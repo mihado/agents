@@ -13,10 +13,12 @@ else
   echo "claude: context7 added to user config"
 fi
 
-# Claude Code — user-level agents
+# Claude Code — user-level agents and commands
 mkdir -p ~/.claude
 ln -sf "$DYNOKUMA/.agents/agents" ~/.claude/agents
 echo "claude: ~/.claude/agents"
+ln -sf "$DYNOKUMA/.agents/commands" ~/.claude/commands
+echo "claude: ~/.claude/commands"
 
 # OpenCode — user-level config
 mkdir -p ~/.config/opencode

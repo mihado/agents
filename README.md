@@ -31,6 +31,7 @@ cd ~/Repos/dynokuma
 |------|-----------|----------|
 | Claude Code MCP | `claude mcp add --scope user` | `~/.claude.json` |
 | Claude Code agents | symlink | `~/.claude/agents → .agents/agents` |
+| Claude Code commands | symlink | `~/.claude/commands → .agents/commands` |
 | OpenCode MCP | symlink | `~/.config/opencode/opencode.json` |
 | OpenCode agents | symlink | `~/.config/opencode/agents → .agents/agents` |
 | OpenCode commands | symlink | `~/.config/opencode/commands → .agents/commands` |
