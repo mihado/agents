@@ -1,4 +1,4 @@
-# dynokuma
+# agents
 
 Generic AI tooling config — agents, commands, and MCP servers. Clone on any machine and run `setup.sh`.
 
@@ -20,8 +20,8 @@ setup.sh
 ## Install
 
 ```bash
-git clone git@github.com:mihado/dynokuma.git ~/Repos/dynokuma
-cd ~/Repos/dynokuma
+git clone git@github.com:mihado/agents.git ~/Repos/agents
+cd ~/Repos/agents
 ./setup.sh
 ```
 
@@ -46,7 +46,7 @@ VSCode MCP is workspace-scoped. For each project that needs it:
 
 ```bash
 mkdir -p <project>/.vscode
-ln -sf ~/Repos/dynokuma/vscode/mcp.json <project>/.vscode/mcp.json
+ln -sf ~/Repos/agents/vscode/mcp.json <project>/.vscode/mcp.json
 ```
 
 ## MCP Servers
