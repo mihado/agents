@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+
+# Checks a non-skill symlink target is absent or already correct; rejects foreign symlinks.
+validate_file() {
+  local source="$1" target="$2" label="$3" existing
+
+  if [ -L "$target" ]; then
+    existing="$(readlink "$target")"
+    [ "$existing" = "$source" ] && return 0
+    printf 'error   %s is a foreign symlink to %s\n' "$label" "$existing" >&2
+    return 1
+  fi
+
+  if [ -e "$target" ]; then
+    printf 'error   %s already exists and will not be overwritten\n' "$label" >&2
+    return 1
+  fi
+}
+
+# Checks a skill symlink target is absent, already correct, or pointing to a stale vendored path
+# that will be replaced. Stale paths arise after scripts/vendor --fetch moves a skill.
+validate_skill() {
+  local source="$1" target="$2" label="$3" existing
+
+  if [ -L "$target" ]; then
+    existing="$(readlink "$target")"
+    [ "$existing" = "$source" ] && return 0
+    case "$existing" in
+      "$ROOT/.agents/skills/"*) return 0 ;;
+    esac
+    printf 'error   %s is a foreign symlink to %s\n' "$label" "$existing" >&2
+    return 1
+  fi
+
+  if [ -e "$target" ]; then
+    printf 'error   %s already exists and will not be overwritten\n' "$label" >&2
+    return 1
+  fi
+}
+
+# Creates or updates a symlink at target pointing to source.
+link_target() {
+  local source="$1" target="$2" label="$3"
+  mkdir -p "$(dirname "$target")"
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+    printf 'ok      %s\n' "$label"
+    return
+  fi
+  [ -L "$target" ] && rm "$target"
+  ln -s "$source" "$target"
+  printf 'linked  %s\n' "$label"
+}
+
+
+# Validates then links all vendored skills into HOME/skills/ using LABEL_PREFIX as the display prefix.
+install_skills() {
+  local home="$1" label_prefix="$2" skill_file skill name
+
+  while IFS= read -r skill_file; do
+    skill="$(dirname "$skill_file")"; name="$(basename "$skill")"
+    validate_skill "$skill" "$home/skills/$name" "$label_prefix skill $name"
+  done < <(find "$ROOT/.agents/skills" -type f -name SKILL.md -print | sort)
+
+  while IFS= read -r skill_file; do
+    skill="$(dirname "$skill_file")"; name="$(basename "$skill")"
+    link_target "$skill" "$home/skills/$name" "$label_prefix skill $name"
+  done < <(find "$ROOT/.agents/skills" -type f -name SKILL.md -print | sort)
+}
+
+# Installs AGENTS.md, CLAUDE.md, and all vendored skills for Claude Code.
+setup_claude() {
+  validate_file "$ROOT/AGENTS.md" "$CLAUDE_HOME/AGENTS.md" "Claude shared instructions"
+  validate_file "$ROOT/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" "Claude instructions"
+  link_target   "$ROOT/AGENTS.md" "$CLAUDE_HOME/AGENTS.md" "Claude shared instructions"
+  link_target   "$ROOT/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" "Claude instructions"
+  install_skills "$CLAUDE_HOME" "Claude"
+}
+
+# Installs AGENTS.md and all vendored skills for Codex.
+setup_codex() {
+  validate_file "$ROOT/AGENTS.md" "$CODEX_HOME/AGENTS.md" "Codex instructions"
+  link_target   "$ROOT/AGENTS.md" "$CODEX_HOME/AGENTS.md" "Codex instructions"
+  install_skills "$CODEX_HOME" "Codex"
+}
+
+setup_claude
+setup_codex
+
+printf '\nInstallation complete. Run scripts/doctor to verify discovery.\n'
