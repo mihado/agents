@@ -1,83 +1,163 @@
 # agents
 
-Generic AI tooling config — agents, commands, and MCP servers. Clone on any machine and run `setup.sh`.
+Shared engineering instructions and workflows for Claude Code and Codex.
 
-Works with: Claude Code, OpenCode, VSCode (with Copilot).
+This repository contains portable engineering practice only. Product context, company policy, client knowledge, credentials, MCP configuration, and machine-specific paths belong in domain, project, or local configuration.
+
+## Instruction Layers
+
+Both tools load broad instructions before project-specific instructions:
+
+```text
+global engineering instructions
+  -> project instructions
+  -> nested directory instructions
+  -> current task
+```
+
+- `AGENTS.md` is the canonical shared engineering contract.
+- `CLAUDE.md` imports `AGENTS.md` and contains only Claude-specific additions.
+- Project repositories should commit their own `AGENTS.md`.
+- A project `CLAUDE.md` can import its project `AGENTS.md` and add only Claude-specific behavior.
+- Detailed workflows live in skills and load only when relevant.
 
 ## Layout
 
-```
+```text
+AGENTS.md                  shared global instructions
+CLAUDE.md                  Claude wrapper around AGENTS.md
 .agents/
-  agents/        # custom agents (Claude Code: ~/.claude/agents, OpenCode: ~/.config/opencode/agents)
-  commands/      # slash commands (project-level: .claude/commands, .opencode/commands)
-opencode/
-  opencode.json  # OpenCode user-level config → ~/.config/opencode/opencode.json
-vscode/
-  mcp.json       # VSCode MCP config (per-project symlink, not global)
-setup.sh
+  skills/<category>/       vendored skills organized for humans
+  licenses/                upstream license notices
+scripts/
+  install                  union-safe Claude and Codex installer
+  doctor                   installation and integrity diagnostics
+  mcp                      install and verify baseline MCP
+  vendor                   fetch and verify vendored skills
+mcp.json                   human-edited baseline MCP servers
+skills.json                human-edited sources and selected skills
+skills.lock                generated commits, provenance, and hashes
 ```
 
 ## Install
 
+Requirements: Git, Node.js, Claude Code, and/or Codex.
+
 ```bash
 git clone git@github.com:mihado/agents.git ~/Repos/agents
 cd ~/Repos/agents
-./setup.sh
+./scripts/install
+./scripts/mcp --install
+./scripts/doctor
 ```
 
-### What setup.sh does
+The installer creates these links:
 
-| Tool | Mechanism | Location |
-|------|-----------|----------|
-| Claude Code MCP | `claude mcp add --scope user` | `~/.claude.json` |
-| Claude Code agents | symlink | `~/.claude/agents → .agents/agents` |
-| Claude Code commands | symlink | `~/.claude/commands → .agents/commands` |
-| OpenCode MCP | symlink | `~/.config/opencode/opencode.json` |
-| OpenCode agents | symlink | `~/.config/opencode/agents → .agents/agents` |
-| OpenCode commands | symlink | `~/.config/opencode/commands → .agents/commands` |
-| VSCode MCP | **per-project** symlink (manual) | `<project>/.vscode/mcp.json` |
+```text
+~/.codex/AGENTS.md       -> <repo>/AGENTS.md
+~/.claude/AGENTS.md      -> <repo>/AGENTS.md
+~/.claude/CLAUDE.md      -> <repo>/CLAUDE.md
+~/.codex/skills/<name>   -> <repo>/.agents/skills/<name>
+~/.claude/skills/<name>  -> <repo>/.agents/skills/<name>
+```
 
-Claude Code reads MCP config from `~/.claude.json` via `claude mcp add` — not from a symlinked file.
-OpenCode reads from `~/.config/opencode/opencode.json` — symlink works fine.
+Entries are linked individually. Existing unrelated skills survive, while a file, directory, or foreign symlink with the same name causes installation to stop instead of being overwritten.
 
-### VSCode MCP (per-project)
+`CODEX_HOME` and `CLAUDE_HOME` may be set to test or install into alternate locations.
 
-VSCode MCP is workspace-scoped. For each project that needs it:
+## Baseline MCP
+
+`mcp.json` declares shared baseline MCP servers. It currently contains only Context7:
 
 ```bash
-mkdir -p <project>/.vscode
-ln -sf ~/Repos/agents/vscode/mcp.json <project>/.vscode/mcp.json
+./scripts/mcp --install
+./scripts/mcp --check
 ```
 
-## MCP Servers
+The MCP script uses the native Claude and Codex CLIs and configures whichever tools are present. It prefers `CODEX_CLI_PATH` or `CLAUDE_CLI_PATH`, then searches `PATH`; on macOS it also detects the CLI bundled with `/Applications/Codex.app`.
 
-### Context7
-
-Provides live library documentation to AI tools.
-
-- No API key required for basic use
-- Optional: `export CONTEXT7_API_KEY=your-key` in `.bashrc`/`.zshrc` for higher rate limits
-- Key is never stored in this repo — it comes from shell environment
-
-## .agents pattern
-
-`.agents/` is the canonical source. Each tool symlinks into it:
-
-| Directory | Claude Code | OpenCode |
-|-----------|-------------|----------|
-| `agents/` | `~/.claude/agents` (user-level) | `~/.config/opencode/agents` (user-level) |
-| `commands/` | `.claude/commands` (project-level) | `.opencode/commands` (project-level) |
-
-For project-level commands:
-```
-.agents/commands/   # source
-.claude/commands    → ../.agents/commands
-.opencode/commands  → ../.agents/commands
+```text
+context7 -> npx -y @upstash/context7-mcp
 ```
 
-## Adding a new MCP server
+Installation is idempotent and fails rather than replacing a conflicting definition. Checks compare configuration only and do not test live server health. Environment-variable names may be documented in `mcp.json`, but values remain in the machine environment and are never stored by this repository.
 
-1. Add to `opencode/opencode.json` (OpenCode)
-2. Run `claude mcp add --scope user <name> -- <command>` (Claude Code)
-3. Add to `vscode/mcp.json` (VSCode, if needed)
-4. Document here
+Additional MCP servers remain machine or domain-specific until a repeated pattern justifies a broader abstraction.
+
+## Mac And VM Usage
+
+The Mac can contain the union of this repository and domain repositories such as BevLex or Koan. Each repository links its own uniquely named skills into the same discovery directories.
+
+A domain VM installs this shared repository plus its domain repository. No runtime profile selection is required. Projects supply their own architecture, commands, constraints, and verification instructions.
+
+## Vendored Skills
+
+Selected skills are copied unchanged from:
+
+- [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
+- [mattpocock/skills](https://github.com/mattpocock/skills)
+
+`skills.json` is the human-edited desired state. Each skill declares an upstream `srcPath` and a local `path` relative to `.agents/`, allowing repository categories such as `skills/engineering/` and `skills/design/`.
+
+`skills.lock` is generated by `scripts/vendor --fetch`. It records the resolved commit and content hash for every source, license, and skill. Each skill entry repeats its source, upstream path, local path, and commit so provenance is easy to inspect.
+
+Vendored skill names are clean local names. To add or remove one, edit `skills.json` and fetch again. The fetch is authoritative and overwrites selected local copies; review the Git diff and reconcile any intentional local changes afterward.
+
+First-party skills may be added directly to `.agents/skills/`; they use the same namespace but are not listed in `skills.json`.
+
+Repository categories do not affect invocation. The installer scans recursively and links each skill flat by its directory name:
+
+```text
+.agents/skills/engineering/zoom-out  -> ~/.codex/skills/zoom-out
+                                     -> ~/.claude/skills/zoom-out
+```
+
+Skill directory names must therefore remain globally unique.
+
+### Check Integrity
+
+```bash
+./scripts/vendor --check
+```
+
+This is offline and fails when a locked skill, license, or manifest entry has changed unexpectedly.
+
+### Update
+
+Fetch every declared skill from its tracked source ref and regenerate `skills.lock`:
+
+```bash
+./scripts/vendor --fetch
+```
+
+The fetch clones sources into temporary storage, stages all declared paths, overwrites their vendored copies, removes previously locked skills that are no longer declared, and writes `skills.lock` from scratch. Review the resulting Git diff before committing.
+
+## Diagnostics
+
+```bash
+./scripts/doctor
+```
+
+The doctor checks:
+
+- Git and Node.js availability
+- skills manifest, lock structure, and content hashes
+- baseline Context7 configuration
+- global instruction links
+- every Claude and Codex skill link
+- broken or foreign links
+
+It reports problems without changing the machine.
+
+## Boundaries
+
+This repository intentionally does not install:
+
+- custom agent personas
+- slash commands
+- OpenCode configuration
+- VS Code configuration
+- domain or machine-specific MCP servers
+- credentials or machine-specific executable paths
+
+OpenCode can be added later as a thin adapter over the same instructions and skill namespace.
