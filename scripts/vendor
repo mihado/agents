@@ -1,0 +1,402 @@
+#!/usr/bin/env node
+
+const crypto = require("node:crypto");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+const root = path.resolve(__dirname, "..");
+const manifestPath = path.join(root, "skills.json");
+const lockPath = path.join(root, "skills.lock");
+const skillsRoot = path.join(root, ".agents", "skills");
+const licensesRoot = path.join(root, ".agents", "licenses");
+const command = process.argv[2];
+
+if (!["--check", "--fetch"].includes(command) || process.argv.length !== 3) {
+  console.error("Usage: scripts/vendor --check | --fetch");
+  process.exit(1);
+}
+
+const manifest = readJson(manifestPath);
+validateManifest(manifest);
+
+if (command === "--check") {
+  const lock = readJson(lockPath);
+  validateLock(manifest, lock);
+  verifyWorkingCopy(lock);
+  console.log(
+    `Verified ${Object.keys(lock.skills).length} vendored skills and ${Object.keys(lock.sources).length} licenses.`,
+  );
+  process.exit(0);
+}
+
+fetchSkills(manifest);
+
+function fetchSkills(currentManifest) {
+  const previousLock = fs.existsSync(lockPath) ? readJson(lockPath) : null;
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agents-vendor-"));
+  const nextLock = {
+    version: 1,
+    sources: {},
+    skills: {},
+  };
+
+  try {
+    for (const sourceName of sortedKeys(currentManifest.sources)) {
+      const source = currentManifest.sources[sourceName];
+      const cloneDir = path.join(tempRoot, "sources", safeName(sourceName));
+      run("git", ["clone", "--quiet", source.repository, cloneDir]);
+      run("git", ["-C", cloneDir, "checkout", "--quiet", source.ref]);
+      const commit = run("git", [
+        "-C",
+        cloneDir,
+        "rev-parse",
+        "HEAD",
+      ]).trim();
+
+      const licenseFileName = `${safeName(sourceName)}-LICENSE`;
+      const stagedLicense = path.join(
+        tempRoot,
+        "licenses",
+        licenseFileName,
+      );
+      copyPath(path.join(cloneDir, source.license.path), stagedLicense);
+
+      nextLock.sources[sourceName] = {
+        repository: source.repository,
+        ref: source.ref,
+        commit,
+        license: source.license.name,
+        licensePath: `.agents/licenses/${licenseFileName}`,
+        licenseSha256: hashPath(stagedLicense),
+      };
+
+      for (const skillName of sortedKeys(currentManifest.skills)) {
+        const skill = currentManifest.skills[skillName];
+        if (skill.source !== sourceName) continue;
+
+        const upstream = path.join(cloneDir, skill.srcPath);
+        if (!fs.existsSync(path.join(upstream, "SKILL.md"))) {
+          fail(`missing SKILL.md at ${sourceName}:${skill.srcPath}`);
+        }
+
+        const stagedSkill = path.join(tempRoot, "skills", skillName);
+        copyPath(upstream, stagedSkill);
+        nextLock.skills[skillName] = {
+          source: sourceName,
+          srcPath: skill.srcPath,
+          path: skill.path,
+          commit,
+          sha256: hashPath(stagedSkill),
+        };
+      }
+
+      console.log(`${sourceName}: ${commit}`);
+    }
+
+    applyFetchedContent(previousLock, nextLock, tempRoot);
+    writeJson(lockPath, nextLock);
+    validateLock(currentManifest, nextLock);
+    verifyWorkingCopy(nextLock);
+    console.log("Vendor fetch complete.");
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+function applyFetchedContent(previousLock, nextLock, tempRoot) {
+  fs.mkdirSync(skillsRoot, { recursive: true });
+  fs.mkdirSync(licensesRoot, { recursive: true });
+
+  if (previousLock?.skills) {
+    for (const [skillName, skill] of Object.entries(previousLock.skills)) {
+      const previousPath = skill.path || `skills/${skillName}`;
+      if (
+        !nextLock.skills[skillName] ||
+        nextLock.skills[skillName].path !== previousPath
+      ) {
+        validateLocalPath(previousPath, skillName);
+        fs.rmSync(path.join(root, ".agents", previousPath), {
+          recursive: true,
+          force: true,
+        });
+      }
+    }
+  }
+
+  if (previousLock?.sources) {
+    for (const source of Object.values(previousLock.sources)) {
+      if (
+        source.licensePath &&
+        !Object.values(nextLock.sources).some(
+          (next) => next.licensePath === source.licensePath,
+        )
+      ) {
+        validateLicensePath(source.licensePath, "previous lock");
+        fs.rmSync(path.join(root, source.licensePath), { force: true });
+      }
+    }
+  }
+
+  for (const skillName of sortedKeys(nextLock.skills)) {
+    replacePath(
+      path.join(tempRoot, "skills", skillName),
+      path.join(root, ".agents", nextLock.skills[skillName].path),
+    );
+  }
+
+  for (const source of Object.values(nextLock.sources)) {
+    replacePath(
+      path.join(tempRoot, "licenses", path.basename(source.licensePath)),
+      path.join(root, source.licensePath),
+    );
+  }
+}
+
+function validateManifest(current) {
+  if (current.version !== 1) fail("skills.json version must be 1");
+  if (!isObject(current.sources) || !isObject(current.skills)) {
+    fail("skills.json must contain sources and skills objects");
+  }
+
+  for (const [sourceName, source] of Object.entries(current.sources)) {
+    if (
+      !sourceName ||
+      !source.repository ||
+      !source.ref ||
+      !source.license?.name ||
+      !source.license?.path
+    ) {
+      fail(`incomplete source in skills.json: ${sourceName}`);
+    }
+    validateUpstreamPath(source.license.path, `source ${sourceName} license.path`);
+  }
+
+  const localPaths = new Set();
+  for (const [skillName, skill] of Object.entries(current.skills)) {
+    if (!skillName || !skill.source || !skill.srcPath || !skill.path) {
+      fail(`incomplete skill in skills.json: ${skillName}`);
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(skillName)) {
+      fail(`invalid skill name (only letters, digits, '.', '-', '_' allowed): ${skillName}`);
+    }
+    validateUpstreamPath(skill.srcPath, `skill ${skillName} srcPath`);
+    if (!current.sources[skill.source]) {
+      fail(`unknown source for ${skillName}: ${skill.source}`);
+    }
+    validateLocalPath(skill.path, skillName);
+    if (path.posix.basename(skill.path) !== skillName) {
+      fail(`local path must end with the skill name ${skillName}: ${skill.path}`);
+    }
+    if (localPaths.has(skill.path)) {
+      fail(`duplicate local skill path: ${skill.path}`);
+    }
+    localPaths.add(skill.path);
+  }
+}
+
+function validateLock(currentManifest, currentLock) {
+  if (currentLock.version !== 1) fail("skills.lock version must be 1");
+  if (!isObject(currentLock.sources) || !isObject(currentLock.skills)) {
+    fail("skills.lock must contain sources and skills objects");
+  }
+
+  assertSameKeys(
+    "sources",
+    currentManifest.sources,
+    currentLock.sources,
+  );
+  assertSameKeys("skills", currentManifest.skills, currentLock.skills);
+
+  for (const sourceName of sortedKeys(currentManifest.sources)) {
+    const declared = currentManifest.sources[sourceName];
+    const locked = currentLock.sources[sourceName];
+    if (
+      locked.repository !== declared.repository ||
+      locked.ref !== declared.ref ||
+      locked.license !== declared.license.name ||
+      !locked.commit ||
+      !locked.licensePath ||
+      !locked.licenseSha256
+    ) {
+      fail(`stale or incomplete lock source: ${sourceName}`);
+    }
+    validateLicensePath(locked.licensePath, `lock source ${sourceName}`);
+  }
+
+  for (const skillName of sortedKeys(currentManifest.skills)) {
+    const declared = currentManifest.skills[skillName];
+    const locked = currentLock.skills[skillName];
+    const source = currentLock.sources[declared.source];
+    if (
+      locked.source !== declared.source ||
+      locked.srcPath !== declared.srcPath ||
+      locked.path !== declared.path ||
+      locked.commit !== source.commit ||
+      !locked.sha256
+    ) {
+      fail(`stale or incomplete lock skill: ${skillName}`);
+    }
+  }
+}
+
+function verifyWorkingCopy(currentLock) {
+  for (const [skillName, skill] of Object.entries(currentLock.skills)) {
+    const local = path.join(root, ".agents", skill.path);
+    if (!fs.existsSync(path.join(local, "SKILL.md"))) {
+      fail(`missing vendored skill: ${skillName}`);
+    }
+    verifyHash(local, skill.sha256, `skill ${skillName}`);
+  }
+
+  for (const [sourceName, source] of Object.entries(currentLock.sources)) {
+    verifyHash(
+      path.join(root, source.licensePath),
+      source.licenseSha256,
+      `license ${sourceName}`,
+    );
+  }
+}
+
+function validateLocalPath(localPath, skillName) {
+  if (
+    path.isAbsolute(localPath) ||
+    path.posix.normalize(localPath) !== localPath ||
+    localPath === "skills" ||
+    !localPath.startsWith("skills/") ||
+    localPath.endsWith("/")
+  ) {
+    fail(`invalid local path for ${skillName}: ${localPath}`);
+  }
+}
+
+function validateUpstreamPath(upstreamPath, label) {
+  if (
+    path.isAbsolute(upstreamPath) ||
+    path.posix.normalize(upstreamPath) !== upstreamPath ||
+    upstreamPath.startsWith("../") ||
+    upstreamPath === ".." ||
+    upstreamPath === "."
+  ) {
+    fail(`unsafe upstream path in ${label}: ${upstreamPath}`);
+  }
+}
+
+function validateLicensePath(licensePath, label) {
+  if (
+    path.isAbsolute(licensePath) ||
+    !licensePath.startsWith(".agents/licenses/") ||
+    path.posix.normalize(licensePath) !== licensePath
+  ) {
+    fail(`unsafe license path in ${label}: ${licensePath}`);
+  }
+}
+
+function assertSameKeys(label, declared, locked) {
+  const declaredKeys = sortedKeys(declared);
+  const lockedKeys = sortedKeys(locked);
+  if (JSON.stringify(declaredKeys) !== JSON.stringify(lockedKeys)) {
+    fail(
+      `${label} differ between skills.json and skills.lock; run scripts/vendor --fetch`,
+    );
+  }
+}
+
+function hashPath(target) {
+  const hash = crypto.createHash("sha256");
+  const stat = fs.statSync(target);
+
+  if (stat.isFile()) {
+    hash.update(path.basename(target));
+    hash.update("\0");
+    hash.update(fs.readFileSync(target));
+    return hash.digest("hex");
+  }
+
+  for (const file of walkFiles(target)) {
+    const relative = path.relative(target, file).split(path.sep).join("/");
+    hash.update(relative);
+    hash.update("\0");
+    hash.update(fs.readFileSync(file));
+    hash.update("\0");
+  }
+
+  return hash.digest("hex");
+}
+
+function walkFiles(directory) {
+  const files = [];
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...walkFiles(entryPath));
+    else if (entry.isFile()) files.push(entryPath);
+    else fail(`unsupported vendored entry: ${entryPath}`);
+  }
+  return files.sort();
+}
+
+function verifyHash(target, expected, label) {
+  if (!fs.existsSync(target)) fail(`missing ${label}: ${target}`);
+  const actual = hashPath(target);
+  if (actual !== expected) {
+    fail(`${label} was modified (expected ${expected}, got ${actual})`);
+  }
+}
+
+function replacePath(source, target) {
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.rmSync(target, { recursive: true, force: true });
+  fs.cpSync(source, target, {
+    recursive: true,
+    preserveTimestamps: false,
+  });
+}
+
+function copyPath(source, target) {
+  if (!fs.existsSync(source)) fail(`missing upstream path: ${source}`);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.cpSync(source, target, {
+    recursive: true,
+    preserveTimestamps: false,
+  });
+}
+
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    fail(`cannot read ${file}: ${error.message}`);
+  }
+}
+
+function writeJson(file, value) {
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function sortedKeys(value) {
+  return Object.keys(value).sort();
+}
+
+function safeName(value) {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-");
+}
+
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function run(command, commandArgs) {
+  const result = spawnSync(command, commandArgs, { encoding: "utf8" });
+  if (result.status !== 0) {
+    fail(
+      `${command} ${commandArgs.join(" ")} failed:\n${result.stderr.trim()}`,
+    );
+  }
+  return result.stdout;
+}
+
+function fail(message) {
+  console.error(`error: ${message}`);
+  process.exit(1);
+}
