@@ -1,0 +1,208 @@
+#!/usr/bin/env node
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+const root = path.resolve(__dirname, "..");
+const manifestPath = path.join(root, "mcp.json");
+const claudeConfig =
+  process.env.CLAUDE_CONFIG || path.join(os.homedir(), ".claude.json");
+const command = process.argv[2];
+
+if (!["--install", "--check"].includes(command) || process.argv.length !== 3) {
+  fail("Usage: scripts/mcp --install | --check");
+}
+
+const manifest = readJson(manifestPath);
+validateManifest(manifest);
+
+const tools = {
+  codex: resolveExecutable(
+    process.env.CODEX_CLI_PATH,
+    "codex",
+    "/Applications/Codex.app/Contents/Resources/codex",
+  ),
+  claude: resolveExecutable(process.env.CLAUDE_CLI_PATH, "claude"),
+};
+
+if (!tools.codex && !tools.claude) {
+  fail("neither codex nor claude is installed");
+}
+
+let failures = 0;
+
+for (const [name, server] of Object.entries(manifest.servers)) {
+  if (tools.codex) {
+    handleTool("Codex", name, server, codexStatus, installCodex);
+  }
+  if (tools.claude) {
+    handleTool("Claude", name, server, claudeStatus, installClaude);
+  }
+}
+
+process.exit(failures);
+
+function handleTool(label, name, server, statusFn, installFn) {
+  const status = statusFn(name, server);
+
+  if (command === "--check") {
+    if (status === "exact") {
+      console.log(`PASS  ${label} ${name} configured`);
+    } else {
+      console.error(
+        `FAIL  ${label} ${name} ${status === "missing" ? "is not configured" : "configuration conflicts with mcp.json"}`,
+      );
+      failures += 1;
+    }
+    return;
+  }
+
+  if (status === "exact") {
+    console.log(`ok: ${label} ${name}`);
+    return;
+  }
+
+  if (status === "conflict") {
+    console.error(`error: ${label} ${name} conflicts with mcp.json`);
+    failures += 1;
+    return;
+  }
+
+  installFn(name, server);
+  console.log(`installed: ${label} ${name}`);
+}
+
+function codexStatus(name, server) {
+  const result = spawnSync(tools.codex, ["mcp", "get", name], {
+    encoding: "utf8",
+  });
+  if (result.status !== 0) return "missing";
+
+  const details = parseKeyValueOutput(result.stdout);
+  const args = server.args.join(" ");
+  return details.transport === server.type &&
+    details.command === server.command &&
+    details.args === (args || "-")
+    ? "exact"
+    : "conflict";
+}
+
+function claudeStatus(name, server) {
+  if (!fs.existsSync(claudeConfig)) return "missing";
+
+  const config = readJson(claudeConfig);
+  const current = config.mcpServers?.[name];
+  if (!current) return "missing";
+
+  return current.type === server.type &&
+    current.command === server.command &&
+    JSON.stringify(current.args || []) === JSON.stringify(server.args)
+    ? "exact"
+    : "conflict";
+}
+
+function installCodex(name, server) {
+  run(tools.codex, [
+    "mcp",
+    "add",
+    name,
+    "--",
+    server.command,
+    ...server.args,
+  ]);
+}
+
+function installClaude(name, server) {
+  run(tools.claude, [
+    "mcp",
+    "add",
+    "--scope",
+    "user",
+    name,
+    "--",
+    server.command,
+    ...server.args,
+  ]);
+}
+
+function validateManifest(current) {
+  if (current.version !== 1) fail("mcp.json version must be 1");
+  if (!isObject(current.servers) || Object.keys(current.servers).length === 0) {
+    fail("mcp.json must contain at least one server");
+  }
+
+  for (const [name, server] of Object.entries(current.servers)) {
+    if (
+      !name ||
+      server.type !== "stdio" ||
+      typeof server.command !== "string" ||
+      !server.command ||
+      !Array.isArray(server.args) ||
+      !server.args.every((arg) => typeof arg === "string") ||
+      !Array.isArray(server.env || []) ||
+      !(server.env || []).every((key) => typeof key === "string")
+    ) {
+      fail(`invalid MCP server definition: ${name}`);
+    }
+  }
+}
+
+function parseKeyValueOutput(output) {
+  const values = {};
+  for (const line of output.split("\n")) {
+    const match = line.match(/^\s+([a-z]+):\s*(.*)$/);
+    if (match) values[match[1]] = match[2];
+  }
+  return values;
+}
+
+function resolveExecutable(override, name, ...fallbacks) {
+  for (const candidate of [override, findOnPath(name), ...fallbacks]) {
+    if (candidate && isExecutable(candidate)) return candidate;
+  }
+  return null;
+}
+
+function findOnPath(name) {
+  for (const directory of (process.env.PATH || "").split(path.delimiter)) {
+    if (!directory) continue;
+    const candidate = path.join(directory, name);
+    if (isExecutable(candidate)) return candidate;
+  }
+  return null;
+}
+
+function isExecutable(file) {
+  try {
+    fs.accessSync(file, fs.constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    fail(`cannot read ${file}: ${error.message}`);
+  }
+}
+
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function run(executable, args) {
+  const result = spawnSync(executable, args, { encoding: "utf8" });
+  if (result.status !== 0) {
+    fail(`${executable} ${args.join(" ")} failed:\n${result.stderr.trim()}`);
+  }
+}
+
+function fail(message) {
+  console.error(`error: ${message}`);
+  process.exit(1);
+}

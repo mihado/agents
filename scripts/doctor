@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -u
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+failures=0
+
+pass() {
+  printf 'PASS  %s\n' "$1"
+}
+
+fail() {
+  printf 'FAIL  %s\n' "$1" >&2
+  failures=$((failures + 1))
+}
+
+check_command() {
+  if command -v "$1" >/dev/null 2>&1; then
+    pass "$1 available"
+  else
+    fail "$1 is required"
+  fi
+}
+
+check_link() {
+  local target="$1"
+  local expected="$2"
+  local label="$3"
+
+  if [ ! -L "$target" ]; then
+    fail "$label is not a symlink: $target"
+  elif [ "$(readlink "$target")" != "$expected" ]; then
+    fail "$label points to $(readlink "$target"), expected $expected"
+  elif [ ! -e "$target" ]; then
+    fail "$label is broken: $target"
+  else
+    pass "$label"
+  fi
+}
+
+check_command git
+check_command node
+
+if command -v node >/dev/null 2>&1; then
+  if node "$ROOT/scripts/vendor" --check; then
+    pass "skills manifest, lock, and hashes"
+  else
+    fail "skills manifest, lock, or hashes"
+  fi
+
+  if "$ROOT/scripts/mcp" --check; then
+    pass "baseline MCP configuration"
+  else
+    fail "baseline MCP configuration"
+  fi
+fi
+
+check_link "$CODEX_HOME/AGENTS.md" "$ROOT/AGENTS.md" "Codex instructions"
+check_link "$CLAUDE_HOME/AGENTS.md" "$ROOT/AGENTS.md" "Claude shared instructions"
+check_link "$CLAUDE_HOME/CLAUDE.md" "$ROOT/CLAUDE.md" "Claude instructions"
+
+seen_names=" "
+while IFS= read -r skill_file; do
+  skill="$(dirname "$skill_file")"
+  name="$(basename "$skill")"
+  case "$seen_names" in
+    *" $name "*) fail "duplicate skill name: $name" ;;
+    *) seen_names="$seen_names$name " ;;
+  esac
+  check_link "$CODEX_HOME/skills/$name" "$skill" "Codex skill $name"
+  check_link "$CLAUDE_HOME/skills/$name" "$skill" "Claude skill $name"
+done < <(find "$ROOT/.agents/skills" -type f -name SKILL.md -print | sort)
+
+if [ "$failures" -gt 0 ]; then
+  printf '\nDoctor found %d problem(s).\n' "$failures" >&2
+  exit 1
+fi
+
+printf '\nDoctor found no problems.\n'
