@@ -2,11 +2,9 @@
 
 Shared engineering instructions and workflows for Claude Code and Codex.
 
-This repository contains portable engineering practice only. Product context, company policy, client knowledge, credentials, MCP configuration, and machine-specific paths belong in domain, project, or local configuration.
+This repository contains portable engineering practice only. Product context, company policy, credentials, MCP configuration, and machine-specific paths belong in domain, project, or local configuration.
 
 ## Instruction Layers
-
-Both tools load broad instructions before project-specific instructions:
 
 ```text
 global engineering instructions
@@ -14,12 +12,6 @@ global engineering instructions
   -> nested directory instructions
   -> current task
 ```
-
-- `AGENTS.md` is the canonical shared engineering contract.
-- `CLAUDE.md` imports `AGENTS.md` and contains only Claude-specific additions.
-- Project repositories should commit their own `AGENTS.md`.
-- A project `CLAUDE.md` can import its project `AGENTS.md` and add only Claude-specific behavior.
-- Detailed workflows live in skills and load only when relevant.
 
 ## Layout
 
@@ -30,13 +22,13 @@ CLAUDE.md                  Claude wrapper around AGENTS.md
   skills/<category>/       vendored skills organized for humans
   licenses/                upstream license notices
 scripts/
-  install                  union-safe Claude and Codex installer
-  doctor                   installation and integrity diagnostics
-  mcp                      install and verify baseline MCP
-  vendor                   fetch and verify vendored skills
-mcp.json                   human-edited baseline MCP servers
-skills.json                human-edited sources and selected skills
-skills.lock                generated commits, provenance, and hashes
+  install                  symlinks instructions and skills into Claude and Codex
+  doctor                   checks installation and integrity
+  mcp                      installs and verifies baseline MCP servers
+  vendor                   fetches and verifies vendored skills
+mcp.json                   baseline MCP server definitions
+skills.json                selected skills and their upstream sources
+skills.lock                resolved commits, provenance, and content hashes
 ```
 
 ## Install
@@ -51,7 +43,7 @@ cd ~/Repos/agents
 ./scripts/doctor
 ```
 
-The installer creates these links:
+The installer creates these symlinks:
 
 ```text
 ~/.codex/AGENTS.md       -> <repo>/AGENTS.md
@@ -61,76 +53,36 @@ The installer creates these links:
 ~/.claude/skills/<name>  -> <repo>/.agents/skills/<name>
 ```
 
-Entries are linked individually. Existing unrelated skills survive, while a file, directory, or foreign symlink with the same name causes installation to stop instead of being overwritten.
+Each entry is linked individually. Existing unrelated skills survive. A file, directory, or foreign symlink at the same path causes installation to stop rather than overwrite.
 
-`CODEX_HOME` and `CLAUDE_HOME` may be set to test or install into alternate locations.
+`CODEX_HOME` and `CLAUDE_HOME` may be set to install into alternate locations.
 
 ## Baseline MCP
 
-`mcp.json` declares shared baseline MCP servers. It currently contains only Context7:
+`mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code and Codex are present:
 
 ```bash
-./scripts/mcp --install
-./scripts/mcp --check
+./scripts/mcp --install   # install
+./scripts/mcp --check     # verify without changing anything
 ```
 
-The MCP script uses the native Claude and Codex CLIs and configures whichever tools are present. It prefers `CODEX_CLI_PATH` or `CLAUDE_CLI_PATH`, then searches `PATH`; on macOS it also detects the CLI bundled with `/Applications/Codex.app`.
-
-```text
-context7 -> npx -y @upstash/context7-mcp
-```
-
-Installation is idempotent and fails rather than replacing a conflicting definition. Checks compare configuration only and do not test live server health. Environment-variable names may be documented in `mcp.json`, but values remain in the machine environment and are never stored by this repository.
-
-Additional MCP servers remain machine or domain-specific until a repeated pattern justifies a broader abstraction.
-
-## Mac And VM Usage
-
-The Mac can contain the union of this repository and domain repositories such as BevLex or Koan. Each repository links its own uniquely named skills into the same discovery directories.
-
-A domain VM installs this shared repository plus its domain repository. No runtime profile selection is required. Projects supply their own architecture, commands, constraints, and verification instructions.
+Environment variable names may be documented in `mcp.json`; values stay in the machine environment and are never stored here.
 
 ## Vendored Skills
 
-Selected skills are copied unchanged from:
+Skills are copied unchanged from upstream repositories declared in `skills.json`:
 
 - [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
 - [mattpocock/skills](https://github.com/mattpocock/skills)
 
-`skills.json` is the human-edited desired state. Each skill declares an upstream `srcPath` and a local `path` relative to `.agents/`, allowing repository categories such as `skills/engineering/` and `skills/design/`.
-
-`skills.lock` is generated by `scripts/vendor --fetch`. It records the resolved commit and content hash for every source, license, and skill. Each skill entry repeats its source, upstream path, local path, and commit so provenance is easy to inspect.
-
-Vendored skill names are clean local names. To add or remove one, edit `skills.json` and fetch again. The fetch is authoritative and overwrites selected local copies; review the Git diff and reconcile any intentional local changes afterward.
-
-First-party skills may be added directly to `.agents/skills/`; they use the same namespace but are not listed in `skills.json`.
-
-Repository categories do not affect invocation. The installer scans recursively and links each skill flat by its directory name:
-
-```text
-.agents/skills/engineering/zoom-out  -> ~/.codex/skills/zoom-out
-                                     -> ~/.claude/skills/zoom-out
-```
-
-Skill directory names must therefore remain globally unique.
-
-### Check Integrity
-
 ```bash
-./scripts/vendor --check
+./scripts/vendor --fetch   # fetch all declared skills and regenerate skills.lock
+./scripts/vendor --check   # verify hashes offline without fetching
 ```
 
-This is offline and fails when a locked skill, license, or manifest entry has changed unexpectedly.
+After fetching, review the Git diff before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
 
-### Update
-
-Fetch every declared skill from its tracked source ref and regenerate `skills.lock`:
-
-```bash
-./scripts/vendor --fetch
-```
-
-The fetch clones sources into temporary storage, stages all declared paths, overwrites their vendored copies, removes previously locked skills that are no longer declared, and writes `skills.lock` from scratch. Review the resulting Git diff before committing.
+Skill directory names must be globally unique across all installed repositories.
 
 ## Diagnostics
 
@@ -138,26 +90,4 @@ The fetch clones sources into temporary storage, stages all declared paths, over
 ./scripts/doctor
 ```
 
-The doctor checks:
-
-- Git and Node.js availability
-- skills manifest, lock structure, and content hashes
-- baseline Context7 configuration
-- global instruction links
-- every Claude and Codex skill link
-- broken or foreign links
-
-It reports problems without changing the machine.
-
-## Boundaries
-
-This repository intentionally does not install:
-
-- custom agent personas
-- slash commands
-- OpenCode configuration
-- VS Code configuration
-- domain or machine-specific MCP servers
-- credentials or machine-specific executable paths
-
-OpenCode can be added later as a thin adapter over the same instructions and skill namespace.
+Reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
