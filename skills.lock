@@ -4,7 +4,7 @@
     "addyosmani/agent-skills": {
       "repository": "https://github.com/addyosmani/agent-skills.git",
       "ref": "main",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "license": "MIT",
       "licensePath": ".agents/licenses/addyosmani-agent-skills-LICENSE",
       "licenseSha256": "f877a8366ac7fcbe83485940745bc6018bc884db812585ecf52af44233590095"
@@ -23,98 +23,98 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/api-and-interface-design",
       "path": "skills/engineering/api-and-interface-design",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "0f762ddae2eb0c21141536d9fd755e39ce3306095fe8c63c999e1ab542db0f07"
     },
     "browser-testing-with-devtools": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/browser-testing-with-devtools",
       "path": "skills/engineering/browser-testing-with-devtools",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "61e236fba5b1a5791c9b6ca6116a5a3f4488932c7b5b5f8326e288b70cf3d912"
     },
     "code-review-and-quality": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-review-and-quality",
       "path": "skills/engineering/code-review-and-quality",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "9b086a4c540ef77b4589307a1c165ab241b5adcb84f4ae70da67924fe8a83fb0"
     },
     "code-simplification": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-simplification",
       "path": "skills/engineering/code-simplification",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "a6d4aba8358a46634487e1c4b612cd021a41f3227fbe0b131270e2ebaaea8440"
     },
     "debugging-and-error-recovery": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/debugging-and-error-recovery",
       "path": "skills/engineering/debugging-and-error-recovery",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "03cadb08513e6b6abf533d6a587d4e72e3271da4f1cfb247bb64a2acae2daf0e"
     },
     "documentation-and-adrs": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/documentation-and-adrs",
       "path": "skills/engineering/documentation-and-adrs",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "c0075d076299d574ce31d925493130c61c5fe50a45e0facbdd912c8e2e52bf6b"
     },
     "frontend-ui-engineering": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/frontend-ui-engineering",
       "path": "skills/engineering/frontend-ui-engineering",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "58542bff1be0b719134d022ec0ec6f304808ef5e8c900ac426886716e80d3b76"
     },
     "incremental-implementation": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/incremental-implementation",
       "path": "skills/engineering/incremental-implementation",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "3a55804e2a3e5d8f49bae12893aff8a6551fcbb42f8bc24195a1a799354c7a80"
     },
     "performance-optimization": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/performance-optimization",
       "path": "skills/engineering/performance-optimization",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "a0ed8ae6affa5e2e67f8739675ee774427401c70d0890c73af6b4f629a2ed2d7"
     },
     "planning-and-task-breakdown": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/planning-and-task-breakdown",
       "path": "skills/engineering/planning-and-task-breakdown",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "44758184c486894656b8f438c5da56893108f7ac2b9fa7b45541be2ced668cca"
     },
     "security-and-hardening": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/security-and-hardening",
       "path": "skills/engineering/security-and-hardening",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
-      "sha256": "2877b26f4495bc031348970756762aef69da49beeb45ed0f661c3fd2cf02cdcf"
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
+      "sha256": "05bc67d417db252f0a1fa6b3edeb892036dad685c8aa39e4c08c8e5be5b719d0"
     },
     "source-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/source-driven-development",
       "path": "skills/engineering/source-driven-development",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "4b9caeb329c2fcad7f5fbfff1b16d094d378e6c34d631d6fe488835c111375ac"
     },
     "spec-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/spec-driven-development",
       "path": "skills/engineering/spec-driven-development",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "251328f1ccf012f704fb9626bcef21fb277f5575cc4cc26a45324a0636113e83"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/test-driven-development",
       "path": "skills/engineering/test-driven-development",
-      "commit": "2e0dfbfb436ef3307bbe8ba172f14996de980784",
+      "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "6c8e03bc2f631799c1c3c29f9f525193596781213f7fd24ece5a8ddf6a8d773e"
     },
     "grill-with-docs": {
