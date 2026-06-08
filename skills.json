@@ -54,10 +54,20 @@
       "srcPath": "skills/frontend-ui-engineering",
       "path": "skills/engineering/frontend-ui-engineering"
     },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/grill-me",
+      "path": "skills/productivity/grill-me"
+    },
     "grill-with-docs": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/grill-with-docs",
       "path": "skills/engineering/grill-with-docs"
+    },
+    "handoff": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/handoff",
+      "path": "skills/productivity/handoff"
     },
     "improve-codebase-architecture": {
       "source": "mattpocock/skills",
@@ -98,6 +108,11 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/spec-driven-development",
       "path": "skills/engineering/spec-driven-development"
+    },
+    "teach": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/teach",
+      "path": "skills/productivity/teach"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",

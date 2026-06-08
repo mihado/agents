@@ -12,7 +12,7 @@
     "mattpocock/skills": {
       "repository": "https://github.com/mattpocock/skills.git",
       "ref": "main",
-      "commit": "be55a7970319ede7965edbb02b5e41cba1ca82c9",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
       "license": "MIT",
       "licensePath": ".agents/licenses/mattpocock-skills-LICENSE",
       "licenseSha256": "d4cbbee3e786322cfa7d0b4e8568eb9908a4e1efd6e3b46b1356094bcacfb93b"
@@ -117,32 +117,53 @@
       "commit": "c076972e2626fe2acc30b00a6c7240d4c5fb786a",
       "sha256": "6c8e03bc2f631799c1c3c29f9f525193596781213f7fd24ece5a8ddf6a8d773e"
     },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/grill-me",
+      "path": "skills/productivity/grill-me",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
+      "sha256": "0fe30e2291a6f990a5414f85205535bc06519622bf604980511d7c11dad327e0"
+    },
     "grill-with-docs": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/grill-with-docs",
       "path": "skills/engineering/grill-with-docs",
-      "commit": "be55a7970319ede7965edbb02b5e41cba1ca82c9",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
       "sha256": "d21af3c2e0570cd9563a73780c9afb8d6ec70b77511152e67888eddd84d578fc"
+    },
+    "handoff": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/handoff",
+      "path": "skills/productivity/handoff",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
+      "sha256": "478ba7f43732eb37517839d1360c630bc645a1eac6f39737cb3fb38d22a1194b"
     },
     "improve-codebase-architecture": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/improve-codebase-architecture",
       "path": "skills/engineering/improve-codebase-architecture",
-      "commit": "be55a7970319ede7965edbb02b5e41cba1ca82c9",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
       "sha256": "326e2a53c622d19509f2b0c32111b4d8cb208eb3df1bd1dd8671308708bc245b"
     },
     "prototype": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/prototype",
       "path": "skills/engineering/prototype",
-      "commit": "be55a7970319ede7965edbb02b5e41cba1ca82c9",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
       "sha256": "76829cdb04f2cf3924e58f90d298a2e39029a3031f76f68131dbe5ae9a9a3f83"
+    },
+    "teach": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/teach",
+      "path": "skills/productivity/teach",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
+      "sha256": "893ca91c8ef1257dab8e7eade9520b997bff2e867a2b32065b60414ef44da54b"
     },
     "zoom-out": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/zoom-out",
       "path": "skills/engineering/zoom-out",
-      "commit": "be55a7970319ede7965edbb02b5e41cba1ca82c9",
+      "commit": "2bf70051928429983de3b5718d277150926f8c89",
       "sha256": "34f4bab271b9b9bbad01e08413d5a096ec84d1ee983d747de9219f77afc5e897"
     }
   }
