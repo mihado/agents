@@ -16,6 +16,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "shadcn/improve": {
+      "repository": "https://github.com/shadcn/improve.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE.md"
+      }
     }
   },
   "skills": {
@@ -123,6 +131,11 @@
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/zoom-out",
       "path": "skills/engineering/zoom-out"
+    },
+    "improve": {
+      "source": "shadcn/improve",
+      "srcPath": "skills/improve",
+      "path": "skills/engineering/improve"
     }
   }
 }
