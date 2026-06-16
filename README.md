@@ -19,10 +19,13 @@ global engineering instructions
 AGENTS.md                  shared global instructions
 CLAUDE.md                  Claude wrapper around AGENTS.md
 .agents/
-  skills/<category>/       vendored skills organized for humans
+  skills/engineering/      portable engineering practice
+  skills/productivity/     portable general workflows
+  skills/personal/         Minh-specific utilities
+  skills/calibrated/minh/  skills containing Minh-calibrated context
   licenses/                upstream license notices
 scripts/
-  install                  symlinks instructions and skills into Claude and Codex
+  install                  symlinks instructions and skills into Claude, Codex, and Zed
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
@@ -33,7 +36,7 @@ skills.lock                resolved commits, provenance, and content hashes
 
 ## Install
 
-Requirements: Git, Node.js, Claude Code, and/or Codex.
+Requirements: Git, Node.js, Claude Code, Codex, and/or Zed.
 
 ```bash
 git clone git@github.com:mihado/agents.git ~/Repos/agents
@@ -51,15 +54,16 @@ The installer creates these symlinks:
 ~/.claude/CLAUDE.md      -> <repo>/CLAUDE.md
 ~/.codex/skills/<name>   -> <repo>/.agents/skills/<name>
 ~/.claude/skills/<name>  -> <repo>/.agents/skills/<name>
+~/.zed/skills/<name>     -> <repo>/.agents/skills/<name>
 ```
 
 Each entry is linked individually. Existing unrelated skills survive. A file, directory, or foreign symlink at the same path causes installation to stop rather than overwrite.
 
-`CODEX_HOME` and `CLAUDE_HOME` may be set to install into alternate locations.
+`CODEX_HOME`, `CLAUDE_HOME`, and `ZED_HOME` may be set to install into alternate locations.
 
 ## Baseline MCP
 
-`mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code and Codex are present:
+`mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
 
 ```bash
 ./scripts/mcp --install   # install
@@ -83,6 +87,17 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 After fetching, review the Git diff before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
 
 Skill directory names must be globally unique across all installed repositories.
+
+### First-Party Skill Boundaries
+
+First-party skills are grouped by portability and calibration:
+
+- `engineering/` contains portable engineering practice.
+- `productivity/` contains portable workflows that are useful beyond a single person or domain.
+- `personal/` contains utilities that are useful because of how Minh works but do not model his identity or voice.
+- `calibrated/minh/` contains skills and references calibrated to Minh's voice, judgment, history, or preferences.
+
+All categories are installed on Minh's machines and discovered under a flat skill namespace. The directory structure documents ownership and portability; it is not a runtime profile system. Review calibrated material before pushing it to a public repository.
 
 ## Diagnostics
 
