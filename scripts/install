@@ -5,6 +5,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 
+# Ensure .agents/skills/ exists so find never fails
+mkdir -p "$ROOT/.agents/skills"
+
 # Checks a non-skill symlink target is absent or already correct; rejects foreign symlinks.
 validate_file() {
   local source="$1" target="$2" label="$3" existing

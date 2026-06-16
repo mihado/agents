@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-const root = path.resolve(__dirname, "..");
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const manifestPath = path.join(root, "mcp.json");
 const claudeConfig =
   process.env.CLAUDE_CONFIG || path.join(os.homedir(), ".claude.json");
@@ -25,10 +26,11 @@ const tools = {
     "/Applications/Codex.app/Contents/Resources/codex",
   ),
   claude: resolveExecutable(process.env.CLAUDE_CLI_PATH, "claude"),
+  opencode: resolveExecutable(process.env.OPENCODE_CLI_PATH, "opencode"),
 };
 
-if (!tools.codex && !tools.claude) {
-  fail("neither codex nor claude is installed");
+if (!tools.codex && !tools.claude && !tools.opencode) {
+  fail("no supported tool installed (codex, claude, or opencode)");
 }
 
 let failures = 0;
@@ -39,6 +41,9 @@ for (const [name, server] of Object.entries(manifest.servers)) {
   }
   if (tools.claude) {
     handleTool("Claude", name, server, claudeStatus, installClaude);
+  }
+  if (tools.opencode) {
+    handleOpenCodeTool(name, server);
   }
 }
 
@@ -200,6 +205,124 @@ function run(executable, args) {
   if (result.status !== 0) {
     fail(`${executable} ${args.join(" ")} failed:\n${result.stderr.trim()}`);
   }
+}
+
+// OpenCode uses a JSONC config file at ~/.config/opencode/opencode.jsonc
+function getOpenCodeConfigPath() {
+  const configHome = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
+  return path.join(configHome, "opencode", "opencode.jsonc");
+}
+
+// Strips JSONC comments from a string
+function parseJSONC(content) {
+  // Remove single-line comments
+  const withoutSingleLine = content.replace(/\/\/.*$/gm, "");
+  // Remove multi-line comments
+  const withoutMultiLine = withoutSingleLine.replace(/\/\*[\s\S]*?\*\//g, "");
+  return JSON.parse(withoutMultiLine);
+}
+
+function openCodeStatus(name, server) {
+  const configPath = getOpenCodeConfigPath();
+  if (!fs.existsSync(configPath)) return "missing";
+
+  try {
+    const content = fs.readFileSync(configPath, "utf8");
+    const config = parseJSONC(content);
+    const current = config.mcp?.[name];
+    if (!current) return "missing";
+
+    // For OpenCode, we only support 'remote' type with url
+    // Map from mcp.json stdio definition to OpenCode remote if possible
+    const opencodeServer = toOpenCodeRemote(server);
+    if (!opencodeServer) return "conflict";
+
+    return current.type === opencodeServer.type &&
+      current.url === opencodeServer.url &&
+      JSON.stringify(current.headers || {}) === JSON.stringify(opencodeServer.headers || {})
+      ? "exact"
+      : "conflict";
+  } catch {
+    return "missing";
+  }
+}
+
+// Converts a mcp.json server definition to OpenCode remote format if possible
+function toOpenCodeRemote(server) {
+  // OpenCode supports 'remote' type with a URL
+  // For npx-based servers like context7, we can use the remote endpoint
+  if (server.command === "npx" && server.args.includes("@upstash/context7-mcp")) {
+    return {
+      type: "remote",
+      url: "https://mcp.context7.com/mcp",
+      headers: server.env?.includes("CONTEXT7_API_KEY")
+        ? { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" }
+        : {},
+    };
+  }
+  // Add other known remote mappings here
+  return null;
+}
+
+function installOpenCode(name, server) {
+  const opencodeServer = toOpenCodeRemote(server);
+  if (!opencodeServer) {
+    console.error(`error: ${name} cannot be configured for OpenCode (no remote mapping)`);
+    failures += 1;
+    return;
+  }
+
+  const configPath = getOpenCodeConfigPath();
+  let config = { mcp: {} };
+
+  if (fs.existsSync(configPath)) {
+    try {
+      const content = fs.readFileSync(configPath, "utf8");
+      config = parseJSONC(content);
+      if (!config.mcp) config.mcp = {};
+    } catch {
+      // If we can't parse it, start fresh
+      config = { mcp: {} };
+    }
+  } else {
+    // Ensure directory exists
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+  }
+
+  config.mcp[name] = opencodeServer;
+
+  // Write back as JSONC (with comments preserved if possible, otherwise just JSON)
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+}
+
+function handleOpenCodeTool(name, server) {
+  const status = openCodeStatus(name, server);
+
+  if (command === "--check") {
+    if (status === "exact") {
+      console.log(`PASS  OpenCode ${name} configured`);
+    } else {
+      console.error(
+        `FAIL  OpenCode ${name} ${status === "missing" ? "is not configured" : "configuration conflicts or unsupported"}`,
+      );
+      failures += 1;
+    }
+    return;
+  }
+
+  if (status === "exact") {
+    console.log(`ok: OpenCode ${name}`);
+    return;
+  }
+
+  if (status === "conflict") {
+    console.error(`error: OpenCode ${name} conflicts with mcp.json`);
+    failures += 1;
+    return;
+  }
+
+  installOpenCode(name, server);
+  console.log(`installed: OpenCode ${name}`);
 }
 
 function fail(message) {
