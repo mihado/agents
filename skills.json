@@ -17,6 +17,14 @@
         "path": "LICENSE"
       }
     },
+    "wondelai/skills": {
+      "repository": "https://github.com/wondelai/skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
+    },
     "shadcn/improve": {
       "repository": "https://github.com/shadcn/improve.git",
       "ref": "main",
@@ -179,6 +187,106 @@
       "source": "nutlope/hallmark",
       "srcPath": "skills/hallmark",
       "path": "skills/design/hallmark"
+    },
+    "jobs-to-be-done": {
+      "source": "wondelai/skills",
+      "srcPath": "jobs-to-be-done",
+      "path": "skills/product/jobs-to-be-done"
+    },
+    "obviously-awesome": {
+      "source": "wondelai/skills",
+      "srcPath": "obviously-awesome",
+      "path": "skills/product/obviously-awesome"
+    },
+    "mom-test": {
+      "source": "wondelai/skills",
+      "srcPath": "mom-test",
+      "path": "skills/product/mom-test"
+    },
+    "good-strategy-bad-strategy": {
+      "source": "wondelai/skills",
+      "srcPath": "good-strategy-bad-strategy",
+      "path": "skills/product/good-strategy-bad-strategy"
+    },
+    "monetizing-innovation": {
+      "source": "wondelai/skills",
+      "srcPath": "monetizing-innovation",
+      "path": "skills/product/monetizing-innovation"
+    },
+    "hooked-ux": {
+      "source": "wondelai/skills",
+      "srcPath": "hooked-ux",
+      "path": "skills/design/hooked-ux"
+    },
+    "improve-retention": {
+      "source": "wondelai/skills",
+      "srcPath": "improve-retention",
+      "path": "skills/design/improve-retention"
+    },
+    "made-to-stick": {
+      "source": "wondelai/skills",
+      "srcPath": "made-to-stick",
+      "path": "skills/product/made-to-stick"
+    },
+    "storybrand-messaging": {
+      "source": "wondelai/skills",
+      "srcPath": "storybrand-messaging",
+      "path": "skills/product/storybrand-messaging"
+    },
+    "design-everyday-things": {
+      "source": "wondelai/skills",
+      "srcPath": "design-everyday-things",
+      "path": "skills/design/design-everyday-things"
+    },
+    "lean-analytics": {
+      "source": "wondelai/skills",
+      "srcPath": "lean-analytics",
+      "path": "skills/product/lean-analytics"
+    },
+    "refactoring-ui": {
+      "source": "wondelai/skills",
+      "srcPath": "refactoring-ui",
+      "path": "skills/design/refactoring-ui"
+    },
+    "ux-heuristics": {
+      "source": "wondelai/skills",
+      "srcPath": "ux-heuristics",
+      "path": "skills/design/ux-heuristics"
+    },
+    "microinteractions": {
+      "source": "wondelai/skills",
+      "srcPath": "microinteractions",
+      "path": "skills/design/microinteractions"
+    },
+    "web-typography": {
+      "source": "wondelai/skills",
+      "srcPath": "web-typography",
+      "path": "skills/design/web-typography"
+    },
+    "ios-hig-design": {
+      "source": "wondelai/skills",
+      "srcPath": "ios-hig-design",
+      "path": "skills/design/ios-hig-design"
+    },
+    "negotiation": {
+      "source": "wondelai/skills",
+      "srcPath": "negotiation",
+      "path": "skills/business/negotiation"
+    },
+    "traction-eos": {
+      "source": "wondelai/skills",
+      "srcPath": "traction-eos",
+      "path": "skills/business/traction-eos"
+    },
+    "team-topologies": {
+      "source": "wondelai/skills",
+      "srcPath": "team-topologies",
+      "path": "skills/business/team-topologies"
+    },
+    "high-output-management": {
+      "source": "wondelai/skills",
+      "srcPath": "high-output-management",
+      "path": "skills/business/high-output-management"
     }
   }
 }
