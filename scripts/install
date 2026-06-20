@@ -59,10 +59,33 @@ link_target() {
   printf 'linked  %s\n' "$label"
 }
 
+# Removes symlinks in HOME/skills/ that point into ROOT/.agents/skills/ but whose targets no longer exist.
+prune_skills() {
+  local home="$1" label_prefix="$2" target
+
+  if [ ! -d "$home/skills" ]; then
+    return
+  fi
+
+  for link in "$home/skills"/*; do
+    [ -L "$link" ] || continue
+    target="$(readlink "$link")"
+    case "$target" in
+      "$ROOT/.agents/skills/"*)
+        if [ ! -e "$target" ]; then
+          rm "$link"
+          printf 'pruned  %s skill %s (target gone)\n' "$label_prefix" "$(basename "$link")"
+        fi
+        ;;
+    esac
+  done
+}
 
 # Validates then links all vendored skills into HOME/skills/ using LABEL_PREFIX as the display prefix.
 install_skills() {
   local home="$1" label_prefix="$2" skill_file skill name
+
+  prune_skills "$home" "$label_prefix"
 
   while IFS= read -r skill_file; do
     skill="$(dirname "$skill_file")"; name="$(basename "$skill")"
