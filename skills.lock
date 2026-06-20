@@ -4,7 +4,7 @@
     "addyosmani/agent-skills": {
       "repository": "https://github.com/addyosmani/agent-skills.git",
       "ref": "main",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "license": "MIT",
       "licensePath": ".agents/licenses/addyosmani-agent-skills-LICENSE",
       "licenseSha256": "f877a8366ac7fcbe83485940745bc6018bc884db812585ecf52af44233590095"
@@ -17,10 +17,18 @@
       "licensePath": ".agents/licenses/mattpocock-skills-LICENSE",
       "licenseSha256": "d4cbbee3e786322cfa7d0b4e8568eb9908a4e1efd6e3b46b1356094bcacfb93b"
     },
+    "nutlope/hallmark": {
+      "repository": "https://github.com/Nutlope/hallmark.git",
+      "ref": "main",
+      "commit": "aeb42fb354ff4efa36ab475773a082315a3af2ce",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/nutlope-hallmark-LICENSE",
+      "licenseSha256": "580cb9c5a50e90ca7963fb033484b90da8f204261780f8b57ff43dba98497ce9"
+    },
     "shadcn/improve": {
       "repository": "https://github.com/shadcn/improve.git",
       "ref": "main",
-      "commit": "5428507e71162a9e7fc9ac68800f1271dac2d71f",
+      "commit": "03369ee6d7cafbfcecc4346539b05b3dc0a603bb",
       "license": "MIT",
       "licensePath": ".agents/licenses/shadcn-improve-LICENSE",
       "licenseSha256": "d193e06c5c0c5a10fe41e0bece27137441e516ec5f4808e3fa1b5f98b9370fdc"
@@ -31,98 +39,98 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/api-and-interface-design",
       "path": "skills/engineering/api-and-interface-design",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "0f762ddae2eb0c21141536d9fd755e39ce3306095fe8c63c999e1ab542db0f07"
     },
     "browser-testing-with-devtools": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/browser-testing-with-devtools",
       "path": "skills/engineering/browser-testing-with-devtools",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "9ceee81666ca5c57571f5595015293bea1a8838df406b417d9263c45dc6e1f8e"
     },
     "code-review-and-quality": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-review-and-quality",
       "path": "skills/engineering/code-review-and-quality",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "9b086a4c540ef77b4589307a1c165ab241b5adcb84f4ae70da67924fe8a83fb0"
     },
     "code-simplification": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-simplification",
       "path": "skills/engineering/code-simplification",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "a6d4aba8358a46634487e1c4b612cd021a41f3227fbe0b131270e2ebaaea8440"
     },
     "debugging-and-error-recovery": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/debugging-and-error-recovery",
       "path": "skills/engineering/debugging-and-error-recovery",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "03cadb08513e6b6abf533d6a587d4e72e3271da4f1cfb247bb64a2acae2daf0e"
     },
     "documentation-and-adrs": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/documentation-and-adrs",
       "path": "skills/engineering/documentation-and-adrs",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "c0075d076299d574ce31d925493130c61c5fe50a45e0facbdd912c8e2e52bf6b"
     },
     "frontend-ui-engineering": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/frontend-ui-engineering",
       "path": "skills/engineering/frontend-ui-engineering",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "58542bff1be0b719134d022ec0ec6f304808ef5e8c900ac426886716e80d3b76"
     },
     "incremental-implementation": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/incremental-implementation",
       "path": "skills/engineering/incremental-implementation",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "3a55804e2a3e5d8f49bae12893aff8a6551fcbb42f8bc24195a1a799354c7a80"
     },
     "performance-optimization": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/performance-optimization",
       "path": "skills/engineering/performance-optimization",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "a0ed8ae6affa5e2e67f8739675ee774427401c70d0890c73af6b4f629a2ed2d7"
     },
     "planning-and-task-breakdown": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/planning-and-task-breakdown",
       "path": "skills/engineering/planning-and-task-breakdown",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "44758184c486894656b8f438c5da56893108f7ac2b9fa7b45541be2ced668cca"
     },
     "security-and-hardening": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/security-and-hardening",
       "path": "skills/engineering/security-and-hardening",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "05bc67d417db252f0a1fa6b3edeb892036dad685c8aa39e4c08c8e5be5b719d0"
     },
     "source-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/source-driven-development",
       "path": "skills/engineering/source-driven-development",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "4b9caeb329c2fcad7f5fbfff1b16d094d378e6c34d631d6fe488835c111375ac"
     },
     "spec-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/spec-driven-development",
       "path": "skills/engineering/spec-driven-development",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "251328f1ccf012f704fb9626bcef21fb277f5575cc4cc26a45324a0636113e83"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/test-driven-development",
       "path": "skills/engineering/test-driven-development",
-      "commit": "3a6fc6392823e31e2362091bd4e3cddf5b77af14",
+      "commit": "a5f0b176381e9fea24a61aefc243506686aa2435",
       "sha256": "6c8e03bc2f631799c1c3c29f9f525193596781213f7fd24ece5a8ddf6a8d773e"
     },
     "grill-me": {
@@ -174,12 +182,19 @@
       "commit": "694fa30311e02c2639942308513555e61ee84a6f",
       "sha256": "34f4bab271b9b9bbad01e08413d5a096ec84d1ee983d747de9219f77afc5e897"
     },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "srcPath": "skills/hallmark",
+      "path": "skills/design/hallmark",
+      "commit": "aeb42fb354ff4efa36ab475773a082315a3af2ce",
+      "sha256": "f0ae5cefe2402866313636f3e7e78385b81cdc3d38f75974f8da0bdc695c32eb"
+    },
     "improve": {
       "source": "shadcn/improve",
       "srcPath": "skills/improve",
       "path": "skills/engineering/improve",
-      "commit": "5428507e71162a9e7fc9ac68800f1271dac2d71f",
-      "sha256": "9fb23ab4355b2dd9ceeb2c4e9d8c3da290d929296b3ad107bbddbc87d41a7d0d"
+      "commit": "03369ee6d7cafbfcecc4346539b05b3dc0a603bb",
+      "sha256": "5ae48357cc892ed232e2bd29b686ba16903ba3465054a8376bae0ae9dc4ec35e"
     }
   }
 }
