@@ -32,6 +32,14 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/shadcn-improve-LICENSE",
       "licenseSha256": "d193e06c5c0c5a10fe41e0bece27137441e516ec5f4808e3fa1b5f98b9370fdc"
+    },
+    "wondelai/skills": {
+      "repository": "https://github.com/wondelai/skills.git",
+      "ref": "main",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
+      "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
     }
   },
   "skills": {
@@ -237,6 +245,146 @@
       "path": "skills/engineering/improve",
       "commit": "03369ee6d7cafbfcecc4346539b05b3dc0a603bb",
       "sha256": "5ae48357cc892ed232e2bd29b686ba16903ba3465054a8376bae0ae9dc4ec35e"
+    },
+    "design-everyday-things": {
+      "source": "wondelai/skills",
+      "srcPath": "design-everyday-things",
+      "path": "skills/design/design-everyday-things",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "fcb13a8b60be0c0b4c08497781ffcee4acb1facfd04d4775f50b20d3cbf9d17b"
+    },
+    "good-strategy-bad-strategy": {
+      "source": "wondelai/skills",
+      "srcPath": "good-strategy-bad-strategy",
+      "path": "skills/product/good-strategy-bad-strategy",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "e18050388dd84169d6cfb4592a276a7d16208d1780b6c783e7aa388174995c8a"
+    },
+    "high-output-management": {
+      "source": "wondelai/skills",
+      "srcPath": "high-output-management",
+      "path": "skills/business/high-output-management",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "83327d62383725b65aeff33bcc51d6b8d40d3229ae0b2b993de018c426a92cfa"
+    },
+    "hooked-ux": {
+      "source": "wondelai/skills",
+      "srcPath": "hooked-ux",
+      "path": "skills/design/hooked-ux",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "571bf2dfb65e9aecfc2f3f03adb7533a4936a2348e069ff50d548c1132dabdd8"
+    },
+    "improve-retention": {
+      "source": "wondelai/skills",
+      "srcPath": "improve-retention",
+      "path": "skills/design/improve-retention",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "2370eb766f7a13cb163ff2efcde1dcce12e97e2fe421f5d1528819bdfc829178"
+    },
+    "ios-hig-design": {
+      "source": "wondelai/skills",
+      "srcPath": "ios-hig-design",
+      "path": "skills/design/ios-hig-design",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "470728c26ae45ee52792c7e7fc2ac98504c93bc1351a53ac1f89fc6c5f2bcfca"
+    },
+    "jobs-to-be-done": {
+      "source": "wondelai/skills",
+      "srcPath": "jobs-to-be-done",
+      "path": "skills/product/jobs-to-be-done",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "5acf379532bd53d074c2fb3115b3df4c7d2219e690bb5a599f490ff90dda4930"
+    },
+    "lean-analytics": {
+      "source": "wondelai/skills",
+      "srcPath": "lean-analytics",
+      "path": "skills/product/lean-analytics",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "1401fdc56e6ef2e253790764f88c6a0facd9291bafe1022c51049a4091080777"
+    },
+    "made-to-stick": {
+      "source": "wondelai/skills",
+      "srcPath": "made-to-stick",
+      "path": "skills/product/made-to-stick",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "e856b2f6fc5d0e6a16b6ca075eb6e8411f3b3ec11a3f12b614a6bb9619aae0ef"
+    },
+    "microinteractions": {
+      "source": "wondelai/skills",
+      "srcPath": "microinteractions",
+      "path": "skills/design/microinteractions",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "876924d60925cb87f13f07a3926cdf701fba54ea916439228fe133cbd5a74e96"
+    },
+    "mom-test": {
+      "source": "wondelai/skills",
+      "srcPath": "mom-test",
+      "path": "skills/product/mom-test",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "af006a0a9f1598fa0a263809d789b2cbf4ae9b10077792e070270999ebba6b1a"
+    },
+    "monetizing-innovation": {
+      "source": "wondelai/skills",
+      "srcPath": "monetizing-innovation",
+      "path": "skills/product/monetizing-innovation",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "68bf1c3b7d62060e66c087edf8c822e7fc14866297f737cac3d6b25a484543cb"
+    },
+    "negotiation": {
+      "source": "wondelai/skills",
+      "srcPath": "negotiation",
+      "path": "skills/business/negotiation",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "100bb30cdaf5951cbc75ad97dc49a040fbab694b705828fea5d5cb6922f3d95b"
+    },
+    "obviously-awesome": {
+      "source": "wondelai/skills",
+      "srcPath": "obviously-awesome",
+      "path": "skills/product/obviously-awesome",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "7ddecaa75133973d599f0a3158ca88e8c5dbdffd8a4f11cadfebd31c70a2ead4"
+    },
+    "refactoring-ui": {
+      "source": "wondelai/skills",
+      "srcPath": "refactoring-ui",
+      "path": "skills/design/refactoring-ui",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "c6024378c3c19b949dd5d1cd432c05123d306a48c51aad5f6b93ad84a8f2731b"
+    },
+    "storybrand-messaging": {
+      "source": "wondelai/skills",
+      "srcPath": "storybrand-messaging",
+      "path": "skills/product/storybrand-messaging",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "a5ab7723063dc2117587ddc24f68bd4326a02b19ee916dcc2579b55ffb2dcf8c"
+    },
+    "team-topologies": {
+      "source": "wondelai/skills",
+      "srcPath": "team-topologies",
+      "path": "skills/business/team-topologies",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "b3d0b1089eeb33833fdf3ec4bfd8df57499c515dc41d7f48ed81ba316213d937"
+    },
+    "traction-eos": {
+      "source": "wondelai/skills",
+      "srcPath": "traction-eos",
+      "path": "skills/business/traction-eos",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "7eae4266a6a2148cfe3f17d8beffc9f87d2afb72632a951d36518963ead507ad"
+    },
+    "ux-heuristics": {
+      "source": "wondelai/skills",
+      "srcPath": "ux-heuristics",
+      "path": "skills/design/ux-heuristics",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "cc005a0ebd11db6ed1d65f2af9dae1dd4a2ab98d8b452abcb0e78707d4cf534d"
+    },
+    "web-typography": {
+      "source": "wondelai/skills",
+      "srcPath": "web-typography",
+      "path": "skills/design/web-typography",
+      "commit": "66de348733ec508b3b8c81717333dbc2ca9f4cf0",
+      "sha256": "5a477e440d9cbd1da804560488e3258dcdcdd667b1660dd06905e3c010e3b11c"
     }
   }
 }
