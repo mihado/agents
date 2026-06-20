@@ -24,6 +24,14 @@
         "name": "MIT",
         "path": "LICENSE.md"
       }
+    },
+    "nutlope/hallmark": {
+      "repository": "https://github.com/Nutlope/hallmark.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -136,6 +144,11 @@
       "source": "shadcn/improve",
       "srcPath": "skills/improve",
       "path": "skills/engineering/improve"
+    },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "srcPath": "skills/hallmark",
+      "path": "skills/design/hallmark"
     }
   }
 }
