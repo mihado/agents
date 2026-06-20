@@ -35,6 +35,21 @@
     }
   },
   "skills": {
+    "using-agent-skills": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/using-agent-skills",
+      "path": "skills/engineering/using-agent-skills"
+    },
+    "interview-me": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/interview-me",
+      "path": "skills/engineering/interview-me"
+    },
+    "idea-refine": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/idea-refine",
+      "path": "skills/engineering/idea-refine"
+    },
     "api-and-interface-design": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/api-and-interface-design",
@@ -49,6 +64,36 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-review-and-quality",
       "path": "skills/engineering/code-review-and-quality"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/domain-modeling",
+      "path": "skills/engineering/domain-modeling"
+    },
+    "codebase-design": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/codebase-design",
+      "path": "skills/engineering/codebase-design"
+    },
+    "context-engineering": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/context-engineering",
+      "path": "skills/engineering/context-engineering"
+    },
+    "doubt-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/doubt-driven-development",
+      "path": "skills/engineering/doubt-driven-development"
+    },
+    "shipping-and-launch": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/shipping-and-launch",
+      "path": "skills/engineering/shipping-and-launch"
+    },
+    "observability-and-instrumentation": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/observability-and-instrumentation",
+      "path": "skills/engineering/observability-and-instrumentation"
     },
     "code-simplification": {
       "source": "addyosmani/agent-skills",
@@ -69,16 +114,6 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/frontend-ui-engineering",
       "path": "skills/engineering/frontend-ui-engineering"
-    },
-    "grill-me": {
-      "source": "mattpocock/skills",
-      "srcPath": "skills/productivity/grill-me",
-      "path": "skills/productivity/grill-me"
-    },
-    "grill-with-docs": {
-      "source": "mattpocock/skills",
-      "srcPath": "skills/engineering/grill-with-docs",
-      "path": "skills/engineering/grill-with-docs"
     },
     "handoff": {
       "source": "mattpocock/skills",
@@ -134,11 +169,6 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/test-driven-development",
       "path": "skills/engineering/test-driven-development"
-    },
-    "zoom-out": {
-      "source": "mattpocock/skills",
-      "srcPath": "skills/engineering/zoom-out",
-      "path": "skills/engineering/zoom-out"
     },
     "improve": {
       "source": "shadcn/improve",
