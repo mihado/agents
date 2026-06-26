@@ -82,6 +82,7 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 - [wondelai/skills](https://github.com/wondelai/skills)
 - [shadcn/improve](https://github.com/shadcn/improve)
 - [nutlope/hallmark](https://github.com/nutlope/hallmark)
+- [pbakaus/impeccable](https://github.com/pbakaus/impeccable)
 
 ```bash
 ./scripts/vendor --fetch   # fetch all declared skills and regenerate skills.lock
