@@ -40,6 +40,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "pbakaus/impeccable": {
+      "repository": "https://github.com/pbakaus/impeccable.git",
+      "ref": "main",
+      "license": {
+        "name": "Apache-2.0",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -187,6 +195,11 @@
       "source": "nutlope/hallmark",
       "srcPath": "skills/hallmark",
       "path": "skills/design/hallmark"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "srcPath": ".agents/skills/impeccable",
+      "path": "skills/design/impeccable"
     },
     "jobs-to-be-done": {
       "source": "wondelai/skills",
