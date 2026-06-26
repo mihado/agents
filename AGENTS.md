@@ -38,5 +38,3 @@ These instructions are the default engineering contract for every repository. Pr
 - Communicate decisions and tradeoffs directly.
 - Surface incorrect assumptions, security risks, and weak boundaries early.
 - Carry actionable work through implementation and verification unless the request is explicitly limited to analysis or planning.
-
-@/Users/mihado/.codex/RTK.md
