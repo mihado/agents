@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+AGENTS_HOME="${AGENTS_HOME:-$HOME/.agents}"
 
 # Ensure .agents/skills/ exists so find never fails
 mkdir -p "$ROOT/.agents/skills"
@@ -114,7 +115,13 @@ setup_codex() {
   install_skills "$CODEX_HOME" "Codex"
 }
 
+# Installs all vendored skills into ~/.agents/skills/ (used by Zed and other agents).
+setup_agents() {
+  install_skills "$AGENTS_HOME" "Agents"
+}
+
 setup_claude
 setup_codex
+setup_agents
 
 printf '\nInstallation complete. Run scripts/doctor to verify discovery.\n'
