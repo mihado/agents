@@ -48,6 +48,14 @@
         "name": "Apache-2.0",
         "path": "LICENSE"
       }
+    },
+    "tw93/kami": {
+      "repository": "https://github.com/tw93/Kami.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "plugins/kami/skills/kami/LICENSE"
+      }
     }
   },
   "skills": {
@@ -200,6 +208,11 @@
       "source": "pbakaus/impeccable",
       "srcPath": ".agents/skills/impeccable",
       "path": "skills/design/impeccable"
+    },
+    "kami": {
+      "source": "tw93/kami",
+      "srcPath": "plugins/kami/skills/kami",
+      "path": "skills/design/kami"
     },
     "jobs-to-be-done": {
       "source": "wondelai/skills",

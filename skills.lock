@@ -41,6 +41,14 @@
       "licensePath": ".agents/licenses/shadcn-improve-LICENSE",
       "licenseSha256": "d193e06c5c0c5a10fe41e0bece27137441e516ec5f4808e3fa1b5f98b9370fdc"
     },
+    "tw93/kami": {
+      "repository": "https://github.com/tw93/Kami.git",
+      "ref": "main",
+      "commit": "166e8f1d15011c539906ebcb581f2883ffe5c248",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/tw93-kami-LICENSE",
+      "licenseSha256": "e16d8ee95d1b030db84de6e7ccd60f1fde36bb5e796b385830a468f880c91a35"
+    },
     "wondelai/skills": {
       "repository": "https://github.com/wondelai/skills.git",
       "ref": "main",
@@ -260,6 +268,13 @@
       "path": "skills/engineering/improve",
       "commit": "03369ee6d7cafbfcecc4346539b05b3dc0a603bb",
       "sha256": "5ae48357cc892ed232e2bd29b686ba16903ba3465054a8376bae0ae9dc4ec35e"
+    },
+    "kami": {
+      "source": "tw93/kami",
+      "srcPath": "plugins/kami/skills/kami",
+      "path": "skills/design/kami",
+      "commit": "166e8f1d15011c539906ebcb581f2883ffe5c248",
+      "sha256": "7aefbe9330b12966ff019db91c855865cab42d987bdac249c9fc79df351ab3fe"
     },
     "design-everyday-things": {
       "source": "wondelai/skills",
