@@ -38,6 +38,7 @@ mcp.json                   baseline MCP server definitions
 providers.json             AI provider manifest (models, limits, reasoning flags)
 skills.json                selected skills and their upstream sources
 skills.lock                resolved commits, provenance, and content hashes
+LICENSE                    Apache-2.0
 ```
 
 ## Install
@@ -137,3 +138,7 @@ make check        # full suite
 
 `make check` runs doctor (Claude/Codex symlinks), MCP config verification (Claude/Codex) and OpenCode remote config, provider config verification (OpenCode), and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
 
+
+## License
+
+Apache-2.0 - see [LICENSE](LICENSE).
