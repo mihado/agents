@@ -1,6 +1,6 @@
 # agents
 
-Shared engineering instructions and workflows for Claude Code and Codex.
+Shared engineering instructions and workflows for Claude Code, Codex, and OpenCode.
 
 This repository contains portable engineering practice only. Product context, company policy, credentials, MCP configuration, and machine-specific paths belong in domain, project, or local configuration.
 
@@ -27,7 +27,7 @@ CLAUDE.md                  Claude wrapper around AGENTS.md
   skills/calibrated/minh/  skills containing Minh-calibrated context
   licenses/                upstream license notices
 scripts/
-  link                     symlinks instructions and skills into Claude and Codex
+  link                     symlinks instructions and skills into Claude, Codex, and ~/.agents (universal)
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
@@ -42,7 +42,7 @@ skills.lock                resolved commits, provenance, and content hashes
 
 ## Install
 
-Requirements: Git, Node.js, Claude Code, and/or Codex.
+Requirements: Git, Node.js, Claude Code, Codex, and/or OpenCode.
 
 ```bash
 git clone git@github.com:mihado/agents.git ~/path/to/repo
@@ -51,18 +51,18 @@ make install
 make check
 ```
 
-`make install` runs the symlink installer, syncs baseline MCP servers, and writes provider config. `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
+`make install` runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
 
 To run individual steps:
 
 ```bash
-make mcp          # sync MCP servers only
+make mcp          # sync MCP (Claude/Codex) and OpenCode remote config
 make providers    # sync OpenCode providers only
 make vendor       # fetch vendored skills
 make test         # run tests
 ```
 
-The installer creates these symlinks:
+The link script creates these symlinks:
 
 ```text
 ~/.codex/AGENTS.md       -> <repo>/AGENTS.md
@@ -70,11 +70,14 @@ The installer creates these symlinks:
 ~/.claude/CLAUDE.md      -> <repo>/CLAUDE.md
 ~/.codex/skills/<name>   -> <repo>/.agents/skills/<name>
 ~/.claude/skills/<name>  -> <repo>/.agents/skills/<name>
+~/.agents/skills/<name>  -> <repo>/.agents/skills/<name>
 ```
+
+`~/.agents/skills/` is the universal skills path — OpenCode and Zed discover skills here.
 
 Each entry is linked individually. Existing unrelated skills survive. A file, directory, or foreign symlink at the same path causes installation to stop rather than overwrite.
 
-`CODEX_HOME` and `CLAUDE_HOME` may be set to install into alternate locations.
+`CODEX_HOME`, `CLAUDE_HOME`, and `AGENTS_HOME` may be set to install into alternate locations.
 
 ## Baseline MCP
 
@@ -128,11 +131,11 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ## Diagnostics
 
 ```bash
-make check      # full suite
+make check        # full suite
 ./scripts/doctor  # doctor only
 ```
 
-`make check` runs doctor, MCP config verification, provider config verification, and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+`make check` runs doctor (Claude/Codex symlinks), MCP config verification (Claude/Codex) and OpenCode remote config, provider config verification (OpenCode), and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
 
 ## Provider Routing
 
