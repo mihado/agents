@@ -31,7 +31,9 @@ scripts/
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
+  opencode-providers       syncs providers.json → OpenCode provider config
 mcp.json                   baseline MCP server definitions
+providers.json             AI provider manifest (models, limits, reasoning flags)
 skills.json                selected skills and their upstream sources
 skills.lock                resolved commits, provenance, and content hashes
 ```
@@ -116,3 +118,4 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ```
 
 Reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+
