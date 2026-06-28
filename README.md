@@ -27,11 +27,13 @@ CLAUDE.md                  Claude wrapper around AGENTS.md
   skills/calibrated/minh/  skills containing Minh-calibrated context
   licenses/                upstream license notices
 scripts/
-  install                  symlinks instructions and skills into Claude and Codex
+  link                     symlinks instructions and skills into Claude and Codex
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
   opencode-providers       syncs providers.json → OpenCode provider config
+  lib/                     shared utilities (opencode config I/O)
+Makefile                   convenience targets for install, check, test
 mcp.json                   baseline MCP server definitions
 providers.json             AI provider manifest (models, limits, reasoning flags)
 skills.json                selected skills and their upstream sources
@@ -45,9 +47,19 @@ Requirements: Git, Node.js, Claude Code, and/or Codex.
 ```bash
 git clone git@github.com:mihado/agents.git ~/path/to/repo
 cd ~/path/to/repo
-./scripts/install
-./scripts/mcp --install
-./scripts/doctor
+make install
+make check
+```
+
+`make install` runs the symlink installer, syncs baseline MCP servers, and writes provider config. `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
+
+To run individual steps:
+
+```bash
+make mcp          # sync MCP servers only
+make providers    # sync OpenCode providers only
+make vendor       # fetch vendored skills
+make test         # run tests
 ```
 
 The installer creates these symlinks:
@@ -71,6 +83,7 @@ Each entry is linked individually. Existing unrelated skills survive. A file, di
 ```bash
 ./scripts/mcp --install   # install
 ./scripts/mcp --check     # verify without changing anything
+# or: make mcp
 ```
 
 Environment variable names may be documented in `mcp.json`; values stay in the machine environment and are never stored here.
@@ -90,6 +103,7 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 ```bash
 ./scripts/vendor --fetch   # fetch all declared skills and regenerate skills.lock
 ./scripts/vendor --check   # verify hashes offline without fetching
+# or: make vendor
 ```
 
 After fetching, review the Git diff before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
@@ -114,8 +128,9 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ## Diagnostics
 
 ```bash
-./scripts/doctor
+make check      # full suite
+./scripts/doctor  # doctor only
 ```
 
-Reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+`make check` runs doctor, MCP config verification, provider config verification, and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
 
