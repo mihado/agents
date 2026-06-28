@@ -65,13 +65,14 @@ function toOpenCodeProvider(id, def) {
     name: def.name || id,
     options: {
       baseURL: def.baseURL,
-      ...(def.apiKeyEnv ? { apiKey: `{env:${def.apiKeyEnv}}` } : {}),
+      ...(def.apiKeyEnv ? { apiKey: `{env:${def.apiKeyEnv}}` } : (def.apiKey ? { apiKey: def.apiKey } : {})),
     },
     models: Object.fromEntries(
       Object.entries(def.models || {}).map(([modelId, model]) => [
         modelId,
         {
           name: model.name || modelId,
+          ...(model.reasoning !== undefined ? { reasoning: model.reasoning } : {}),
           ...(model.limit ? { limit: model.limit } : {}),
         },
       ]),

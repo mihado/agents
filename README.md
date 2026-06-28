@@ -31,7 +31,9 @@ scripts/
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
+  opencode-providers       syncs providers.json → OpenCode provider config
 mcp.json                   baseline MCP server definitions
+providers.json             AI provider manifest (models, limits, reasoning flags)
 skills.json                selected skills and their upstream sources
 skills.lock                resolved commits, provenance, and content hashes
 ```
@@ -116,3 +118,33 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ```
 
 Reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+
+## Provider Routing
+
+We run a **"poor man's OpenRouter"**: pool multiple cheap API subscription plans through [9Router](https://github.com/mihado/9router), a hardened proxy that handles quota tracking, automatic tier fallback, and token saving (RTK).
+
+### How it fits together
+
+```
+Your CLI tool ──► OpenCode config ──► 9Router ──► provider A (until drained)
+                  (providers.json)                └─► provider B (fill_first)
+                                                  └─► provider C
+```
+
+- **`providers.json`** — manifest of providers and models we use. Each provider declares its base URL, API key env var, and models with reasoning/limit metadata. Models are identified by their upstream canonical IDs (e.g., `cmc/deepseek/deepseek-v4-pro`).
+- **`scripts/opencode-providers`** — syncs `providers.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Run `--install` to write, `--check` to verify. Propagates `reasoning`, `limit`, and `apiKey` fields.
+- **`9router`** — hardened fork of `decolua/9router` (MIT). Sits between your tools and the providers. Handles quota tracking, `fill_first` account draining (keeps KV caches warm on a single account), auto-fallback when an account runs dry, and RTK token compression. Built and published only from the `hardened` branch to `ghcr.io/mihado/9router`.
+
+### Strategy
+
+Pool multiple $1–15/month API subscription plans (Command Code GO, OpenCode Go, etc.). Route through 9Router with `fill_first` to keep KV caches warm for cache-read discounts. When one account's quota exhausts, fall back to the next. Net result: production-quality AI coding at a fraction of direct API pricing.
+
+### Quick start
+
+```bash
+# Sync providers to OpenCode config
+node scripts/opencode-providers --install
+
+# Verify
+node scripts/opencode-providers --check
+```
