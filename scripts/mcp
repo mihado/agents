@@ -215,10 +215,27 @@ function getOpenCodeConfigPath() {
 
 // Strips JSONC comments from a string
 function parseJSONC(content) {
-  // Remove single-line comments
-  const withoutSingleLine = content.replace(/\/\/.*$/gm, "");
+  // Remove single-line comments (//) but only outside strings.
+  // A naive regex breaks on URLs containing // like https://
+  const lines = content.split("\n");
+  const cleaned = lines.map((line) => {
+    let inString = false;
+    let result = "";
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      const next = line[i + 1];
+      if (!inString && ch === "/" && next === "/") {
+        break; // rest of line is a comment
+      }
+      if (ch === '"' && (i === 0 || line[i - 1] !== "\\")) {
+        inString = !inString;
+      }
+      result += ch;
+    }
+    return result;
+  }).join("\n");
   // Remove multi-line comments
-  const withoutMultiLine = withoutSingleLine.replace(/\/\*[\s\S]*?\*\//g, "");
+  const withoutMultiLine = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
   return JSON.parse(withoutMultiLine);
 }
 

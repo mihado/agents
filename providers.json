@@ -1,0 +1,45 @@
+{
+  "c9": {
+    "name": "c9.rter.cc",
+    "baseURL": "https://c9.rter.cc/v1",
+    "apiKey": "{env:C9RTER_API_KEY}",
+    "models": {
+        "deepseek-v4-pro": {
+          "name": "DeepSeek V4 Pro",
+          "limit": { "context": 1000000, "output": 384000 }
+        },
+        "ocg/deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash",
+          "limit": { "context": 1000000, "output": 384000 }
+        },
+        "ocg/minimax-m3": {
+          "name": "MiniMax M3",
+          "limit": { "context": 1000000, "output": 131072 }
+        },
+        "ocg/mimo-v2.5-pro": {
+          "name": "MiMo V2.5 Pro",
+          "limit": { "context": 1048576, "output": 128000 }
+        },
+        "ocg/mimo-v2.5": {
+          "name": "MiMo V2.5",
+          "limit": { "context": 1000000, "output": 128000 }
+        },
+        "ocg/glm-5.2": {
+          "name": "GLM-5.2",
+          "limit": { "context": 1000000, "output": 131072 }
+        },
+        "cx/gpt-5.4": {
+          "name": "GPT-5.4",
+          "limit": { "context": 1050000, "output": 128000 }
+        },
+        "cx/gpt-5.4-mini": {
+          "name": "GPT-5.4 mini",
+          "limit": { "context": 400000, "output": 128000 }
+        },
+        "cx/gpt-5.5": {
+          "name": "GPT-5.5",
+          "limit": { "context": 1050000, "output": 128000 }
+        }
+    }
+  }
+}

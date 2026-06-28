@@ -1,0 +1,153 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const manifestPath = path.join(root, "providers.json");
+const command = process.argv[2];
+
+if (!["--install", "--check"].includes(command) || process.argv.length !== 3) {
+  fail("Usage: scripts/opencode-providers --install | --check");
+}
+
+const manifest = readJson(manifestPath);
+validateManifest(manifest);
+
+const opencodeConfigPath = getOpenCodeConfigPath();
+let config = readOpenCodeConfig(opencodeConfigPath);
+
+if (!config.provider) config.provider = {};
+
+let failures = 0;
+
+for (const [providerId, def] of Object.entries(manifest)) {
+  const expected = toOpenCodeProvider(providerId, def);
+
+  if (command === "--check") {
+    const current = config.provider[providerId];
+    if (!current) {
+      console.error(`FAIL  provider ${providerId} not configured (config: ${opencodeConfigPath}, exists: ${fs.existsSync(opencodeConfigPath)})`);
+      failures += 1;
+    } else if (JSON.stringify(current) === JSON.stringify(expected)) {
+      console.log(`PASS  provider ${providerId} configured`);
+    } else {
+      console.error(`FAIL  provider ${providerId} config differs from providers.json`);
+      failures += 1;
+    }
+    continue;
+  }
+
+  // --install
+  const current = config.provider[providerId];
+  if (current && JSON.stringify(current) === JSON.stringify(expected)) {
+    console.log(`ok: provider ${providerId}`);
+    continue;
+  }
+
+  config.provider[providerId] = expected;
+  console.log(`installed: provider ${providerId}`);
+}
+
+if (command === "--install" && failures === 0) {
+  fs.mkdirSync(path.dirname(opencodeConfigPath), { recursive: true });
+  fs.writeFileSync(opencodeConfigPath, JSON.stringify(config, null, 2) + "\n");
+  console.log(`wrote: ${opencodeConfigPath}`);
+}
+
+process.exit(failures);
+
+function toOpenCodeProvider(id, def) {
+  return {
+    npm: def.npm || "@ai-sdk/openai-compatible",
+    name: def.name || id,
+    options: {
+      baseURL: def.baseURL,
+      ...(def.apiKeyEnv ? { apiKey: `{env:${def.apiKeyEnv}}` } : {}),
+    },
+    models: Object.fromEntries(
+      Object.entries(def.models || {}).map(([modelId, model]) => [
+        modelId,
+        {
+          name: model.name || modelId,
+          ...(model.limit ? { limit: model.limit } : {}),
+        },
+      ]),
+    ),
+  };
+}
+
+function getOpenCodeConfigPath() {
+  const configHome =
+    process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
+  return path.join(configHome, "opencode", "opencode.jsonc");
+}
+
+function readOpenCodeConfig(configPath) {
+  if (!fs.existsSync(configPath)) return {};
+  try {
+    return parseJSONC(fs.readFileSync(configPath, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function parseJSONC(content) {
+  // Remove single-line comments (//) but only outside strings.
+  // A naive regex breaks on URLs containing // like https://
+  const lines = content.split("\n");
+  const cleaned = lines.map((line) => {
+    let inString = false;
+    let inComment = false;
+    let result = "";
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      const next = line[i + 1];
+      if (!inString && ch === "/" && next === "/") {
+        break; // rest of line is a comment
+      }
+      if (ch === '"' && (i === 0 || line[i - 1] !== "\\")) {
+        inString = !inString;
+      }
+      result += ch;
+    }
+    return result;
+  }).join("\n");
+  // Remove multi-line comments
+  const withoutMultiLine = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
+  return JSON.parse(withoutMultiLine);
+}
+
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    fail(`cannot read ${file}: ${error.message}`);
+  }
+}
+
+function validateManifest(manifest) {
+  for (const [id, def] of Object.entries(manifest)) {
+    if (!id || typeof def !== "object") {
+      fail(`providers.json: "${id}" must be an object`);
+    }
+    if (!def.baseURL || typeof def.baseURL !== "string") {
+      fail(`providers.json: "${id}" must have a "baseURL" string`);
+    }
+    if (!def.models || Object.keys(def.models).length === 0) {
+      fail(`providers.json: "${id}" must have at least one model`);
+    }
+    for (const [modelId, model] of Object.entries(def.models)) {
+      if (typeof model.name !== "string" || !model.name) {
+        fail(`providers.json: "${id}" model "${modelId}" must have a "name" string`);
+      }
+    }
+  }
+}
+
+function fail(message) {
+  console.error(`error: ${message}`);
+  process.exit(1);
+}
