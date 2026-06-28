@@ -38,6 +38,7 @@ mcp.json                   baseline MCP server definitions
 providers.json             AI provider manifest (models, limits, reasoning flags)
 skills.json                selected skills and their upstream sources
 skills.lock                resolved commits, provenance, and content hashes
+LICENSE                    AGPL-3.0
 ```
 
 ## Install
@@ -163,3 +164,7 @@ Pool multiple $1–15/month API subscription plans (Command Code GO, OpenCode Go
 make providers   # sync providers.json → OpenCode config
 make check       # verify everything
 ```
+
+## License
+
+AGPL-3.0 — see [LICENSE](LICENSE).
