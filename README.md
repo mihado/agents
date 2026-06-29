@@ -150,13 +150,32 @@ Your CLI tool ──► OpenCode config ──► 9Router ──► provider A (
                                                   └─► provider C
 ```
 
-- **`providers.json`** — manifest of providers and models we use. Each provider declares its base URL, API key env var, and models with reasoning/limit metadata. Models are identified by their upstream canonical IDs (e.g., `cmc/deepseek/deepseek-v4-pro`).
-- **`scripts/opencode-providers`** — syncs `providers.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Run `--install` to write, `--check` to verify. Propagates `reasoning`, `limit`, and `apiKey` fields.
+- **`providers.json`** — manifest of providers and models we use. Each provider declares its base URL, API key env var, and models with reasoning, limit, modalities, and capability metadata. Models are identified by their upstream canonical IDs (e.g., `cmc/deepseek/deepseek-v4-pro`). Model metadata is sourced from [models.dev](https://models.dev) (`https://models.dev/catalog.json`).
+- **`scripts/opencode-providers`** — syncs `providers.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Run `--install` to write, `--check` to verify. Propagates `reasoning`, `limit`, `modalities`, `tool_call`, `temperature`, and `apiKey` fields. OpenCode config schema: `https://opencode.ai/config.json`.
 - **`9router`** — hardened fork of `decolua/9router` (MIT). Sits between your tools and the providers. Handles quota tracking, `fill_first` account draining (keeps KV caches warm on a single account), auto-fallback when an account runs dry, and RTK token compression. Built and published only from the `hardened` branch to `ghcr.io/mihado/9router`.
+
+### Metadata reference
+
+Model metadata is sourced from [models.dev](https://models.dev) (`https://models.dev/catalog.json`). Each model in `providers.json` may declare these fields, propagated to OpenCode config per the [config schema](https://opencode.ai/config.json):
+
+| Field | OpenCode schema | models.dev column | What it does |
+|---|---|---|---|
+| `name` | `name` | Model | Display name in model picker |
+| `reasoning` | `reasoning` | Reasoning | Whether the model supports thinking/reasoning tokens |
+| `tool_call` | `tool_call` | Tool Call | Whether the model supports tool calling |
+| `temperature` | `temperature` | Temperature | Whether the model accepts a `temperature` parameter |
+| `limit.context` | `limit.context` | Context | Maximum input context window |
+| `limit.output` | `limit.output` | Output | Maximum output tokens |
+| `modalities` | `modalities` | _(inferred)_ | Input/output types: `text`, `image`, `audio`, `video`, `pdf` |
+| `cost` | `cost` | Price | Token pricing (input, output, cache, >200k) — optional, not yet in our manifest |
+
+To verify a model's capabilities, visit `https://models.dev/providers/{provider}/` (e.g., [opencode-go](https://models.dev/providers/opencode-go/)).
 
 ### Strategy
 
 Pool multiple $1–15/month API subscription plans (Command Code GO, OpenCode Go, etc.). Route through 9Router with `fill_first` to keep KV caches warm for cache-read discounts. When one account's quota exhausts, fall back to the next. Net result: production-quality AI coding at a fraction of direct API pricing.
+
+Fusion models (e.g., `deepseek-v4-pro-fusion`) let text-only models gain vision capability through the router: 9Router routes image requests to a vision-capable backend while keeping text requests on the primary model. Use them as drop-in replacements — same model, with image support added.
 
 ### Quick start
 

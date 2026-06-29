@@ -74,7 +74,10 @@ function toOpenCodeProvider(id, def) {
         {
           name: model.name || modelId,
           ...(model.reasoning !== undefined ? { reasoning: model.reasoning } : {}),
+          ...(model.tool_call !== undefined ? { tool_call: model.tool_call } : {}),
+          ...(model.temperature !== undefined ? { temperature: model.temperature } : {}),
           ...(model.limit ? { limit: model.limit } : {}),
+          ...(model.modalities ? { modalities: model.modalities } : {}),
         },
       ]),
     ),

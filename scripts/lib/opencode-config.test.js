@@ -194,4 +194,82 @@ describe("integration: scripts --check", () => {
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /FAIL\s+provider/);
   });
+
+  it("propagates modalities for vision-capable models", () => {
+    const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
+    assert.equal(install.status, 0);
+
+    const config = read();
+    const models = config.provider?.c9?.models;
+
+    // Vision-capable models should have modalities with image input
+    const visionModels = [
+          "cmc/xiaomi/mimo-v2.5",
+          "ocg/minimax-m3",
+          "ocg/glm-5.2",
+          "cx/gpt-5.4",
+          "cx/gpt-5.4-mini",
+          "cx/gpt-5.5",
+          "deepseek-v4-pro-fusion",
+          "deepseek-v4-flash-fusion",
+          "glm-5.2-fusion",
+        ];
+    for (const id of visionModels) {
+      assert.ok(models[id], `model ${id} should exist`);
+      assert.deepEqual(models[id].modalities, {
+        input: ["text", "image"],
+        output: ["text"],
+      }, `${id} should have image modality`);
+    }
+
+    // Text-only models should NOT have modalities
+    const textOnlyModels = [
+          "cmc/deepseek/deepseek-v4-pro",
+          "cmc/deepseek/deepseek-v4-flash",
+          "cmc/xiaomi/mimo-v2.5-pro",
+        ];
+    for (const id of textOnlyModels) {
+      assert.ok(models[id], `model ${id} should exist`);
+      assert.equal(models[id].modalities, undefined, `${id} should not have modalities`);
+    }
+  });
+
+  it("propagates tool_call and temperature for all models", () => {
+    const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
+    assert.equal(install.status, 0);
+
+    const config = read();
+    const models = config.provider?.c9?.models;
+    const allIds = Object.keys(models);
+    assert.ok(allIds.length >= 9, "should have at least 9 models");
+
+    for (const id of allIds) {
+      assert.equal(models[id].tool_call, true, `${id} should have tool_call: true`);
+      assert.equal(models[id].temperature, true, `${id} should have temperature: true`);
+    }
+  });
+
+  it("modalities field structure is valid per OpenCode schema", () => {
+    const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
+    assert.equal(install.status, 0);
+
+    const config = read();
+    const models = config.provider?.c9?.models;
+
+    for (const [id, model] of Object.entries(models)) {
+      if (model.modalities) {
+        // Must have input and output arrays
+        assert.ok(Array.isArray(model.modalities.input), `${id} modalities.input must be array`);
+        assert.ok(Array.isArray(model.modalities.output), `${id} modalities.output must be array`);
+        // Only valid enum values
+        const validValues = ["text", "audio", "image", "video", "pdf"];
+        for (const val of model.modalities.input) {
+          assert.ok(validValues.includes(val), `${id} input value "${val}" must be valid`);
+        }
+        for (const val of model.modalities.output) {
+          assert.ok(validValues.includes(val), `${id} output value "${val}" must be valid`);
+        }
+      }
+    }
+  });
 });
