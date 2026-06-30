@@ -18,7 +18,7 @@
         "temperature": true,
         "limit": { "context": 1000000, "output": 384000 }
       },
-      "ocg/xiaomi/mimo-v2.5-pro": {
+      "ocg/mimo-v2.5-pro": {
         "name": "MiMo V2.5 Pro",
         "reasoning": true,
         "tool_call": true,
@@ -26,20 +26,12 @@
         "limit": { "context": 1048576, "output": 128000 },
         "modalities": { "input": ["text", "image"], "output": ["text"] }
       },
-      "ocg/xiaomi/mimo-v2.5": {
+      "ocg/mimo-v2.5": {
         "name": "MiMo V2.5",
         "reasoning": true,
         "tool_call": true,
         "temperature": true,
         "limit": { "context": 1000000, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "ocg/minimax-m3": {
-        "name": "MiniMax M3",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 131072 },
         "modalities": { "input": ["text", "image"], "output": ["text"] }
       },
       "ocg/glm-5.2": {
@@ -72,6 +64,14 @@
         "tool_call": true,
         "temperature": true,
         "limit": { "context": 256000, "output": 128000 },
+        "modalities": { "input": ["text", "image"], "output": ["text"] }
+      },
+      "minimax-m3": {
+        "name": "MiniMax M3",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": true,
+        "limit": { "context": 1000000, "output": 131072 },
         "modalities": { "input": ["text", "image"], "output": ["text"] }
       },
       "deepseek-v4-pro-fusion": {
