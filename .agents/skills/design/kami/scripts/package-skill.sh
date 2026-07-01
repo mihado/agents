@@ -4,8 +4,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:-"$ROOT/dist/kami.zip"}"
 PACKAGE_MAX_BYTES="${KAMI_PACKAGE_MAX_BYTES:-6000000}"
-PACKAGE_FORBIDDEN_RE='^(plugins/|\.agents/|assets/showcase/|assets/demos/|assets/images/[123]\.png$|assets/fonts/TsangerJinKai02-W0[45]\.ttf$|assets/fonts/SourceHanSerifKR-(Regular|Medium)\.otf$)'
-PACKAGE_REQUIRED_ENTRY='assets/images/logo.svg'
+PACKAGE_FORBIDDEN_RE='^(\.agents/|\.claude/|\.claude-plugin/|\.github/|plugins/|assets/(showcase|demos|examples|illustrations)/|assets/images/[123]\.png$|assets/fonts/TsangerJinKai02-W0[45]\.ttf$|assets/fonts/SourceHanSerifKR-(Regular|Medium)\.otf$|dist/|index(-[^/]+)?\.html$|styles\.css$|llms\.txt$|robots\.txt$|sitemap\.xml$|vercel\.json$|AGENTS\.md$|CLAUDE\.md$|README\.md$|\.gitignore$|scripts/(build_metadata|draft-release-notes|package-skill)\.py$|scripts/package-skill\.sh$|scripts/tests/)'
+PACKAGE_REQUIRED_ENTRIES=(
+  "SKILL.md"
+  "CHEATSHEET.md"
+  "VERSION"
+  "LICENSE"
+  "assets/images/logo.svg"
+  "assets/fonts/JetBrainsMono.woff2"
+  "assets/templates/resume.html"
+  "assets/templates/landing-page.html"
+  "assets/diagrams/sequence.html"
+  "references/design.md"
+  "scripts/build.py"
+  "scripts/ensure-fonts.sh"
+)
 
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
@@ -18,20 +31,17 @@ trap 'rm -f "$MANIFEST" "$FILTERED_MANIFEST"' EXIT
 
 git ls-files > "$MANIFEST"
 awk '
-  /^assets\/fonts\/TsangerJinKai02-W0[45]\.ttf$/ { next }
-  /^assets\/fonts\/SourceHanSerifKR-(Regular|Medium)\.otf$/ { next }
-  /^assets\/examples\// { next }
-  /^assets\/illustrations\// { next }
-  /^assets\/showcase\// { next }
-  /^assets\/demos\// { next }
-  /^dist\// { next }
-  /^plugins\// { next }
-  /^\.agents\// { next }
-  /^\.vercel\// { next }
   /(^|\/)__pycache__\// { next }
   /\.pyc$/ { next }
   /(^|\/)\.DS_Store$/ { next }
-  { print }
+  /^(SKILL\.md|CHEATSHEET\.md|VERSION|LICENSE)$/ { print; next }
+  /^assets\/templates\// { print; next }
+  /^assets\/diagrams\// { print; next }
+  /^assets\/images\/logo\.svg$/ { print; next }
+  /^assets\/fonts\/JetBrainsMono\.woff2$/ { print; next }
+  /^assets\/fonts\/LICENSE-SourceHanSerifK\.txt$/ { print; next }
+  /^references\// { print; next }
+  /^scripts\/(build|check-update|checks|ensure-fonts|highlight|lint|mermaid_normalize|optional_deps|shared|tokens|verify)\.(py|sh)$/ { print; next }
 ' "$MANIFEST" > "$FILTERED_MANIFEST"
 
 zip -X -q "$OUT" -@ < "$FILTERED_MANIFEST"
@@ -43,10 +53,12 @@ if forbidden_entries="$(printf '%s\n' "$entries" | grep -E "$PACKAGE_FORBIDDEN_R
   exit 1
 fi
 
-if ! printf '%s\n' "$entries" | grep -Fxq "$PACKAGE_REQUIRED_ENTRY"; then
-  echo "ERROR: required package entry missing from $OUT: $PACKAGE_REQUIRED_ENTRY" >&2
-  exit 1
-fi
+for required in "${PACKAGE_REQUIRED_ENTRIES[@]}"; do
+  if ! printf '%s\n' "$entries" | grep -Fxq "$required"; then
+    echo "ERROR: required package entry missing from $OUT: $required" >&2
+    exit 1
+  fi
+done
 
 size_bytes="$(wc -c < "$OUT" | tr -d '[:space:]')"
 if (( size_bytes > PACKAGE_MAX_BYTES )); then

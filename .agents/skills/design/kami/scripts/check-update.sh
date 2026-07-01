@@ -9,7 +9,7 @@ set -u
 
 SKILL="kami"
 REPO="tw93/Kami"
-DEFAULT_UPDATE_CMD="npx skills update kami -g -y"
+DEFAULT_UPDATE_CMD="npx skills add tw93/kami/plugins/kami/skills/kami -a '*' -g -y"
 # KAMI_UPDATE_URL overrides the source (used by tests); defaults to the public VERSION.
 REMOTE_URL="${KAMI_UPDATE_URL:-https://raw.githubusercontent.com/${REPO}/main/VERSION}"
 
@@ -18,7 +18,7 @@ local_ver="$(tr -d '[:space:]' < "${root}/VERSION" 2>/dev/null)"
 [ -n "${local_ver}" ] || exit 0
 
 case "${root}" in
-  */.codex/plugins/cache/kami/kami/*/skills/kami)
+  */plugins/cache/kami/kami/*/skills/kami)
     UPDATE_CMD="codex plugin marketplace upgrade kami && codex plugin add kami@kami"
     ;;
   *)

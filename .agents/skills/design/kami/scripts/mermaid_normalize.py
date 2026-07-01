@@ -31,6 +31,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -87,7 +88,7 @@ def _to_hex(rgb: tuple[float, float, float]) -> str:
 
 def _mix_srgb(c1: tuple[int, int, int], p1: float,
               c2: tuple[int, int, int], p2: float) -> tuple[float, float, float]:
-    """color-mix(in srgb, c1 p1%, c2 p2%) — linear blend in gamma sRGB.
+    """color-mix(in srgb, c1 p1%, c2 p2%): linear blend in gamma sRGB.
 
     Percentages are normalized to sum to 100 (per CSS Color 4).
     """
@@ -313,19 +314,28 @@ def normalize(svg: str, theme: dict[str, str] | None = None,
 
 
 def main(argv: list[str]) -> int:
-    positional = [a for a in argv[1:] if not a.startswith("-") or a == "-"]
-    if not positional:
+    if len(argv) == 1:
         print(__doc__)
         return 0
-    out_path = argv[argv.index("-o") + 1] if "-o" in argv else None
-    src = positional[0]
-    raw = sys.stdin.read() if src == "-" else Path(src).read_text(encoding="utf-8")
-    result = normalize(raw)
-    if out_path:
-        Path(out_path).write_text(result, encoding="utf-8")
-        print(f"OK: wrote {out_path}")
-    else:
-        sys.stdout.write(result)
+
+    parser = argparse.ArgumentParser(
+        description="Re-theme a beautiful-mermaid SVG into a Kami, WeasyPrint-safe SVG.",
+    )
+    parser.add_argument("src", help="Input SVG path, or '-' to read from stdin")
+    parser.add_argument("-o", "--output", help="Output SVG path (default: stdout)")
+    args = parser.parse_args(argv[1:])
+
+    try:
+        raw = sys.stdin.read() if args.src == "-" else Path(args.src).read_text(encoding="utf-8")
+        result = normalize(raw)
+        if args.output:
+            Path(args.output).write_text(result, encoding="utf-8")
+            print(f"OK: wrote {args.output}")
+        else:
+            sys.stdout.write(result)
+    except (OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     return 0
 
 
