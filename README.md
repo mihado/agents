@@ -103,6 +103,7 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 - [nutlope/hallmark](https://github.com/nutlope/hallmark)
 - [pbakaus/impeccable](https://github.com/pbakaus/impeccable)
 - [tw93/kami](https://github.com/tw93/Kami)
+- [lguz/humanize-writing-skill][https://github.com/lguz/humanize-writing-skill]
 
 ```bash
 ./scripts/vendor --fetch   # fetch all declared skills and regenerate skills.lock

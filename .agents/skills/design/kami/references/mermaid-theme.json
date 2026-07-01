@@ -1,5 +1,5 @@
 {
-  "_comment": "Kami Mermaid theme. Single source of truth for mapping beautiful-mermaid's color roles onto the Kami palette (references/tokens.json). Consumed by tools/mermaid/render.mjs (Node) and scripts/mermaid_normalize.py (Python). Keep hex values in sync with references/tokens.json.",
+  "_comment": "Kami Mermaid theme. Single source of truth for mapping beautiful-mermaid's color roles onto the Kami palette (references/tokens.json). Consumed by scripts/mermaid_normalize.py (Python). Keep hex values in sync with references/tokens.json.",
   "colors": {
     "bg": "#f5f4ed",
     "fg": "#141413",

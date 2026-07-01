@@ -56,6 +56,14 @@
         "name": "MIT",
         "path": "plugins/kami/skills/kami/LICENSE"
       }
+    },
+    "lguz/humanize-writing-skill": {
+      "repository": "https://github.com/lguz/humanize-writing-skill.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -313,6 +321,11 @@
       "source": "wondelai/skills",
       "srcPath": "high-output-management",
       "path": "skills/business/high-output-management"
+    },
+    "humanize-writing": {
+      "source": "lguz/humanize-writing-skill",
+      "srcPath": "skills/humanize-writing",
+      "path": "skills/productivity/humanize-writing"
     }
   }
 }

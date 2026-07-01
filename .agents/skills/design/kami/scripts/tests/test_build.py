@@ -95,6 +95,11 @@ def silently(callable_, *args, **kwargs):
 
 PACKAGE_MAX_BYTES = 6_000_000
 PACKAGE_FORBIDDEN_EXACT = {
+    ".claude-plugin/marketplace.json",
+    ".gitignore",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
     "assets/images/1.png",
     "assets/images/2.png",
     "assets/images/3.png",
@@ -102,6 +107,45 @@ PACKAGE_FORBIDDEN_EXACT = {
     "assets/fonts/TsangerJinKai02-W05.ttf",
     "assets/fonts/SourceHanSerifKR-Regular.otf",
     "assets/fonts/SourceHanSerifKR-Medium.otf",
+    "index.html",
+    "index-en.html",
+    "index-ja.html",
+    "index-ko.html",
+    "index-tw.html",
+    "index-zh.html",
+    "llms.txt",
+    "robots.txt",
+    "scripts/build_metadata.py",
+    "scripts/draft-release-notes.py",
+    "scripts/package-skill.sh",
+    "sitemap.xml",
+    "styles.css",
+    "vercel.json",
+}
+PACKAGE_FORBIDDEN_PREFIXES = (
+    ".agents/",
+    ".claude/",
+    ".github/",
+    "assets/demos/",
+    "assets/examples/",
+    "assets/illustrations/",
+    "assets/showcase/",
+    "plugins/",
+    "scripts/tests/",
+)
+PACKAGE_REQUIRED_ENTRIES = {
+    "SKILL.md",
+    "CHEATSHEET.md",
+    "VERSION",
+    "LICENSE",
+    "assets/images/logo.svg",
+    "assets/fonts/JetBrainsMono.woff2",
+    "assets/templates/resume.html",
+    "assets/templates/landing-page.html",
+    "assets/diagrams/sequence.html",
+    "references/design.md",
+    "scripts/build.py",
+    "scripts/ensure-fonts.sh",
 }
 
 
@@ -121,15 +165,16 @@ def test_dist_package_contents() -> None:
 
     forbidden = sorted(
         name for name in names
-        if name.startswith("assets/showcase/")
-        or name.startswith("assets/demos/")
+        if name.startswith(PACKAGE_FORBIDDEN_PREFIXES)
         or name in PACKAGE_FORBIDDEN_EXACT
     )
-    check("dist/kami.zip excludes showcase screenshots, demos, and large bundled fonts",
+    check("dist/kami.zip excludes site, CI, tests, demos, generated mirrors, and large bundled fonts",
           not forbidden,
           f"forbidden entries: {', '.join(forbidden)}")
-    check("dist/kami.zip keeps logo.svg",
-          "assets/images/logo.svg" in names)
+    missing_required = sorted(PACKAGE_REQUIRED_ENTRIES - names)
+    check("dist/kami.zip keeps required runtime skill files",
+          not missing_required,
+          f"missing entries: {', '.join(missing_required)}")
 
 
 def test_codex_plugin_metadata_generated() -> None:
@@ -479,6 +524,9 @@ def test_check_update_script() -> None:
 
         rc, out = run(str(dp / "c1"), newer.as_uri())
         check("check-update notifies on a newer remote", rc == 0 and "9.9.9" in out, out)
+        check("check-update default command uses skills add subpath",
+              "npx skills add tw93/kami/plugins/kami/skills/kami" in out and "skills update" not in out,
+              out)
 
         rc, out = run(str(dp / "c2"), same.as_uri())
         check("check-update is silent when current", rc == 0 and out == "", out)
@@ -506,26 +554,29 @@ def test_check_update_uses_codex_plugin_update_command() -> None:
 
     with tempfile.TemporaryDirectory() as d:
         dp = Path(d)
-        install_root = (
-            dp / ".codex" / "plugins" / "cache" / "kami" / "kami" / "1.7.4" / "skills" / "kami"
-        )
-        (install_root / "scripts").mkdir(parents=True)
-        shutil.copy2(script, install_root / "scripts" / "check-update.sh")
-        (install_root / "VERSION").write_text("1.7.4\n")
         newer = dp / "newer"
         newer.write_text("9.9.9\n")
 
-        env = dict(os.environ, XDG_CACHE_HOME=str(dp / "cache"), KAMI_UPDATE_URL=newer.as_uri())
-        result = subprocess.run(
-            ["bash", str(install_root / "scripts" / "check-update.sh")],
-            capture_output=True,
-            text=True,
-            env=env,
-        )
-        out = result.stdout.strip()
-        check("check-update uses Codex plugin update command",
-              result.returncode == 0 and "codex plugin marketplace upgrade kami" in out,
-              out)
+        roots = [
+            dp / ".codex" / "plugins" / "cache" / "kami" / "kami" / "1.7.4" / "skills" / "kami",
+            dp / "custom-codex-home" / "plugins" / "cache" / "kami" / "kami" / "1.7.4" / "skills" / "kami",
+        ]
+        for index, install_root in enumerate(roots, start=1):
+            (install_root / "scripts").mkdir(parents=True)
+            shutil.copy2(script, install_root / "scripts" / "check-update.sh")
+            (install_root / "VERSION").write_text("1.7.4\n")
+
+            env = dict(os.environ, XDG_CACHE_HOME=str(dp / f"cache-{index}"), KAMI_UPDATE_URL=newer.as_uri())
+            result = subprocess.run(
+                ["bash", str(install_root / "scripts" / "check-update.sh")],
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            out = result.stdout.strip()
+            check(f"check-update uses Codex plugin update command ({install_root.parent.parent.parent.name})",
+                  result.returncode == 0 and "codex plugin marketplace upgrade kami" in out,
+                  out)
 
 
 def test_lint_repo_clean() -> None:
@@ -943,6 +994,47 @@ def test_mermaid_normalize_rejects_non_beautiful_mermaid() -> None:
     check("normalize rejects input lacking --bg/--fg color roles", raised)
 
 
+def test_mermaid_normalize_cli_accepts_output_before_input() -> None:
+    """CLI parsing should accept both `input -o out` and `-o out input`."""
+    script = REPO_ROOT / "scripts" / "mermaid_normalize.py"
+    raw = (
+        '<svg xmlns="http://www.w3.org/2000/svg" '
+        'style="--bg:#ffffff;--fg:#000000;--accent:#ff0000">'
+        '<rect fill="var(--accent)" /></svg>'
+    )
+    with tempfile.TemporaryDirectory() as d:
+        dp = Path(d)
+        src = dp / "raw.svg"
+        out = dp / "clean.svg"
+        src.write_text(raw, encoding="utf-8")
+        result = subprocess.run(
+            [sys.executable, str(script), "-o", str(out), str(src)],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        body = out.read_text(encoding="utf-8") if out.exists() else ""
+        check("mermaid_normalize CLI supports -o before input",
+              result.returncode == 0 and out.exists() and "color-mix(" not in body and "var(" not in body,
+              (result.stdout + result.stderr).strip())
+
+
+def test_mermaid_normalize_cli_reports_missing_input() -> None:
+    """Missing input should be a concise ERROR, not a Python traceback."""
+    script = REPO_ROOT / "scripts" / "mermaid_normalize.py"
+    with tempfile.TemporaryDirectory() as d:
+        result = subprocess.run(
+            [sys.executable, str(script), str(Path(d) / "missing.svg")],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        combined = result.stdout + result.stderr
+        check("mermaid_normalize CLI reports missing input without traceback",
+              result.returncode == 1 and "ERROR:" in combined and "Traceback" not in combined,
+              combined.strip())
+
+
 def main() -> int:
     test_dist_package_contents()
     test_codex_plugin_metadata_generated()
@@ -988,6 +1080,8 @@ def main() -> int:
     test_mermaid_diagram_templates_normalized()
     test_mermaid_diagrams_match_their_mmd_sources()
     test_mermaid_normalize_rejects_non_beautiful_mermaid()
+    test_mermaid_normalize_cli_accepts_output_before_input()
+    test_mermaid_normalize_cli_reports_missing_input()
     print()
     print(f"Passed: {_PASS} | Failed: {_FAIL}")
     return 0 if _FAIL == 0 else 1
