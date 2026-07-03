@@ -4,15 +4,8 @@
     "baseURL": "https://c9.rter.cc/v1",
     "apiKey": "{env:C9RTER_API_KEY}",
     "models": {
-      "cmc/deepseek/deepseek-v4-pro": {
-        "name": "DeepSeek V4 Pro",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 384000 }
-      },
-      "cmc/deepseek/deepseek-v4-flash": {
-        "name": "DeepSeek V4 Flash",
+      "cmc-ds-v4-pro-fusion": {
+        "name": "DeepSeek-V4 Pro Fusion (CMC)",
         "reasoning": true,
         "tool_call": true,
         "temperature": true,
@@ -75,7 +68,7 @@
         "modalities": { "input": ["text", "image"], "output": ["text"] }
       },
       "deepseek-v4-pro-fusion": {
-        "name": "DeepSeek V4 Pro Fusion",
+        "name": "DeepSeek-V4 Pro Fusion",
         "reasoning": true,
         "tool_call": true,
         "temperature": true,
@@ -83,7 +76,7 @@
         "modalities": { "input": ["text", "image"], "output": ["text"] }
       },
       "deepseek-v4-flash-fusion": {
-          "name": "DeepSeek V4 Flash Fusion",
+          "name": "DeepSeek-V4 Flash Fusion",
           "reasoning": true,
           "tool_call": true,
           "temperature": true,
@@ -112,6 +105,46 @@
         "tool_call": true,
         "temperature": true,
         "limit": { "context": 256000, "output": 128000 },
+        "modalities": { "input": ["text", "image"], "output": ["text"] }
+      },
+      "kiro-sonnet": {
+        "name": "Kiro Sonnet",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": true,
+        "limit": { "context": 1000000, "output": 128000 },
+        "modalities": { "input": ["text", "image"], "output": ["text"] }
+      },
+      "kiro-opus": {
+        "name": "Kiro Opus",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": true,
+        "limit": { "context": 1000000, "output": 128000 },
+        "modalities": { "input": ["text", "image"], "output": ["text"] }
+      },
+      "kr/claude-haiku-4.5": {
+        "name": "Kiro Claude Haiku 4.5",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": true,
+        "limit": { "context": 1000000, "output": 128000 },
+        "modalities": { "input": ["text", "image"], "output": ["text"] }
+      },
+      "koan-sonnet": {
+        "name": "Koan Sonnet",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": true,
+        "limit": { "context": 1000000, "output": 128000 },
+        "modalities": { "input": ["text", "image"], "output": ["text"] }
+      },
+      "koan-opus": {
+        "name": "Koan Opus",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": true,
+        "limit": { "context": 1000000, "output": 128000 },
         "modalities": { "input": ["text", "image"], "output": ["text"] }
       }
     }
