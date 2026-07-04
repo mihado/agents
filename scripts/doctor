@@ -4,6 +4,7 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+KIRO_HOME="${KIRO_HOME:-$HOME/.kiro}"
 failures=0
 
 pass() {
@@ -70,6 +71,7 @@ while IFS= read -r skill_file; do
   esac
   check_link "$CODEX_HOME/skills/$name" "$skill" "Codex skill $name"
   check_link "$CLAUDE_HOME/skills/$name" "$skill" "Claude skill $name"
+  check_link "$KIRO_HOME/skills/$name" "$skill" "Kiro skill $name"
 done < <(find "$ROOT/.agents/skills" -type f -name SKILL.md -print | sort)
 
 if [ "$failures" -gt 0 ]; then

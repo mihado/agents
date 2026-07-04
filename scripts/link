@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 AGENTS_HOME="${AGENTS_HOME:-$HOME/.agents}"
+KIRO_HOME="${KIRO_HOME:-$HOME/.kiro}"
 
 # Ensure .agents/skills/ exists so find never fails
 mkdir -p "$ROOT/.agents/skills"
@@ -120,8 +121,16 @@ setup_agents() {
   install_skills "$AGENTS_HOME" "Agents"
 }
 
+# Installs all vendored skills into ~/.kiro/skills/ (Kiro global skills). Creates
+# ~/.kiro if the app hasn't been installed on this machine yet.
+setup_kiro() {
+  mkdir -p "$KIRO_HOME"
+  install_skills "$KIRO_HOME" "Kiro"
+}
+
 setup_claude
 setup_codex
 setup_agents
+setup_kiro
 
 printf '\nInstallation complete. Run scripts/doctor to verify discovery.\n'

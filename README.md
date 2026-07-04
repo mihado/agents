@@ -72,13 +72,14 @@ The link script creates these symlinks:
 ~/.codex/skills/<name>   -> <repo>/.agents/skills/<name>
 ~/.claude/skills/<name>  -> <repo>/.agents/skills/<name>
 ~/.agents/skills/<name>  -> <repo>/.agents/skills/<name>
+~/.kiro/skills/<name>    -> <repo>/.agents/skills/<name>
 ```
 
-`~/.agents/skills/` is the universal skills path — OpenCode and Zed discover skills here.
+`~/.agents/skills/` is the universal skills path — OpenCode and Zed discover skills here. `~/.kiro/skills/` is Kiro's global skills path. If `~/.kiro` doesn't exist yet (Kiro not installed on this machine), the link script creates it so skills are ready the moment Kiro is installed.
 
 Each entry is linked individually. Existing unrelated skills survive. A file, directory, or foreign symlink at the same path causes installation to stop rather than overwrite.
 
-`CODEX_HOME`, `CLAUDE_HOME`, and `AGENTS_HOME` may be set to install into alternate locations.
+`CODEX_HOME`, `CLAUDE_HOME`, `AGENTS_HOME`, and `KIRO_HOME` may be set to install into alternate locations.
 
 ## Baseline MCP
 
@@ -137,7 +138,7 @@ make check        # full suite
 ./scripts/doctor  # doctor only
 ```
 
-`make check` runs doctor (Claude/Codex symlinks), MCP config verification (Claude/Codex) and OpenCode remote config, provider config verification (OpenCode), and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+`make check` runs doctor (Claude/Codex/Kiro symlinks), MCP config verification (Claude/Codex) and OpenCode remote config, provider config verification (OpenCode), and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
 
 
 ## License
