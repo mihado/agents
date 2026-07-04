@@ -31,9 +31,15 @@ scripts/
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
-  vendor-review            advisory scan of vendored skill diffs for injection/exec risk
+  vendor-review            diff-based advisory scan (after fetch, before commit)
+  vendor-audit             full-tree audit of all live skills
   opencode-providers       syncs providers.json → OpenCode provider config
-  lib/                     shared utilities (opencode config I/O)
+  lib/
+    patterns.js            shared injection/exec-risk pattern definitions
+    scanner.js             scanLines, scanFile, fingerprint, walk
+    baseline.js            read/write/merge baseline (fingerprint ledger)
+    skillspector.js        resolve and run skillspector from venv
+    opencode-config.js     shared OpenCode config I/O
 pyproject.toml             uv project: pins skillspector and Python tooling dependencies
 uv.lock                    locked dependency graph (committed, reproducible installs)
 .python-version            Python version pin (3.12)
@@ -116,12 +122,23 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 ./scripts/vendor --fetch                    # fetch all declared skills and regenerate skills.lock
 ./scripts/vendor --check                    # verify hashes offline without fetching
 ./scripts/vendor-review                     # advisory scan of the fetched diff for injection/exec risk
-./scripts/vendor-review --accept-baseline   # mark current findings as reviewed (silences future scans)
+./scripts/vendor-review --accept            # mark current findings as reviewed (silences future scans)
 ./scripts/vendor-review --show-suppressed   # also list baseline-accepted findings
+./scripts/vendor-review --skillspector      # also run skillspector on changed skill dirs
+./scripts/vendor-audit                      # audit entire live skill tree (all patterns, all skills)
+./scripts/vendor-audit --json               # output findings as JSON (for agent review)
+./scripts/vendor-audit --skillspector       # also run skillspector on all skill dirs
 # or: make vendor                           # runs --fetch then vendor-review
+# or: make vendor-audit                     # runs vendor-audit
 ```
 
-`scripts/vendor` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks. `scripts/vendor-review` greps the newly fetched diff for two risk classes hashing can't catch: prompt-injection language in prose files (instruction overrides, "don't tell the user," credential/secret access, exfiltration phrasing) and exec/shell risk in scripts (`curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`). Findings are fingerprinted and can be accepted into `.vendor-review-baseline.json` (committed) so re-scans surface only genuinely new hits — useful since upstream skills update independently of this repo. After the regex pass, [`skillspector`](https://github.com/NVIDIA/skillspector) (installed in the repo-local venv via `uv sync`, pinned to a specific commit in `pyproject.toml`) runs a static-only (`--no-llm`, no skill content leaves the machine) AST/taint/YARA pass over changed skill directories as a stronger second opinion.
+`scripts/vendor` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
+
+`scripts/vendor-review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (instruction overrides, "don't tell the user," credential/secret access, exfiltration phrasing) and exec/shell risk in scripts (`curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`). Findings are fingerprinted and filtered against `.vendor-review-baseline.json` (committed) so only genuinely new hits surface.
+
+`scripts/vendor-audit` walks the entire live skill tree — same patterns, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. With `--json`, produces structured output suitable for programmatic analysis. With `--skillspector`, also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+
+Both scripts share patterns and utilities from `scripts/lib/` (patterns, scanner, baseline, skillspector). [`skillspector`](https://github.com/NVIDIA/skillspector) is installed in the repo-local venv via `uv sync`, pinned to a specific commit in `pyproject.toml`. No skill content leaves the machine.
 
 This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
 

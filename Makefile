@@ -1,4 +1,4 @@
-.PHONY: install setup check test vendor vendor-review mcp providers help
+.PHONY: install setup check test vendor vendor-review vendor-audit mcp providers help
 
 .DEFAULT_GOAL := help
 
@@ -9,6 +9,7 @@ help:
 	@echo "make test          Run tests"
 	@echo "make vendor        Fetch vendored skills, then run vendor-review"
 	@echo "make vendor-review Advisory scan of vendored skill diffs for injection/exec risk"
+	@echo "make vendor-audit  Audit entire live skill tree for injection/exec risk patterns"
 	@echo "make mcp           Sync MCP configuration"
 	@echo "make providers     Sync OpenCode provider configuration"
 
@@ -28,7 +29,7 @@ check:
 	./scripts/vendor --check
 
 test:
-	node --test scripts/lib/opencode-config.test.js
+	pnpm test
 
 vendor:
 	./scripts/vendor --fetch
@@ -36,6 +37,9 @@ vendor:
 
 vendor-review:
 	./scripts/vendor-review
+
+vendor-audit:
+	./scripts/vendor-audit
 
 mcp:
 	./scripts/mcp --install

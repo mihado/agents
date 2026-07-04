@@ -1,0 +1,95 @@
+#!/usr/bin/env node
+// Audit the entire live skill tree for injection and exec-risk patterns.
+//
+// Walks .agents/skills/ and runs both the regex scanner and skillspector
+// (static-only, --no-llm) against every skill. Produces a report for
+// human review. Does not interact with the baseline — that's vendor-review's
+// job.
+//
+// Usage:
+//   scripts/vendor-audit                  print report to stdout
+//   scripts/vendor-audit --json           output findings as JSON
+//   scripts/vendor-audit --skillspector   also run skillspector (slower)
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { scanFile, walk } from "./lib/scanner.js";
+import { listAllSkillDirs, runSkillspector } from "./lib/skillspector.js";
+
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const skillsDir = path.join(root, ".agents/skills");
+const args = new Set(process.argv.slice(2));
+const jsonOutput = args.has("--json");
+const withSkillspector = args.has("--skillspector");
+
+// --- Regex scan ---
+
+const files = walk(skillsDir);
+const findings = [];
+
+for (const absFile of files) {
+  const relFile = path.relative(root, absFile);
+  findings.push(...scanFile(absFile, relFile));
+}
+
+// --- Output ---
+
+if (jsonOutput) {
+  const output = { findings, count: findings.length };
+  if (withSkillspector) {
+    const skillDirs = listAllSkillDirs(root);
+    output.skillspector = runSkillspector(root, skillDirs);
+  }
+  console.log(JSON.stringify(output, null, 2));
+  process.exit(0);
+}
+
+// Human-readable output.
+if (findings.length === 0) {
+  console.log("No suspicious patterns found in live skill tree.");
+} else {
+  console.log(`${findings.length} finding(s):\n`);
+  for (const { file, label, snippet } of findings) {
+    console.log(`${file}\n  [${label}] ${snippet}\n`);
+  }
+
+  // Summary by skill.
+  const bySkill = {};
+  for (const f of findings) {
+    const parts = f.file.replace(/^\.agents\/skills\//, "").split("/");
+    const skillName = parts.slice(0, 2).join("/");
+    bySkill[skillName] = bySkill[skillName] || [];
+    bySkill[skillName].push(f);
+  }
+  console.log("--- By skill ---\n");
+  for (const [skill, items] of Object.entries(bySkill).sort((a, b) => b[1].length - a[1].length)) {
+    const labels = [...new Set(items.map((i) => i.label))];
+    console.log(`  ${skill.padEnd(40)} ${items.length} finding(s) [${labels.join(", ")}]`);
+  }
+}
+
+// --- Skillspector ---
+
+if (withSkillspector) {
+  const skillDirs = listAllSkillDirs(root);
+  const result = runSkillspector(root, skillDirs);
+
+  if (!result) {
+    console.log(
+      "\nskillspector not available. Run `make setup` to install.",
+    );
+  } else {
+    console.log(
+      `\nSkillspector (${result.label}, static-only --no-llm) on ${result.results.length} skill(s):\n`,
+    );
+    for (const r of result.results) {
+      if (r.error) {
+        console.log(`  ${path.basename(r.dir).padEnd(35)} error: ${r.error}`);
+      } else {
+        console.log(
+          `  ${path.basename(r.dir).padEnd(35)} score=${String(r.score).padEnd(3)} severity=${String(r.severity).padEnd(8)} issues=${r.issueCount}`,
+        );
+      }
+    }
+  }
+}
