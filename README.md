@@ -31,19 +31,24 @@ scripts/
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
+  vendor-review            advisory scan of vendored skill diffs for injection/exec risk
   opencode-providers       syncs providers.json → OpenCode provider config
   lib/                     shared utilities (opencode config I/O)
-Makefile                   convenience targets for install, check, test
+pyproject.toml             uv project: pins skillspector and Python tooling dependencies
+uv.lock                    locked dependency graph (committed, reproducible installs)
+.python-version            Python version pin (3.12)
+Makefile                   convenience targets for install, setup, check, test
 mcp.json                   baseline MCP server definitions
 providers.json             AI provider manifest (models, limits, reasoning flags)
 skills.json                selected skills and their upstream sources
 skills.lock                resolved commits, provenance, and content hashes
+.vendor-review-baseline.json  vendor-review findings accepted as reviewed, keyed by fingerprint
 LICENSE                    Apache-2.0
 ```
 
 ## Install
 
-Requirements: Git, Node.js, Claude Code, Codex, and/or OpenCode.
+Requirements: Git, Node.js, [uv](https://docs.astral.sh/uv/), Claude Code, Codex, and/or OpenCode.
 
 ```bash
 git clone git@github.com:mihado/agents.git ~/path/to/repo
@@ -52,11 +57,12 @@ make install
 make check
 ```
 
-`make install` runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
+`make install` runs the link script (Claude/Codex/universal symlinks), sets up the Python venv (`uv sync` — installs skillspector and other tooling pinned in `pyproject.toml`), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
 
 To run individual steps:
 
 ```bash
+make setup        # set up Python venv (skillspector, etc.) via uv sync
 make mcp          # sync MCP (Claude/Codex) and OpenCode remote config
 make providers    # sync OpenCode providers only
 make vendor       # fetch vendored skills
@@ -107,12 +113,19 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 - [lguz/humanize-writing-skill][https://github.com/lguz/humanize-writing-skill]
 
 ```bash
-./scripts/vendor --fetch   # fetch all declared skills and regenerate skills.lock
-./scripts/vendor --check   # verify hashes offline without fetching
-# or: make vendor
+./scripts/vendor --fetch                    # fetch all declared skills and regenerate skills.lock
+./scripts/vendor --check                    # verify hashes offline without fetching
+./scripts/vendor-review                     # advisory scan of the fetched diff for injection/exec risk
+./scripts/vendor-review --accept-baseline   # mark current findings as reviewed (silences future scans)
+./scripts/vendor-review --show-suppressed   # also list baseline-accepted findings
+# or: make vendor                           # runs --fetch then vendor-review
 ```
 
-After fetching, review the Git diff before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
+`scripts/vendor` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks. `scripts/vendor-review` greps the newly fetched diff for two risk classes hashing can't catch: prompt-injection language in prose files (instruction overrides, "don't tell the user," credential/secret access, exfiltration phrasing) and exec/shell risk in scripts (`curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`). Findings are fingerprinted and can be accepted into `.vendor-review-baseline.json` (committed) so re-scans surface only genuinely new hits — useful since upstream skills update independently of this repo. After the regex pass, [`skillspector`](https://github.com/NVIDIA/skillspector) (installed in the repo-local venv via `uv sync`, pinned to a specific commit in `pyproject.toml`) runs a static-only (`--no-llm`, no skill content leaves the machine) AST/taint/YARA pass over changed skill directories as a stronger second opinion.
+
+This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
+
+After fetching, review the Git diff and `scripts/vendor-review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
 
 Skill directory names must be globally unique across all installed repositories.
 
