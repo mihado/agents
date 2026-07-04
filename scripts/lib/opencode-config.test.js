@@ -1,5 +1,4 @@
-import { describe, it, before, after } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -15,11 +14,11 @@ const tempRoot = fs.mkdtempSync(
 const tempConfigHome = path.join(tempRoot, ".config");
 const configPath = path.join(tempConfigHome, "opencode", "opencode.jsonc");
 
-before(() => {
+beforeAll(() => {
   process.env.XDG_CONFIG_HOME = tempConfigHome;
 });
 
-after(() => {
+afterAll(() => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
   delete process.env.XDG_CONFIG_HOME;
 });
@@ -43,7 +42,7 @@ function unseed() {
 // ---------------------------------------------------------------------------
 describe("getPath()", () => {
   it("returns path under XDG_CONFIG_HOME", () => {
-    assert.equal(getPath(), configPath);
+    expect(getPath()).toBe(configPath);
   });
 });
 
@@ -53,37 +52,37 @@ describe("getPath()", () => {
 describe("read()", () => {
   it("returns {} when no config file exists", () => {
     unseed();
-    assert.deepEqual(read(), {});
+    expect(read()).toEqual({});
   });
 
   it("parses valid JSON", () => {
     seed('{"key":"value"}');
-    assert.deepEqual(read(), { key: "value" });
+    expect(read()).toEqual({ key: "value" });
   });
 
   it("strips // single-line comments", () => {
     seed('{\n  // a comment\n  "key": "value"\n}');
-    assert.deepEqual(read(), { key: "value" });
+    expect(read()).toEqual({ key: "value" });
   });
 
   it("strips /* */ multi-line comments", () => {
     seed("{\n  /* block\n     comment */\n  \"key\": \"value\"\n}");
-    assert.deepEqual(read(), { key: "value" });
+    expect(read()).toEqual({ key: "value" });
   });
 
   it("preserves // inside strings (URLs)", () => {
     seed('{ "url": "https://example.com/path" }');
-    assert.deepEqual(read(), { url: "https://example.com/path" });
+    expect(read()).toEqual({ url: "https://example.com/path" });
   });
 
   it("handles // at end of line inside a string (not a comment)", () => {
     seed('{ "text": "foo // bar" }');
-    assert.deepEqual(read(), { text: "foo // bar" });
+    expect(read()).toEqual({ text: "foo // bar" });
   });
 
   it("returns {} on malformed JSON", () => {
     seed("not json");
-    assert.deepEqual(read(), {});
+    expect(read()).toEqual({});
   });
 
   it("reads the real-world provider + mcp config shape", () => {
@@ -110,8 +109,8 @@ describe("read()", () => {
   }
 }`);
     const config = read();
-    assert.ok(config.provider?.c9?.models?.["cmc/deepseek/deepseek-v4-pro"]?.reasoning);
-    assert.equal(config.mcp?.context7?.type, "remote");
+    expect(config.provider?.c9?.models?.["cmc/deepseek/deepseek-v4-pro"]?.reasoning).toBe(true);
+    expect(config.mcp?.context7?.type).toBe("remote");
   });
 });
 
@@ -124,14 +123,14 @@ describe("write()", () => {
     write(data);
     const raw = fs.readFileSync(configPath, "utf8");
     const parsed = JSON.parse(raw);
-    assert.deepEqual(parsed, data);
+    expect(parsed).toEqual(data);
   });
 
   it("overwrites existing config", () => {
     seed('{ "old": true }');
     write({ fresh: true });
     const parsed = JSON.parse(fs.readFileSync(configPath, "utf8"));
-    assert.deepEqual(parsed, { fresh: true });
+    expect(parsed).toEqual({ fresh: true });
   });
 });
 
@@ -145,7 +144,7 @@ describe("roundtrip", () => {
       mcp: { context7: { type: "remote", url: "https://example.com" } },
     };
     write(config);
-    assert.deepEqual(read(), config);
+    expect(read()).toEqual(config);
   });
 
   it("write does not persist JSONC comments", () => {
@@ -153,7 +152,7 @@ describe("roundtrip", () => {
     const config = read();
     write(config);
     const raw = fs.readFileSync(configPath, "utf8");
-    assert.ok(!raw.includes("will be lost"), "comments should be stripped");
+    expect(raw).not.toContain("will be lost");
   });
 });
 
@@ -174,100 +173,100 @@ describe("integration: scripts --check", () => {
         },
       },
     }));
-    const result = spawnSync("node", [mcpScript, "--check"], { encoding: "utf8" });
-    // OpenCode section should pass; Codex/Claude depend on local tooling
-    assert.match(result.stdout, /PASS\s+OpenCode\s+context7/);
+    const result = spawnSync("node", [mcpScript, "--check"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        XDG_CONFIG_HOME: tempConfigHome,
+        OPENCODE_CLI_PATH: process.execPath,
+      },
+    });
+    expect(result.stdout).toMatch(/PASS\s+OpenCode\s+context7/);
   });
 
   it("opencode-providers --install then --check passes", () => {
     const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
-    assert.equal(install.status, 0);
+    expect(install.status).toBe(0);
 
     const check = spawnSync("node", [providersScript, "--check"], { encoding: "utf8" });
-    assert.equal(check.status, 0);
-    assert.match(check.stdout, /PASS\s+provider/);
+    expect(check.status).toBe(0);
+    expect(check.stdout).toMatch(/PASS\s+provider/);
   });
 
   it("opencode-providers --check fails with empty config", () => {
     unseed();
     const result = spawnSync("node", [providersScript, "--check"], { encoding: "utf8" });
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /FAIL\s+provider/);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toMatch(/FAIL\s+provider/);
   });
 
   it("propagates modalities for vision-capable models", () => {
     const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
-    assert.equal(install.status, 0);
+    expect(install.status).toBe(0);
 
     const config = read();
     const models = config.provider?.c9?.models;
 
-    // Vision-capable models should have modalities with image input
     const visionModels = [
-          "cmc/xiaomi/mimo-v2.5",
-          "ocg/minimax-m3",
-          "ocg/glm-5.2",
-          "cx/gpt-5.4",
-          "cx/gpt-5.4-mini",
-          "cx/gpt-5.5",
-          "deepseek-v4-pro-fusion",
-          "deepseek-v4-flash-fusion",
-          "glm-5.2-fusion",
-        ];
+      "ocg/mimo-v2.5",
+      "ocg/glm-5.2",
+      "cx/gpt-5.4",
+      "cx/gpt-5.4-mini",
+      "cx/gpt-5.5",
+      "minimax-m3",
+      "deepseek-v4-pro-fusion",
+      "deepseek-v4-flash-fusion",
+      "glm-5.2-fusion",
+    ];
     for (const id of visionModels) {
-      assert.ok(models[id], `model ${id} should exist`);
-      assert.deepEqual(models[id].modalities, {
+      expect(models[id], `model ${id} should exist`).toBeTruthy();
+      expect(models[id].modalities, `${id} should have image modality`).toEqual({
         input: ["text", "image"],
         output: ["text"],
-      }, `${id} should have image modality`);
+      });
     }
 
-    // Text-only models should NOT have modalities
     const textOnlyModels = [
-          "cmc/deepseek/deepseek-v4-pro",
-          "cmc/deepseek/deepseek-v4-flash",
-          "cmc/xiaomi/mimo-v2.5-pro",
-        ];
+      "cmc-ds-v4-pro-fusion",
+    ];
     for (const id of textOnlyModels) {
-      assert.ok(models[id], `model ${id} should exist`);
-      assert.equal(models[id].modalities, undefined, `${id} should not have modalities`);
+      expect(models[id], `model ${id} should exist`).toBeTruthy();
+      expect(models[id].modalities, `${id} should not have modalities`).toBeUndefined();
     }
   });
 
   it("propagates tool_call and temperature for all models", () => {
     const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
-    assert.equal(install.status, 0);
+    expect(install.status).toBe(0);
 
     const config = read();
     const models = config.provider?.c9?.models;
     const allIds = Object.keys(models);
-    assert.ok(allIds.length >= 9, "should have at least 9 models");
+    expect(allIds.length).toBeGreaterThanOrEqual(9);
 
     for (const id of allIds) {
-      assert.equal(models[id].tool_call, true, `${id} should have tool_call: true`);
-      assert.equal(models[id].temperature, true, `${id} should have temperature: true`);
+      expect(models[id].tool_call, `${id} should have tool_call: true`).toBe(true);
+      expect(models[id].temperature, `${id} should have temperature: true`).toBe(true);
     }
   });
 
   it("modalities field structure is valid per OpenCode schema", () => {
     const install = spawnSync("node", [providersScript, "--install"], { encoding: "utf8" });
-    assert.equal(install.status, 0);
+    expect(install.status).toBe(0);
 
     const config = read();
     const models = config.provider?.c9?.models;
 
     for (const [id, model] of Object.entries(models)) {
       if (model.modalities) {
-        // Must have input and output arrays
-        assert.ok(Array.isArray(model.modalities.input), `${id} modalities.input must be array`);
-        assert.ok(Array.isArray(model.modalities.output), `${id} modalities.output must be array`);
-        // Only valid enum values
+        expect(Array.isArray(model.modalities.input), `${id} modalities.input must be array`).toBe(true);
+        expect(Array.isArray(model.modalities.output), `${id} modalities.output must be array`).toBe(true);
         const validValues = ["text", "audio", "image", "video", "pdf"];
         for (const val of model.modalities.input) {
-          assert.ok(validValues.includes(val), `${id} input value "${val}" must be valid`);
+          expect(validValues, `${id} input value "${val}" must be valid`).toContain(val);
         }
         for (const val of model.modalities.output) {
-          assert.ok(validValues.includes(val), `${id} output value "${val}" must be valid`);
+          expect(validValues, `${id} output value "${val}" must be valid`).toContain(val);
         }
       }
     }
