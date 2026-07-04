@@ -1,80 +1,39 @@
 #!/usr/bin/env node
-// Advisory scan over content newly introduced by `scripts/vendor --fetch`.
+// Advisory scan of vendored skill changes introduced by `scripts/vendor --fetch`.
 //
-// Vendored skills are prose (SKILL.md, references/*.md) that an agent reads
-// and follows as instructions, plus executable scripts (.sh/.py/.js/.mjs)
-// that agents or hooks may run. Both are an upstream-controlled supply
-// chain. `scripts/vendor` already proves *integrity* (hash-locked, path-
-// safe, license-tracked); this script is a second pass for *content risk*
-// that hashing cannot catch: prompt injection embedded in instructions, and
-// shell/exec/exfiltration patterns embedded in scripts.
-//
-// Regex only sees literal patterns — it cannot follow a value from an env
-// var through three variables into a network call. For deeper analysis
-// (AST + taint tracking + YARA), this script calls NVIDIA's SkillSpector
-// (https://github.com/NVIDIA/skillspector) statically only (`--no-llm`, no
-// skill content leaves the machine) — using an installed copy if present
-// on PATH, otherwise an ephemeral `uvx` run with no persistent install.
-// Neither is a dependency of this repo; both are best-effort extras.
+// Scans the git diff under .agents/skills/ for injection and exec-risk
+// patterns. Filters findings against the baseline (previously accepted
+// findings) so only genuinely new hits surface. Optionally runs skillspector
+// on changed skill directories.
 //
 // Non-blocking by design: findings are for a human to eyeball, not a gate.
 // Run after `scripts/vendor --fetch`, before committing.
 //
 // Usage:
-//   scripts/vendor-review                 scan diff, filter against baseline
+//   scripts/vendor-review                 scan diff, show new findings only
+//   scripts/vendor-review --accept        accept all current findings into baseline
 //   scripts/vendor-review --show-suppressed  also list baseline-suppressed hits
-//   scripts/vendor-review --accept-baseline  accept all current findings as reviewed
+//   scripts/vendor-review --skillspector  also run skillspector on changed skills
 
-import crypto from "node:crypto";
-import fs from "node:fs";
-import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { scanLines, fingerprint } from "./lib/scanner.js";
+import { readBaseline, writeBaseline, mergeBaseline } from "./lib/baseline.js";
+import { runSkillspector } from "./lib/skillspector.js";
+import { PROSE_EXTS, CODE_EXTS } from "./lib/patterns.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baselinePath = path.join(root, ".vendor-review-baseline.json");
 const args = new Set(process.argv.slice(2));
+const acceptMode = args.has("--accept");
 const showSuppressed = args.has("--show-suppressed");
-const acceptBaseline = args.has("--accept-baseline");
+const withSkillspector = args.has("--skillspector");
 
-const INJECTION_PATTERNS = [
-  [/ignore (all |any )?(previous|prior|above) instructions/i, "instruction override"],
-  [/disregard (the |your |all )?(system prompt|previous|prior)/i, "instruction override"],
-  [/you are (now|no longer) (bound|restricted|limited)/i, "role/constraint override"],
-  [/do not (tell|inform|mention|warn) the user/i, "conceal from user"],
-  [/without (the user|user's|the human)('s)? (knowledge|consent|awareness)/i, "conceal from user"],
-  [/(send|post|upload|exfiltrat\w*)\s+(the\s+)?(contents?|file|data|key|token|secret|credential)s?\s+(to|via)\s+https?:\/\//i, "possible exfiltration instruction"],
-  [/read\s+(the\s+)?(~\/\.ssh|\.env|id_rsa|credentials|\.aws\/credentials|\.netrc)/i, "credential/secret access instruction"],
-  [/curl\s+[^\n]*\|\s*(sh|bash|zsh)/i, "remote-script execution"],
-  [/base64\s+-d/i, "encoded payload decode"],
-  [/\u200b|\u200c|\u200d|\ufeff/, "zero-width/invisible character"],
-];
-
-const CODE_RISK_PATTERNS = [
-  [/curl\s+[^\n]*\|\s*(sh|bash|zsh)/i, "remote-script execution"],
-  [/\beval\s*\(/, "eval()"],
-  [/require\(['"]child_process['"]\)|from\s+child_process|import.*child_process/, "child_process"],
-  [/\b(child_process\.)?exec(Sync|File)?\s*\(\s*['"`]/, "shell exec() with string command"],
-  [/subprocess\.(run|Popen|call|check_output)/, "subprocess"],
-  [/os\.system\s*\(/, "os.system()"],
-  [/rm\s+-rf\s+\//, "rm -rf /"],
-  [/base64\s+-d/, "base64 decode"],
-  [/process\.env\[/, "dynamic env var access"],
-  [/os\.environ\[/, "dynamic env var access"],
-];
-
-const PROSE_EXTS = new Set([".md", ".mdx", ".txt"]);
-const CODE_EXTS = new Set([".sh", ".py", ".js", ".mjs", ".cjs", ".ts"]);
+// --- Get diff ---
 
 const diffOutput = run("git", [
-  "-C",
-  root,
-  "diff",
-  "--no-color",
-  "--unified=0",
-  "HEAD",
-  "--",
-  ".agents/skills",
+  "-C", root, "diff", "--no-color", "--unified=0", "HEAD", "--", ".agents/skills",
 ]);
 
 if (!diffOutput.trim()) {
@@ -83,6 +42,8 @@ if (!diffOutput.trim()) {
   );
   process.exit(0);
 }
+
+// --- Scan added lines ---
 
 const findings = [];
 let currentFile = null;
@@ -99,24 +60,23 @@ for (const line of diffOutput.split("\n")) {
   if (!line.startsWith("+") || line.startsWith("+++")) continue;
 
   const added = line.slice(1);
-  const patterns = PROSE_EXTS.has(currentExt)
-    ? INJECTION_PATTERNS
-    : CODE_EXTS.has(currentExt)
-      ? [...INJECTION_PATTERNS, ...CODE_RISK_PATTERNS]
-      : [];
-
-  for (const [pattern, label] of patterns) {
-    if (pattern.test(added)) {
-      const snippet = added.trim().slice(0, 160);
-      findings.push({ file: currentFile, label, snippet, fingerprint: fingerprint(currentFile, label, snippet) });
-    }
+  const lineFindings = scanLines([added], currentExt);
+  for (const f of lineFindings) {
+    findings.push({
+      file: currentFile,
+      label: f.label,
+      snippet: f.snippet,
+      fingerprint: fingerprint(currentFile, f.label, f.snippet),
+    });
   }
 }
 
-const baseline = readBaseline();
+// --- Baseline filtering ---
 
-if (acceptBaseline) {
-  writeBaseline(mergeBaseline(baseline, findings));
+const baseline = readBaseline(baselinePath);
+
+if (acceptMode) {
+  writeBaseline(baselinePath, mergeBaseline(baseline, findings));
   console.log(`Accepted ${findings.length} finding(s) into ${path.relative(root, baselinePath)}.`);
   process.exit(0);
 }
@@ -139,7 +99,7 @@ if (newFindings.length === 0) {
   console.log(
     "Review each hit above. These are pattern matches, not proof of a problem — " +
       "vendored SKILL.md content is instructions an agent will follow, so read it as such.\n" +
-      "If reviewed and accepted, run `scripts/vendor-review --accept-baseline` to silence it on future scans.",
+      "If reviewed and accepted, run `scripts/vendor-review --accept` to silence on future scans.",
   );
 }
 
@@ -150,90 +110,36 @@ if (showSuppressed && suppressed.length > 0) {
   }
 }
 
-runSkillspectorIfAvailable(diffOutput);
+// --- Skillspector on changed skills ---
 
-function fingerprint(file, label, snippet) {
-  return crypto.createHash("sha256").update(`${file}\0${label}\0${snippet}`).digest("hex").slice(0, 16);
-}
-
-function readBaseline() {
-  if (!fs.existsSync(baselinePath)) return [];
-  try {
-    const parsed = JSON.parse(fs.readFileSync(baselinePath, "utf8"));
-    return Array.isArray(parsed.accepted) ? parsed.accepted : [];
-  } catch (error) {
-    console.error(`error: cannot read ${baselinePath}: ${error.message}`);
-    process.exit(1);
-  }
-}
-
-function mergeBaseline(existing, newFindings) {
-  const byFingerprint = new Map(existing.map((entry) => [entry.fingerprint, entry]));
-  for (const { file, label, snippet, fingerprint: fp } of newFindings) {
-    if (!byFingerprint.has(fp)) {
-      byFingerprint.set(fp, { fingerprint: fp, file, label, snippet, acceptedAt: new Date().toISOString().slice(0, 10) });
-    }
-  }
-  return [...byFingerprint.values()].sort((a, b) => a.fingerprint.localeCompare(b.fingerprint));
-}
-
-function writeBaseline(entries) {
-  fs.writeFileSync(baselinePath, `${JSON.stringify({ accepted: entries }, null, 2)}\n`);
-}
-
-function runSkillspectorIfAvailable(currentDiffOutput) {
-  const invocation = resolveSkillspectorInvocation();
-  if (!invocation) {
-    console.log(
-      "\n(optional) skillspector not available (not on PATH, and `uvx` not found for an ephemeral run). " +
-        "Regex-only scan above. For AST/taint/YARA-level analysis: https://github.com/NVIDIA/skillspector",
-    );
-    return;
-  }
-
+if (withSkillspector) {
   const changedSkillDirs = new Set();
-  for (const line of currentDiffOutput.split("\n")) {
-    const fileMatch = line.match(/^\+\+\+ b\/(\.agents\/skills\/[^/]+\/[^/]+)\//);
-    if (fileMatch) changedSkillDirs.add(fileMatch[1]);
+  for (const line of diffOutput.split("\n")) {
+    const match = line.match(/^\+\+\+ b\/(\.agents\/skills\/[^/]+\/[^/]+)\//);
+    if (match) changedSkillDirs.add(match[1]);
   }
-
-  if (changedSkillDirs.size === 0) return;
-
-  console.log(
-    `\nRunning skillspector (${invocation.label}, static-only --no-llm) on ${changedSkillDirs.size} changed skill(s):\n`,
-  );
-  for (const relDir of [...changedSkillDirs].sort()) {
-    const result = spawnSync(
-      invocation.command,
-      [...invocation.args, "scan", relDir, "--no-llm", "--format", "json"],
-      { cwd: root, encoding: "utf8", maxBuffer: 1024 * 1024 * 64 },
-    );
-    if (result.status === 2 || result.error) {
-      console.log(`${relDir}: skillspector error (${result.stderr?.trim() || result.error?.message || "unknown"})`);
-      continue;
-    }
-    try {
-      const report = JSON.parse(result.stdout);
-      const { score, severity, recommendation } = report.risk_assessment ?? {};
-      console.log(`${relDir}: score=${score} severity=${severity} recommendation=${recommendation}`);
-    } catch {
-      console.log(`${relDir}: could not parse skillspector output`);
+  if (changedSkillDirs.size > 0) {
+    const result = runSkillspector(root, [...changedSkillDirs]);
+    if (!result) {
+      console.log("\nskillspector not available. Run `make setup` to install.");
+    } else {
+      console.log(
+        `\nSkillspector (${result.label}, static-only --no-llm) on ${result.results.length} changed skill(s):\n`,
+      );
+      for (const r of result.results) {
+        if (r.error) {
+          console.log(`  ${path.basename(r.dir).padEnd(35)} error: ${r.error}`);
+        } else {
+          console.log(
+            `  ${path.basename(r.dir).padEnd(35)} score=${String(r.score).padEnd(3)} severity=${String(r.severity).padEnd(8)} issues=${r.issueCount}`,
+          );
+        }
+      }
     }
   }
 }
 
-function resolveSkillspectorInvocation() {
-  // Prefer the repo-local venv managed by uv (pyproject.toml pins the commit).
-  const localBin = path.join(root, ".venv", "bin", "skillspector");
-  if (fs.existsSync(localBin)) {
-    return { command: localBin, args: [], label: "venv (uv sync)" };
-  }
-  // Fallback: globally installed.
-  if (spawnSync("which", ["skillspector"], { encoding: "utf8" }).status === 0) {
-    return { command: "skillspector", args: [], label: "installed" };
-  }
-  return null;
-}
+// --- Helpers ---
 
 function run(command, commandArgs) {
   const result = spawnSync(command, commandArgs, { encoding: "utf8", maxBuffer: 1024 * 1024 * 64 });

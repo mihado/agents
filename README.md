@@ -31,9 +31,15 @@ scripts/
   doctor                   checks installation and integrity
   mcp                      installs and verifies baseline MCP servers
   vendor                   fetches and verifies vendored skills
-  vendor-review            advisory scan of vendored skill diffs for injection/exec risk
+  vendor-review            diff-based advisory scan (after fetch, before commit)
+  vendor-audit             full-tree audit of all live skills
   opencode-providers       syncs providers.json → OpenCode provider config
-  lib/                     shared utilities (opencode config I/O)
+  lib/
+    patterns.js            shared injection/exec-risk pattern definitions
+    scanner.js             scanLines, scanFile, fingerprint, walk
+    baseline.js            read/write/merge baseline (fingerprint ledger)
+    skillspector.js        resolve and run skillspector from venv
+    opencode-config.js     shared OpenCode config I/O
 pyproject.toml             uv project: pins skillspector and Python tooling dependencies
 uv.lock                    locked dependency graph (committed, reproducible installs)
 .python-version            Python version pin (3.12)
@@ -116,12 +122,23 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 ./scripts/vendor --fetch                    # fetch all declared skills and regenerate skills.lock
 ./scripts/vendor --check                    # verify hashes offline without fetching
 ./scripts/vendor-review                     # advisory scan of the fetched diff for injection/exec risk
-./scripts/vendor-review --accept-baseline   # mark current findings as reviewed (silences future scans)
+./scripts/vendor-review --accept            # mark current findings as reviewed (silences future scans)
 ./scripts/vendor-review --show-suppressed   # also list baseline-accepted findings
+./scripts/vendor-review --skillspector      # also run skillspector on changed skill dirs
+./scripts/vendor-audit                      # audit entire live skill tree (all patterns, all skills)
+./scripts/vendor-audit --json               # output findings as JSON (for agent review)
+./scripts/vendor-audit --skillspector       # also run skillspector on all skill dirs
 # or: make vendor                           # runs --fetch then vendor-review
+# or: make vendor-audit                     # runs vendor-audit
 ```
 
-`scripts/vendor` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks. `scripts/vendor-review` greps the newly fetched diff for two risk classes hashing can't catch: prompt-injection language in prose files (instruction overrides, "don't tell the user," credential/secret access, exfiltration phrasing) and exec/shell risk in scripts (`curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`). Findings are fingerprinted and can be accepted into `.vendor-review-baseline.json` (committed) so re-scans surface only genuinely new hits — useful since upstream skills update independently of this repo. After the regex pass, [`skillspector`](https://github.com/NVIDIA/skillspector) (installed in the repo-local venv via `uv sync`, pinned to a specific commit in `pyproject.toml`) runs a static-only (`--no-llm`, no skill content leaves the machine) AST/taint/YARA pass over changed skill directories as a stronger second opinion.
+`scripts/vendor` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
+
+`scripts/vendor-review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (instruction overrides, "don't tell the user," credential/secret access, exfiltration phrasing) and exec/shell risk in scripts (`curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`). Findings are fingerprinted and filtered against `.vendor-review-baseline.json` (committed) so only genuinely new hits surface.
+
+`scripts/vendor-audit` walks the entire live skill tree — same patterns, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. With `--json`, produces structured output suitable for programmatic analysis. With `--skillspector`, also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+
+Both scripts share patterns and utilities from `scripts/lib/` (patterns, scanner, baseline, skillspector). [`skillspector`](https://github.com/NVIDIA/skillspector) is installed in the repo-local venv via `uv sync`, pinned to a specific commit in `pyproject.toml`. No skill content leaves the machine.
 
 This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
 
@@ -155,44 +172,31 @@ make check        # full suite
 
 ## Provider Routing
 
-We run a **"poor man's OpenRouter"**: pool multiple cheap API subscription plans through [9Router](https://github.com/mihado/9router), a hardened proxy that handles quota tracking, automatic tier fallback, and token saving (RTK).
-
-### How it fits together
+Models are routed through [9Router](https://github.com/mihado/9router), a proxy that handles quota tracking, automatic fallback, and request routing across multiple provider accounts.
 
 ```
-Your CLI tool ──► OpenCode config ──► 9Router ──► provider A (until drained)
-                  (providers.json)                └─► provider B (fill_first)
+Your CLI tool ──► OpenCode config ──► 9Router ──► provider A
+                  (providers.json)                └─► provider B (fallback)
                                                   └─► provider C
 ```
 
-- **`providers.json`** — manifest of providers and models we use. Each provider declares its base URL, API key env var, and models with reasoning, limit, modalities, and capability metadata. Models are identified by their upstream canonical IDs (e.g., `cmc/deepseek/deepseek-v4-pro`). Model metadata is sourced from [models.dev](https://models.dev) (`https://models.dev/catalog.json`).
-- **`scripts/opencode-providers`** — syncs `providers.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Run `--install` to write, `--check` to verify. Propagates `reasoning`, `limit`, `modalities`, `tool_call`, `temperature`, and `apiKey` fields. OpenCode config schema: `https://opencode.ai/config.json`.
-- **`9router`** — hardened fork of `decolua/9router` (MIT). Sits between your tools and the providers. Handles quota tracking, `fill_first` account draining (keeps KV caches warm on a single account), auto-fallback when an account runs dry, and RTK token compression. Built and published only from the `hardened` branch to `ghcr.io/mihado/9router`.
+- **`providers.json`** — manifest of providers and models. Each provider declares its base URL, API key env var, and models with reasoning, limit, modalities, and capability metadata. Model metadata is sourced from [models.dev](https://models.dev).
+- **`scripts/opencode-providers`** — syncs `providers.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Run `--install` to write, `--check` to verify. Propagates `reasoning`, `limit`, `modalities`, `tool_call`, `temperature`, and `apiKey` fields.
+- **Fusion models** (e.g., `deepseek-v4-pro-fusion`) let text-only models gain vision capability through the router: image requests route to a vision-capable backend while text stays on the primary model. Drop-in replacements.
 
 ### Metadata reference
 
-Model metadata is sourced from [models.dev](https://models.dev) (`https://models.dev/catalog.json`). Each model in `providers.json` may declare these fields, propagated to OpenCode config per the [config schema](https://opencode.ai/config.json):
+Each model in `providers.json` may declare these fields, propagated to OpenCode config:
 
-| Field | OpenCode schema | models.dev column | What it does |
-|---|---|---|---|
-| `name` | `name` | Model | Display name in model picker |
-| `reasoning` | `reasoning` | Reasoning | Whether the model supports thinking/reasoning tokens |
-| `tool_call` | `tool_call` | Tool Call | Whether the model supports tool calling |
-| `temperature` | `temperature` | Temperature | Whether the model accepts a `temperature` parameter |
-| `limit.context` | `limit.context` | Context | Maximum input context window |
-| `limit.output` | `limit.output` | Output | Maximum output tokens |
-| `modalities` | `modalities` | _(inferred)_ | Input/output types: `text`, `image`, `audio`, `video`, `pdf` |
-| `cost` | `cost` | Price | Token pricing (input, output, cache, >200k) — optional, not yet in our manifest |
-
-To verify a model's capabilities, visit `https://models.dev/providers/{provider}/` (e.g., [opencode-go](https://models.dev/providers/opencode-go/)).
-
-### Strategy
-
-Pool multiple $1–15/month API subscription plans (Command Code GO, OpenCode Go, etc.). Route through 9Router with `fill_first` to keep KV caches warm for cache-read discounts. When one account's quota exhausts, fall back to the next. Net result: production-quality AI coding at a fraction of direct API pricing.
-
-Fusion models (e.g., `deepseek-v4-pro-fusion`) let text-only models gain vision capability through the router: 9Router routes image requests to a vision-capable backend while keeping text requests on the primary model. Use them as drop-in replacements — same model, with image support added.
-
-### Quick start
+| Field | What it does |
+|---|---|
+| `name` | Display name in model picker |
+| `reasoning` | Whether the model supports thinking/reasoning tokens |
+| `tool_call` | Whether the model supports tool calling |
+| `temperature` | Whether the model accepts a `temperature` parameter |
+| `limit.context` | Maximum input context window |
+| `limit.output` | Maximum output tokens |
+| `modalities` | Input/output types: `text`, `image`, `audio`, `video`, `pdf` |
 
 ```bash
 make providers   # sync providers.json → OpenCode config
