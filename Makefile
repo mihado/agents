@@ -1,48 +1,74 @@
-.PHONY: install setup check test vendor vendor-review vendor-audit mcp providers help
+.PHONY: install setup check test typecheck lint vendor vendor-review vendor-audit vendor-accept mcp providers help clean
 
 .DEFAULT_GOAL := help
 
-help:
-	@echo "make install       Install everything (symlinks, MCP, providers, Python tooling)"
-	@echo "make setup         Set up Python venv (skillspector, etc.) via uv"
-	@echo "make check         Run machine integrity checks (doctor, MCP, providers, vendor)"
-	@echo "make test          Run tests"
-	@echo "make vendor        Fetch vendored skills, then run vendor-review"
-	@echo "make vendor-review Advisory scan of vendored skill diffs for injection/exec risk"
-	@echo "make vendor-audit  Audit entire live skill tree for injection/exec risk patterns"
-	@echo "make mcp           Sync MCP configuration"
-	@echo "make providers     Sync OpenCode provider configuration"
+BUILD_STAMP := dist/.build-stamp
+TS_SOURCES := $(shell find src -name '*.ts' -print)
+BUILD_INPUTS := $(TS_SOURCES) tsconfig.json package.json pnpm-lock.yaml
 
-install:
-	./scripts/link
+help:
+	@echo "make install        Install everything (symlinks, MCP, providers, Python tooling)"
+	@echo "make setup          Set up Python venv (skillspector, etc.) via uv"
+	@echo "make check          Run machine integrity checks (doctor, MCP, providers, vendor)"
+	@echo "make build          Build TypeScript sources to dist/"
+	@echo "make clean          Remove build artifacts under dist/"
+	@echo "make typecheck      Type-check TypeScript sources (no emit)"
+	@echo "make lint           Lint all source files"
+	@echo "make test           Run tests"
+	@echo "make vendor         Fetch vendored skills, then run vendor-review"
+	@echo "make vendor-review  Advisory scan of vendored skill diffs"
+	@echo "make vendor-audit   Audit entire live skill tree (regex + skillspector)"
+	@echo "make vendor-accept  Bless current findings into both baselines"
+	@echo "make mcp            Sync MCP configuration"
+	@echo "make providers      Sync OpenCode provider configuration"
+
+install: build
+	node dist/cli/link.js
 	$(MAKE) setup
 	$(MAKE) mcp
-	$(MAKE) providers
 
 setup:
 	uv sync
 
-check:
-	./scripts/doctor
-	./scripts/mcp --check
-	./scripts/opencode-providers --check
-	./scripts/vendor --check
+$(BUILD_STAMP): $(BUILD_INPUTS)
+	pnpm build
+	@mkdir -p dist
+	@touch $(BUILD_STAMP)
 
-test:
+build: $(BUILD_STAMP)
+
+clean:
+	rm -rf dist
+
+typecheck:
+	pnpm typecheck
+
+lint:
+	pnpm lint
+
+check: build
+	node dist/cli/doctor.js
+	node dist/cli/mcp.js --check
+	node dist/cli/vendor.js --check
+
+test: build
 	pnpm test
 
-vendor:
-	./scripts/vendor --fetch
-	./scripts/vendor-review
+vendor: build
+	node dist/cli/vendor.js --fetch
+	node dist/cli/vendor-review.js
 
-vendor-review:
-	./scripts/vendor-review
+vendor-review: build
+	node dist/cli/vendor-review.js
 
-vendor-audit:
-	./scripts/vendor-audit
+vendor-audit: build
+	node dist/cli/vendor-audit.js --skillspector
 
-mcp:
-	./scripts/mcp --install
+vendor-accept: build
+	node dist/cli/vendor-audit.js --accept
 
-providers:
-	./scripts/opencode-providers --install
+mcp: build
+	node dist/cli/mcp.js --install
+
+providers: build
+	node dist/cli/opencode-providers.js --install

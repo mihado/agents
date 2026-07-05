@@ -26,30 +26,19 @@ CLAUDE.md                  Claude wrapper around AGENTS.md
   skills/business/         business and operations skills
   skills/calibrated/minh/  skills containing Minh-calibrated context
   licenses/                upstream license notices
-scripts/
-  link                     symlinks instructions and skills into Claude, Codex, and ~/.agents (universal)
-  doctor                   checks installation and integrity
-  mcp                      installs and verifies baseline MCP servers
-  vendor                   fetches and verifies vendored skills
-  vendor-review            diff-based advisory scan (after fetch, before commit)
-  vendor-audit             full-tree audit of all live skills
-  opencode-providers       syncs providers.json → OpenCode provider config
-  lib/
-    patterns.js            shared injection/exec-risk pattern definitions
-    scanner.js             scanLines, scanFile, fingerprint, walk
-    baseline.js            read/write/merge baseline (fingerprint ledger)
-    skillspector.js        resolve and run skillspector from venv
-    opencode-config.js     shared OpenCode config I/O
+src/
+  cli/                     thin CLI entrypoints (link, doctor, mcp, vendor, etc.)
+  core/                    shared infrastructure (commands, paths, reporter)
+  providers/               provider modules + shared utilities
+  skills/                  inventory, integrity, ingest, review subdomains
+dist/                      compiled output (gitignored)
+config/
+  providers/               mcp.json, opencode.json
+  skills/                  manifest.json, lock.json, semgrep.yml
 pyproject.toml             uv project: pins skillspector and Python tooling dependencies
 uv.lock                    locked dependency graph (committed, reproducible installs)
 .python-version            Python version pin (3.12)
 Makefile                   convenience targets for install, setup, check, test
-mcp.json                   baseline MCP server definitions
-providers.json             AI provider manifest (models, limits, reasoning flags)
-skills.json                selected skills and their upstream sources
-skills.lock                resolved commits, provenance, and content hashes
-.vendor-review-baseline.json  vendor-review findings accepted as reviewed, keyed by fingerprint
-LICENSE                    AGPL-3.0
 ```
 
 ## Install
@@ -63,7 +52,7 @@ make install
 make check
 ```
 
-`make install` runs the link script (Claude/Codex/universal symlinks), sets up the Python venv (`uv sync` — installs skillspector and other tooling pinned in `pyproject.toml`), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
+`make install` builds TypeScript sources, runs the link script (Claude/Codex/universal symlinks), sets up the Python venv (`uv sync` — installs skillspector and other tooling pinned in `pyproject.toml`), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
 
 To run individual steps:
 
@@ -95,19 +84,19 @@ Each entry is linked individually. Existing unrelated skills survive. A file, di
 
 ## Baseline MCP
 
-`mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
+`config/providers/mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
 
 ```bash
-./scripts/mcp --install   # install
-./scripts/mcp --check     # verify without changing anything
-# or: make mcp
+make mcp            # install all MCP config (dist/ is built automatically)
+make check          # verify without changing anything
 ```
 
-Environment variable names may be documented in `mcp.json`; values stay in the machine environment and are never stored here.
+Environment variable names may be documented in `config/providers/mcp.json`; values stay in the machine environment and are never stored here.
+
 
 ## Vendored Skills
 
-Skills are copied unchanged from upstream repositories declared in `skills.json`:
+Skills are copied unchanged from upstream repositories declared in `config/skills/manifest.json`:
 
 - [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
 - [mattpocock/skills](https://github.com/mattpocock/skills)
@@ -119,30 +108,24 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 - [lguz/humanize-writing-skill][https://github.com/lguz/humanize-writing-skill]
 
 ```bash
-./scripts/vendor --fetch                    # fetch all declared skills and regenerate skills.lock
-./scripts/vendor --check                    # verify hashes offline without fetching
-./scripts/vendor-review                     # advisory scan of the fetched diff for injection/exec risk
-./scripts/vendor-review --accept            # mark current findings as reviewed (silences future scans)
-./scripts/vendor-review --show-suppressed   # also list baseline-accepted findings
-./scripts/vendor-review --skillspector      # also run skillspector on changed skill dirs
-./scripts/vendor-audit                      # audit entire live skill tree (all patterns, all skills)
-./scripts/vendor-audit --json               # output findings as JSON (for agent review)
-./scripts/vendor-audit --skillspector       # also run skillspector on all skill dirs
-# or: make vendor                           # runs --fetch then vendor-review
-# or: make vendor-audit                     # runs vendor-audit
+make vendor       # fetch all declared skills, regenerate lock, then run vendor-review
+make check        # verify hashes offline without fetching (included in make check)
+make vendor-review          # advisory scan of the fetched diff for injection/exec risk
+make vendor-accept          # mark current findings as reviewed (silences future scans)
+make vendor-audit           # audit entire live skill tree (regex + skillspector)
 ```
 
-`scripts/vendor` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
+The vendor tool proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
 
-`scripts/vendor-review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (instruction overrides, "don't tell the user," credential/secret access, exfiltration phrasing) and exec/shell risk in scripts (`curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`). Findings are fingerprinted and filtered against `.vendor-review-baseline.json` (committed) so only genuinely new hits surface.
+`vendor-review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (custom regexes for instruction overrides, concealment, credential/secret access, exfiltration phrasing) and code-execution risk in scripts (Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic env access). Findings are fingerprinted and filtered against the vendor-review baseline so only genuinely new hits surface.
 
-`scripts/vendor-audit` walks the entire live skill tree — same patterns, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. With `--json`, produces structured output suitable for programmatic analysis. With `--skillspector`, also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+`vendor-audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
 
-Both scripts share patterns and utilities from `scripts/lib/` (patterns, scanner, baseline, skillspector). [`skillspector`](https://github.com/NVIDIA/skillspector) is installed in the repo-local venv via `uv sync`, pinned to a specific commit in `pyproject.toml`. No skill content leaves the machine.
+Both tools share patterns and utilities from `src/skills/review/`. [`semgrep`](https://semgrep.dev/) and [`skillspector`](https://github.com/NVIDIA/skillspector) are installed in the repo-local venv via `uv sync`. No skill content leaves the machine.
 
 This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
 
-After fetching, review the Git diff and `scripts/vendor-review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
+After fetching, review the Git diff and `vendor-review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `config/skills/manifest.json`.
 
 Skill directory names must be globally unique across all installed repositories.
 
@@ -164,11 +147,10 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ## Diagnostics
 
 ```bash
-make check        # full suite
-./scripts/doctor  # doctor only
+make check            # full suite: doctor + MCP + providers + vendor integrity
 ```
 
-`make check` runs doctor (Claude/Codex/Kiro symlinks), MCP config verification (Claude/Codex) and OpenCode remote config, provider config verification (OpenCode), and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+`make check` runs doctor (symlink validation for all providers), MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
 
 ## Provider Routing
 
@@ -180,13 +162,13 @@ Your CLI tool ──► OpenCode config ──► 9Router ──► provider A
                                                   └─► provider C
 ```
 
-- **`providers.json`** — manifest of providers and models. Each provider declares its base URL, API key env var, and models with reasoning, limit, modalities, and capability metadata. Model metadata is sourced from [models.dev](https://models.dev).
-- **`scripts/opencode-providers`** — syncs `providers.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Run `--install` to write, `--check` to verify. Propagates `reasoning`, `limit`, `modalities`, `tool_call`, `temperature`, and `apiKey` fields.
+- **`config/providers/opencode.json`** — manifest of providers and models. Each provider declares its base URL, API key env var, and models with reasoning, limit, modalities, and capability metadata. Model metadata is sourced from [models.dev](https://models.dev).
+- **`make providers`** — syncs `config/providers/opencode.json` → OpenCode's `~/.config/opencode/opencode.jsonc`. Propagates `reasoning`, `limit`, `modalities`, `tool_call`, `temperature`, and `apiKey` fields.
 - **Fusion models** (e.g., `deepseek-v4-pro-fusion`) let text-only models gain vision capability through the router: image requests route to a vision-capable backend while text stays on the primary model. Drop-in replacements.
 
 ### Metadata reference
 
-Each model in `providers.json` may declare these fields, propagated to OpenCode config:
+Each model in `config/providers/opencode.json` may declare these fields, propagated to OpenCode config:
 
 | Field | What it does |
 |---|---|
@@ -199,7 +181,7 @@ Each model in `providers.json` may declare these fields, propagated to OpenCode 
 | `modalities` | Input/output types: `text`, `image`, `audio`, `video`, `pdf` |
 
 ```bash
-make providers   # sync providers.json → OpenCode config
+make providers   # sync config/providers/opencode.json → OpenCode config
 make check       # verify everything
 ```
 

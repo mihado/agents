@@ -1,0 +1,331 @@
+{
+  "version": 1,
+  "sources": {
+    "addyosmani/agent-skills": {
+      "repository": "https://github.com/addyosmani/agent-skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
+    },
+    "mattpocock/skills": {
+      "repository": "https://github.com/mattpocock/skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
+    },
+    "wondelai/skills": {
+      "repository": "https://github.com/wondelai/skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
+    },
+    "shadcn/improve": {
+      "repository": "https://github.com/shadcn/improve.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE.md"
+      }
+    },
+    "nutlope/hallmark": {
+      "repository": "https://github.com/Nutlope/hallmark.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
+    },
+    "pbakaus/impeccable": {
+      "repository": "https://github.com/pbakaus/impeccable.git",
+      "ref": "main",
+      "license": {
+        "name": "Apache-2.0",
+        "path": "LICENSE"
+      }
+    },
+    "tw93/kami": {
+      "repository": "https://github.com/tw93/Kami.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "plugins/kami/skills/kami/LICENSE"
+      }
+    },
+    "lguz/humanize-writing-skill": {
+      "repository": "https://github.com/lguz/humanize-writing-skill.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
+    }
+  },
+  "skills": {
+    "using-agent-skills": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/using-agent-skills",
+      "path": "skills/engineering/using-agent-skills"
+    },
+    "interview-me": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/interview-me",
+      "path": "skills/engineering/interview-me"
+    },
+    "idea-refine": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/idea-refine",
+      "path": "skills/engineering/idea-refine"
+    },
+    "api-and-interface-design": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/api-and-interface-design",
+      "path": "skills/engineering/api-and-interface-design"
+    },
+    "browser-testing-with-devtools": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/browser-testing-with-devtools",
+      "path": "skills/engineering/browser-testing-with-devtools"
+    },
+    "code-review-and-quality": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/code-review-and-quality",
+      "path": "skills/engineering/code-review-and-quality"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/domain-modeling",
+      "path": "skills/engineering/domain-modeling"
+    },
+    "codebase-design": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/codebase-design",
+      "path": "skills/engineering/codebase-design"
+    },
+    "context-engineering": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/context-engineering",
+      "path": "skills/engineering/context-engineering"
+    },
+    "doubt-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/doubt-driven-development",
+      "path": "skills/engineering/doubt-driven-development"
+    },
+    "shipping-and-launch": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/shipping-and-launch",
+      "path": "skills/engineering/shipping-and-launch"
+    },
+    "observability-and-instrumentation": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/observability-and-instrumentation",
+      "path": "skills/engineering/observability-and-instrumentation"
+    },
+    "code-simplification": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/code-simplification",
+      "path": "skills/engineering/code-simplification"
+    },
+    "debugging-and-error-recovery": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/debugging-and-error-recovery",
+      "path": "skills/engineering/debugging-and-error-recovery"
+    },
+    "documentation-and-adrs": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/documentation-and-adrs",
+      "path": "skills/engineering/documentation-and-adrs"
+    },
+    "frontend-ui-engineering": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/frontend-ui-engineering",
+      "path": "skills/engineering/frontend-ui-engineering"
+    },
+    "handoff": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/handoff",
+      "path": "skills/productivity/handoff"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/improve-codebase-architecture",
+      "path": "skills/engineering/improve-codebase-architecture"
+    },
+    "incremental-implementation": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/incremental-implementation",
+      "path": "skills/engineering/incremental-implementation"
+    },
+    "performance-optimization": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/performance-optimization",
+      "path": "skills/engineering/performance-optimization"
+    },
+    "planning-and-task-breakdown": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/planning-and-task-breakdown",
+      "path": "skills/engineering/planning-and-task-breakdown"
+    },
+    "prototype": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/prototype",
+      "path": "skills/engineering/prototype"
+    },
+    "security-and-hardening": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/security-and-hardening",
+      "path": "skills/engineering/security-and-hardening"
+    },
+    "source-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/source-driven-development",
+      "path": "skills/engineering/source-driven-development"
+    },
+    "spec-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/spec-driven-development",
+      "path": "skills/engineering/spec-driven-development"
+    },
+    "teach": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/teach",
+      "path": "skills/productivity/teach"
+    },
+    "test-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/test-driven-development",
+      "path": "skills/engineering/test-driven-development"
+    },
+    "improve": {
+      "source": "shadcn/improve",
+      "srcPath": "skills/improve",
+      "path": "skills/engineering/improve"
+    },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "srcPath": "skills/hallmark",
+      "path": "skills/design/hallmark"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "srcPath": ".agents/skills/impeccable",
+      "path": "skills/design/impeccable"
+    },
+    "kami": {
+      "source": "tw93/kami",
+      "srcPath": "plugins/kami/skills/kami",
+      "path": "skills/design/kami"
+    },
+    "jobs-to-be-done": {
+      "source": "wondelai/skills",
+      "srcPath": "jobs-to-be-done",
+      "path": "skills/product/jobs-to-be-done"
+    },
+    "obviously-awesome": {
+      "source": "wondelai/skills",
+      "srcPath": "obviously-awesome",
+      "path": "skills/product/obviously-awesome"
+    },
+    "mom-test": {
+      "source": "wondelai/skills",
+      "srcPath": "mom-test",
+      "path": "skills/product/mom-test"
+    },
+    "good-strategy-bad-strategy": {
+      "source": "wondelai/skills",
+      "srcPath": "good-strategy-bad-strategy",
+      "path": "skills/product/good-strategy-bad-strategy"
+    },
+    "monetizing-innovation": {
+      "source": "wondelai/skills",
+      "srcPath": "monetizing-innovation",
+      "path": "skills/product/monetizing-innovation"
+    },
+    "hooked-ux": {
+      "source": "wondelai/skills",
+      "srcPath": "hooked-ux",
+      "path": "skills/design/hooked-ux"
+    },
+    "improve-retention": {
+      "source": "wondelai/skills",
+      "srcPath": "improve-retention",
+      "path": "skills/design/improve-retention"
+    },
+    "made-to-stick": {
+      "source": "wondelai/skills",
+      "srcPath": "made-to-stick",
+      "path": "skills/product/made-to-stick"
+    },
+    "storybrand-messaging": {
+      "source": "wondelai/skills",
+      "srcPath": "storybrand-messaging",
+      "path": "skills/product/storybrand-messaging"
+    },
+    "design-everyday-things": {
+      "source": "wondelai/skills",
+      "srcPath": "design-everyday-things",
+      "path": "skills/design/design-everyday-things"
+    },
+    "lean-analytics": {
+      "source": "wondelai/skills",
+      "srcPath": "lean-analytics",
+      "path": "skills/product/lean-analytics"
+    },
+    "refactoring-ui": {
+      "source": "wondelai/skills",
+      "srcPath": "refactoring-ui",
+      "path": "skills/design/refactoring-ui"
+    },
+    "ux-heuristics": {
+      "source": "wondelai/skills",
+      "srcPath": "ux-heuristics",
+      "path": "skills/design/ux-heuristics"
+    },
+    "microinteractions": {
+      "source": "wondelai/skills",
+      "srcPath": "microinteractions",
+      "path": "skills/design/microinteractions"
+    },
+    "web-typography": {
+      "source": "wondelai/skills",
+      "srcPath": "web-typography",
+      "path": "skills/design/web-typography"
+    },
+    "ios-hig-design": {
+      "source": "wondelai/skills",
+      "srcPath": "ios-hig-design",
+      "path": "skills/design/ios-hig-design"
+    },
+    "negotiation": {
+      "source": "wondelai/skills",
+      "srcPath": "negotiation",
+      "path": "skills/business/negotiation"
+    },
+    "traction-eos": {
+      "source": "wondelai/skills",
+      "srcPath": "traction-eos",
+      "path": "skills/business/traction-eos"
+    },
+    "team-topologies": {
+      "source": "wondelai/skills",
+      "srcPath": "team-topologies",
+      "path": "skills/business/team-topologies"
+    },
+    "high-output-management": {
+      "source": "wondelai/skills",
+      "srcPath": "high-output-management",
+      "path": "skills/business/high-output-management"
+    },
+    "humanize-writing": {
+      "source": "lguz/humanize-writing-skill",
+      "srcPath": "skills/humanize-writing",
+      "path": "skills/productivity/humanize-writing"
+    }
+  }
+}
