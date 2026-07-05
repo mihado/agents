@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { fetchSkills } from "../skills/ingest/fetch.js";
 import { promoteStagedContent } from "../skills/ingest/promote.js";
-import { removeSkillFromLock } from "./vendor-remove.js";
+import { removeSkillFromLock } from "../skills/ingest/remove.js";
 import { runVendorReview, type ReviewOptions, type ReviewOutcome } from "../skills/review/review.js";
 import { runVendorAudit, type AuditOptions, type AuditOutcome } from "../skills/review/audit.js";
 import { verifyLock } from "../skills/inventory/verify.js";
