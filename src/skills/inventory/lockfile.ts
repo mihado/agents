@@ -29,7 +29,7 @@ export interface Lock {
 function assertKeysSubset(label: string, declared: Record<string, unknown>, locked: Record<string, unknown>): void {
   for (const key of sortedKeys(locked)) {
     if (declared[key] === undefined) {
-      fail(`lock.json ${label} '${key}' is not declared in manifest.json; run \`make vendor\``);
+      fail(`lock.json ${label} '${key}' is not declared in manifest.json; run \`apm skills fetch\``);
     }
   }
 }

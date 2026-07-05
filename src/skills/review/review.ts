@@ -32,8 +32,8 @@ export type ReviewOutcome =
 function runDiffCmd(command: string, commandArgs: string[]): string {
   const result = spawnSync(command, commandArgs, { encoding: "utf8", maxBuffer: 1024 * 1024 * 64 });
   if (result.status !== 0 && result.status !== 1 && result.status !== null) {
-    console.error(`error: ${command} ${commandArgs.join(" ")} failed:\n${result.stderr}`);
-    process.exit(1);
+    const message = result.stderr?.trim() || result.error?.message || `exit code ${result.status}`;
+    throw new Error(`${command} ${commandArgs.join(" ")} failed:\n${message}`);
   }
   return result.stdout;
 }
