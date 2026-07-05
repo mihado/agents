@@ -79,18 +79,18 @@ function getStagedDiffOutput(root: string): string | null {
 
 export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
   const { root, accept, showSuppressed, withSkillspector } = opts;
-  const baselinePath = path.join(root, "config", "skills", "vendor-review-baseline.json");
+  const baselinePath = path.join(root, "config", "skills", "skills-review-baseline.json");
   const skillspectorBaselinePath = path.join(root, "config", "skills", "skillspector-baseline.yaml");
 
   const diffOutput = getStagedDiffOutput(root);
 
   if (diffOutput === null) {
-    writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
+    writeArtifact(root, "skills-review", "skills-review", [], [], []);
     return { kind: "no-stage" };
   }
 
   if (!diffOutput.trim()) {
-    writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
+    writeArtifact(root, "skills-review", "skills-review", [], [], []);
     return { kind: "no-diff" };
   }
 
@@ -115,7 +115,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
   if (accept) {
     const changedPaths = [...changedFiles.keys()];
     writeArtifact(
-      root, "vendor-review", "vendor-review --accept",
+      root, "skills-review", "skills-review --accept",
       parseSkillNames(diffOutput), allFindings, ["prose-scanner", "semgrep"], changedPaths,
     );
     writeBaseline(baselinePath, mergeBaseline(baseline, allFindings));
@@ -139,7 +139,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
     console.log(
       "Review each hit above. These are pattern matches, not proof of a problem — " +
         "vendored SKILL.md content is instructions an agent will follow, so read it as such.\n" +
-        "If reviewed and accepted, run `make vendor-accept` to silence on future scans.",
+        "If reviewed and accepted, run `apm skills accept` to silence on future scans.",
     );
   }
 
@@ -160,7 +160,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
   }
 
   writeArtifact(
-    root, "vendor-review", "vendor-review", skillNames, allFindings, reviewScanners, [...changedFiles.keys()], skillspectorResult,
+    root, "skills-review", "skills-review", skillNames, allFindings, reviewScanners, [...changedFiles.keys()], skillspectorResult,
   );
 
   return { kind: "reviewed", newFindings, suppressedCount: suppressed.length, changedSkillDirs };

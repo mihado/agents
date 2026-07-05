@@ -10,7 +10,7 @@ import { readJson } from "../../core/commands.js";
 import { removeSkillFromLock } from "./remove.js";
 
 function makeTempRoot(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "vendor-e2e-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "skills-e2e-"));
 }
 
 function writeJson(filePath: string, value: unknown): void {

@@ -28,7 +28,7 @@ export function fetchSkills(root: string): void {
   const manifest = readJson<Manifest>(manifestPath);
   validateManifest(manifest);
 
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agents-vendor-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agents-skills-"));
   fs.mkdirSync(path.join(root, ".stage"), { recursive: true });
   const tempStage = fs.mkdtempSync(path.join(root, ".stage/.fetch-tmp-"));
   const nextLock: Lock = { version: 1, sources: {}, skills: {} };

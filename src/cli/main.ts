@@ -84,7 +84,7 @@ export function buildProgram(opts?: { root?: string }): Command {
       const r = root();
       const lock = promoteStagedContent(r);
       const skillNames = Object.keys(lock.skills);
-      writeArtifact(r, "vendor-accept", "vendor-accept", skillNames, [], ["promotion"], undefined);
+      writeArtifact(r, "skills-accept", "skills-accept", skillNames, [], ["promotion"], undefined);
       console.log(`\nPromoted ${skillNames.length} skills to live tree.`);
     });
 
