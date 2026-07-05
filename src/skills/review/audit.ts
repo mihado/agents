@@ -103,7 +103,7 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
     });
 
     if (!skillspectorResult) {
-      console.log("\nskillspector not available. Run `make setup` to install.");
+      console.log("\nskillspector not available. Run `make deps` to install.");
     } else {
       process.stdout.write("\r" + " ".repeat(60) + "\r");
       console.log(

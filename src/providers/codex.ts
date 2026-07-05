@@ -42,12 +42,13 @@ export function resolveCodex(): string | null {
   );
 }
 
-export function installCodexMcp(codexPath: string, name: string, command: string, args: string[]): void {
+export function installCodexMcp(codexPath: string, name: string, command: string, args: string[]): boolean {
   const result = spawnSync(codexPath, ["mcp", "add", name, "--", command, ...args], { encoding: "utf8" });
   if (result.status !== 0) {
-    console.error(`error: ${codexPath} mcp add ${name} failed:\n${result.stderr.trim()}`);
+    console.error(`error   ${codexPath} mcp add ${name} failed:\n${result.stderr.trim()}`);
     process.exit(1);
   }
+  return true;
 }
 
 export function checkCodexMcp(codexPath: string, name: string, command: string, args: string[]): boolean {

@@ -31,7 +31,7 @@ export function scanCodeFiles(root: string, relFiles: string[], configPath?: str
 
   const invocation = resolveSemgrepInvocation(root);
   if (!invocation) {
-    throw new Error("semgrep not available. Run `make setup` to install.");
+    throw new Error("semgrep not available. Run `make deps` to install.");
   }
 
   const config = configPath ?? defaultSemgrepConfig(root);

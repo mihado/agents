@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { spawnSync } from "node:child_process";
+import { spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -145,6 +145,10 @@ describe("roundtrip", () => {
 
 describe("integration: scripts --check", () => {
   const providersCli = path.join(root, "dist", "cli", "opencode-providers.js");
+
+  beforeAll(() => {
+    execSync("pnpm build", { cwd: root, stdio: "pipe" });
+  });
 
   it("opencode-providers --install then --check passes", () => {
     const install = spawnSync("node", [providersCli, "--install"], { encoding: "utf8" });

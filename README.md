@@ -38,7 +38,7 @@ config/
 pyproject.toml             uv project: pins skillspector and Python tooling dependencies
 uv.lock                    locked dependency graph (committed, reproducible installs)
 .python-version            Python version pin (3.12)
-Makefile                   convenience targets for install, setup, check, test
+Makefile                   convenience targets for install, deps, check, test
 ```
 
 ## Install
@@ -52,12 +52,12 @@ make install
 make check
 ```
 
-`make install` builds TypeScript sources, runs the link script (Claude/Codex/universal symlinks), sets up the Python venv (`uv sync` — installs skillspector and other tooling pinned in `pyproject.toml`), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
+`make install` builds TypeScript sources, runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex), and writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
 
 To run individual steps:
 
 ```bash
-make setup        # set up Python venv (skillspector, etc.) via uv sync
+make deps         # set up Python venv (skillspector, semgrep) via uv sync
 make mcp          # sync MCP (Claude/Codex) and OpenCode remote config
 make providers    # sync OpenCode providers only
 make vendor       # fetch vendored skills

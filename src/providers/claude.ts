@@ -42,12 +42,15 @@ export function resolveClaude(): string | null {
   return resolveExecutable(process.env.CLAUDE_CLI_PATH, "claude");
 }
 
-export function installClaudeMcp(claudePath: string, name: string, command: string, args: string[]): void {
+export function installClaudeMcp(claudePath: string, name: string, command: string, args: string[]): boolean {
   const result = spawnSync(claudePath, ["mcp", "add", "--scope", "user", name, "--", command, ...args], { encoding: "utf8" });
   if (result.status !== 0) {
-    console.error(`error: ${claudePath} mcp add ${name} failed:\n${result.stderr.trim()}`);
+    const msg = result.stderr.trim();
+    if (msg.includes("already exists")) return false;
+    console.error(`error   ${claudePath} mcp add ${name} failed:\n${msg}`);
     process.exit(1);
   }
+  return true;
 }
 
 export function checkClaudeMcp(name: string, command: string, args: string[]): boolean {

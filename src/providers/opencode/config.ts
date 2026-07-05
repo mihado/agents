@@ -111,7 +111,7 @@ export function toOpenCodeRemote(server: McpServerDef): { type: string; url: str
 export function installOpenCodeMcp(name: string, server: McpServerDef, config: Record<string, unknown>): boolean {
   const expected = toOpenCodeRemote(server);
   if (!expected) {
-    console.error(`error: ${name} cannot be configured for OpenCode (no remote mapping)`);
+    console.error(`error   ${name} cannot be configured for OpenCode (no remote mapping)`);
     return false;
   }
 
@@ -119,13 +119,13 @@ export function installOpenCodeMcp(name: string, server: McpServerDef, config: R
   const current = mcpSection[name] as Record<string, unknown> | undefined;
 
   if (current && JSON.stringify(current) === JSON.stringify(expected)) {
-    console.log(`ok: OpenCode ${name}`);
+    console.log(`ok      OpenCode ${name}`);
     return false;
   }
 
   mcpSection[name] = expected;
   config.mcp = mcpSection;
-  console.log(`installed: OpenCode ${name}`);
+  console.log(`linked  OpenCode ${name}`);
   return true;
 }
 
@@ -238,12 +238,12 @@ export function installProviders(root: string): void {
     const expected = toOpenCodeProvider(providerId, def);
     const current = (config.provider as Record<string, unknown>)[providerId];
     if (current && JSON.stringify(current) === JSON.stringify(expected)) {
-      console.log(`ok: provider ${providerId}`);
+      console.log(`ok      provider ${providerId}`);
       continue;
     }
     (config.provider as Record<string, unknown>)[providerId] = expected;
     changed = true;
-    console.log(`installed: provider ${providerId}`);
+    console.log(`linked  provider ${providerId}`);
   }
 
   if (changed && failures === 0) {

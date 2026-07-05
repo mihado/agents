@@ -95,7 +95,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
       baselinePath: skillspectorBaselinePath,
     });
     if (!result) {
-      console.log("\nskillspector not available. Run `make setup` to install.");
+      console.log("\nskillspector not available. Run `make deps` to install.");
     } else {
       console.log(
         `\nSkillspector (${result.label}, static-only --no-llm) on ${result.results.length} changed skill(s):\n`,
