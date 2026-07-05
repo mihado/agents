@@ -13,9 +13,9 @@ afterEach(() => {
 });
 
 describe("agents CLI smoke", () => {
-  it("reports the agents name and version", () => {
+  it("reports the apm name and version", () => {
     const program = buildProgram();
-    expect(program.name()).toBe("agents");
+    expect(program.name()).toBe("apm");
     expect(program.version()).toBe("0.1.0");
   });
 
@@ -39,11 +39,11 @@ describe("agents CLI smoke", () => {
       throw new Error(`process.exit:${code ?? 0}`);
     }) as never);
 
-    expect(() => program.parse(["node", "agents", "vendor", "reject"])).toThrow(/process\.exit:1/);
+    expect(() => program.parse(["node", "apm", "vendor", "reject"])).toThrow(/process\.exit:1/);
     expect(stderrWrites.join("")).toMatch(/skill-name/);
 
     stderrWrites.length = 0;
-    expect(() => program.parse(["node", "agents", "vendor", "remove"])).toThrow(/process\.exit:1/);
+    expect(() => program.parse(["node", "apm", "vendor", "remove"])).toThrow(/process\.exit:1/);
     expect(stderrWrites.join("")).toMatch(/skill-name/);
 
     exitSpy.mockRestore();
@@ -60,7 +60,7 @@ describe("agents CLI smoke", () => {
         throw new Error(`process.exit:${code ?? 0}`);
       }) as never);
 
-      expect(() => program.parse(["node", "agents", "vendor", "reject", "skill-a"])).toThrow(/process\.exit:1/);
+      expect(() => program.parse(["node", "apm", "vendor", "reject", "skill-a"])).toThrow(/process\.exit:1/);
 
       exitSpy.mockRestore();
     } finally {

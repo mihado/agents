@@ -19,7 +19,7 @@ export function buildProgram(opts?: { root?: string }): Command {
   const program = new Command();
 
   program
-    .name("agents")
+    .name("apm")
     .description("Agent tooling for the agents repository")
     .version("0.1.0");
 
@@ -55,7 +55,7 @@ export function buildProgram(opts?: { root?: string }): Command {
       };
       const outcome: ReviewOutcome = runVendorReview(reviewOpts);
       if (outcome.kind === "no-stage") {
-        console.log("No skills in stage. Run `agents vendor fetch` to fetch skills.");
+        console.log("No skills in stage. Run `apm vendor fetch` to fetch skills.");
         process.exit(0);
       }
       if (outcome.kind === "no-diff") {
@@ -87,11 +87,11 @@ export function buildProgram(opts?: { root?: string }): Command {
       const r = root();
       const stageDir = path.join(r, ".stage/skills");
       if (!fs.existsSync(stageDir)) {
-        fail("No stage found. Run `agents vendor fetch` first.");
+        fail("No stage found. Run `apm vendor fetch` first.");
       }
       const stageLockPath = path.join(r, ".stage", "stage-lock.json");
       if (!fs.existsSync(stageLockPath)) {
-        fail("No stage-lock.json found. Run `agents vendor fetch` first.");
+        fail("No stage-lock.json found. Run `apm vendor fetch` first.");
       }
       const stageLock = readJson<Lock>(stageLockPath);
       validateStageLock(stageLock);
