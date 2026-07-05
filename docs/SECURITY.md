@@ -18,13 +18,13 @@ Examples:
 
 ## 2. Current Controls
 
-### 2.1. We verify integrity with `scripts/vendor`
+### 2.1. We verify integrity with `make vendor`
 
-`scripts/vendor` handles vendoring mechanics:
+`make vendor` handles vendoring mechanics:
 
-- fetch upstream repositories declared in `skills.json`
+- fetch upstream repositories declared in `config/skills/manifest.json`
 - copy selected skills unchanged
-- verify content against `skills.lock`
+- verify content against `config/skills/lock.json`
 - enforce path-safe extraction
 - track upstream license files
 
@@ -32,7 +32,7 @@ This proves integrity. It does not prove safety.
 
 ### 2.2. We scan skill prose with the local regex scanner
 
-`scripts/vendor-review` and `scripts/vendor-audit` use `scripts/lib/scanner.js` for prose-like files such as:
+`make vendor-review` and `make vendor-audit` use `src/skills/review/prose-scanner.ts` for prose-like files such as:
 
 - `.md`
 - `.mdx`
@@ -50,7 +50,7 @@ We keep this scanner local and simple because this is plain-text policy scanning
 
 ### 2.3. We scan code with Semgrep
 
-`scripts/vendor-review` and `scripts/vendor-audit` use Semgrep for code files such as:
+`make vendor-review` and `make vendor-audit` use Semgrep for code files such as:
 
 - `.sh`
 - `.py`
@@ -59,7 +59,7 @@ We keep this scanner local and simple because this is plain-text policy scanning
 - `.cjs`
 - `.ts`
 
-The Semgrep rules live in `scripts/semgrep/vendor-risk.yml`.
+The Semgrep rules live in `config/skills/semgrep.yml`.
 
 The current rules look for:
 
@@ -78,7 +78,7 @@ We use Semgrep here because code scanning should rely on a maintained scanner an
 
 ### 2.4. We use SkillSpector as a secondary scanner
 
-`scripts/vendor-review --skillspector` and `scripts/vendor-audit --skillspector` run NVIDIA SkillSpector.
+`make vendor-review --skillspector` and `make vendor-audit --skillspector` run NVIDIA SkillSpector.
 
 We use it for an extra static-analysis pass. We do not use it as the primary source of truth.
 
@@ -90,39 +90,42 @@ Reason:
 
 ## 3. Command Roles
 
-### 3.1. `scripts/vendor-review`
+### 3.1. `make vendor-review`
 
 Purpose:
 
 - scan only the current Git diff under `.agents/skills`
 - report only findings introduced by the current change
+- write structured artifact to `reports/security/vendor-review/`
 
 Behavior:
 
 - prose findings come from the local regex scanner
 - code findings come from Semgrep
-- findings are filtered against `.vendor-review-baseline.json`
+- findings are filtered against `config/skills/vendor-review-baseline.json`
 - optional SkillSpector pass can be added
+- artifact written regardless of whether findings exist
 
-### 3.2. `scripts/vendor-audit`
+### 3.2. `make vendor-audit`
 
 Purpose:
 
 - scan the entire live skill tree
 - produce a full current finding set
+- write structured artifact to `reports/security/vendor-audit/`
 
 Behavior:
 
 - prose findings come from the local regex scanner
 - code findings come from Semgrep
-- optional SkillSpector pass can be added
-- `--json` produces structured output for review tooling
+- optional SkillSpector pass recommended (`--skillspector`)
+- artifact captures scanners, findings, summary by skill, and SkillSpector issue details
 
 ## 4. Baselines
 
 We keep separate baselines for separate scanners.
 
-### 4.1. `.vendor-review-baseline.json`
+### 4.1. `config/skills/vendor-review-baseline.json`
 
 Used by the local review pipeline.
 
@@ -134,15 +137,15 @@ Fingerprints are based on:
 - label
 - snippet
 
-### 4.2. `.skillspector-baseline.yaml`
+### 4.2. `config/skills/skillspector-baseline.yaml`
 
 Used by SkillSpector.
 
-Generated during `scripts/vendor-audit --accept` and passed back into later SkillSpector scans.
+Generated during `make vendor-accept` and passed back into later SkillSpector scans.
 
 ## 5. Output Normalization
 
-Semgrep output is normalized in `scripts/lib/semgrep.js` into the same internal finding shape used by the rest of the review pipeline:
+Semgrep output is normalized in `src/skills/review/semgrep.ts` into the same internal finding shape used by the rest of the review pipeline:
 
 - `file`
 - `label`
@@ -161,22 +164,12 @@ stable even if the code-scanning engine changes.
 ## 6. Commands
 
 ```bash
-./scripts/vendor --fetch
-./scripts/vendor --check
-
-./scripts/vendor-review
-./scripts/vendor-review --accept
-./scripts/vendor-review --show-suppressed
-./scripts/vendor-review --skillspector
-
-./scripts/vendor-audit
-./scripts/vendor-audit --json
-./scripts/vendor-audit --skillspector
-./scripts/vendor-audit --accept
-
-make vendor
-make vendor-audit
-make vendor-accept
+make vendor             # fetch + review
+make vendor-review      # scan staged diff, write artifact
+make vendor-audit       # scan live tree, write artifact
+make vendor-audit --skillspector  # including SkillSpector
+make vendor-accept      # accept findings into baseline (prose + Semgrep only)
+make check              # verify lock integrity + MCP + providers
 ```
 
 ## 7. Current Limits
@@ -203,7 +196,7 @@ Work still to be done:
 
 Reference plan:
 
-- `docs/plans/2026-07-04-vendor-staged-review.md`
+- `docs/plans/2026-07-05-skill-lifecycle-implementation.md`
 
 ### 8.1. Staged cache boundary
 
