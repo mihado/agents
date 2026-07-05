@@ -141,7 +141,7 @@ Fingerprints are based on:
 
 Used by SkillSpector.
 
-Generated during `make vendor-accept` and passed back into later SkillSpector scans.
+This baseline is optional scanner-noise suppression state. It is not part of the core staged promotion path.
 
 ## 5. Output Normalization
 
@@ -167,7 +167,7 @@ stable even if the code-scanning engine changes.
 make vendor             # fetch skills to stage
 make vendor-review      # scan staged diff (with SkillSpector), write artifact
 make vendor-audit       # scan live tree, write artifact (with SkillSpector)
-make vendor-accept      # accept findings into baseline (prose + Semgrep only)
+make vendor-accept      # promote remaining staged skills to live and update lock
 make check              # verify lock integrity + MCP + providers
 ```
 
@@ -178,15 +178,15 @@ make check              # verify lock integrity + MCP + providers
 - no replacement for reading the actual diff
 - no claim that all prompt-injection patterns are covered
 - no claim that all code-execution paths are covered
-- staged cache boundary exists but accept/reject flow is not yet implemented
+- staged cache boundary exists but reject/remove flow is still being finished
 
-Today, vendored content is written to `.stage/skills` before review, but cannot yet be promoted to `.agents/skills`.
+Today, vendored content is written to `.stage/skills` before review. The intended workflow is review, reject unwanted staged skills, then accept whatever remains.
 
 ## 8. Improvements In Progress
 
 Work still to be done:
 
-- accept/reject flow to promote staged content to live `.agents/skills` tree
+- reject/remove flow and exact post-rejection promotion semantics
 - optional isolated staging evaluation for checkout, scanning, and review
 - filesystem-attribute checks for vendored content
 - persistence-mechanism checks such as shell profile or cron writes

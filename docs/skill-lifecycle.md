@@ -14,7 +14,7 @@ This lifecycle covers vendored skill content:
 
 - skill prose such as `SKILL.md`
 - vendored code shipped with a skill
-- manifests, locks, review artifacts, and accepted baselines associated with that content
+- manifests, locks, review artifacts, and any optional noise-suppression baselines associated with that content
 
 It does not define the internal TypeScript module layout. That belongs in implementation plans.
 
@@ -53,13 +53,13 @@ The active `.agents/skills` content that local agent tooling can load.
 A structured record of findings, diffs, and review metadata produced from staged or live content so a human or another agent can evaluate it.
 
 **Baseline**
-A record of findings that were reviewed and accepted as known. Baselines suppress repeated scanner noise. They are not review artifacts.
+An optional record of findings that were reviewed and accepted as known noise. Baselines suppress repeated scanner noise. They are not review artifacts and they are not provenance.
 
 **Accept**
 Promote a staged skill revision into the live tree and update the lock accordingly.
 
 **Reject**
-Decline to promote a staged skill revision into the live tree. Rejection applies to the fetched revision that was reviewed, not to the skill forever.
+Decline to promote a staged skill revision into the live tree by removing it from stage. Rejection applies to the fetched revision that was reviewed, not to the skill forever.
 
 **Remove**
 Delete already-live accepted content from the live tree and update the lock accordingly.
@@ -95,7 +95,7 @@ The staged revision has review artifacts and is waiting for judgment.
 The staged revision has been promoted into `.agents/skills` and recorded in `config/skills/lock.json`.
 
 5. **Rejected**
-The staged revision was reviewed and not promoted.
+The staged revision was reviewed and removed from stage, so it cannot be promoted by a later batch accept.
 
 6. **Removed**
 Previously accepted live content was deleted from the live tree and removed from the lock.
@@ -147,7 +147,7 @@ The exact staging path is an implementation detail, but the behavioral rule is f
 
 Review artifacts capture what needs judgment now.
 
-Baselines capture findings that were already judged acceptable.
+Baselines, if used at all, capture findings that were already judged acceptable scanner noise.
 
 These are different records with different jobs.
 
@@ -182,7 +182,7 @@ reports/security/
 
 These artifacts may be committed or left untracked. That is a workflow decision, not a lifecycle invariant.
 
-What matters is that the lifecycle has an intermediate review object between scanning and baseline acceptance.
+What matters is that the lifecycle has an intermediate review object between scanning and any later baseline acceptance.
 
 Each artifact should include enough information to support review without re-running the whole pipeline blindly. At minimum:
 
@@ -210,8 +210,8 @@ It answers:
 
 Review may lead to:
 
-- accept
-- reject
+- reject specific staged skills so they are removed from stage
+- accept the remaining staged skills
 
 ### Audit
 
@@ -226,7 +226,7 @@ Audit may lead to:
 
 - follow-up review
 - remove
-- baseline updates for accepted known findings
+- optional baseline updates for accepted known findings
 
 Audit does not lead directly to accept, because accept is only meaningful for staged candidate content.
 
@@ -238,22 +238,23 @@ These actions are distinct.
 
 Accept means:
 
-- staged revision is approved
-- content is copied into the live tree
-- `config/skills/lock.json` is updated to describe that live revision
-- any associated review decision can be recorded
+- the remaining staged revisions are approved
+- content still present in stage is copied into the live tree
+- `config/skills/lock.json` is updated to describe exactly what was promoted
+- the `vendor-review` artifact remains the review record for that batch
 
 ### Reject
 
 Reject means:
 
 - staged revision is not approved
+- that staged skill is removed from stage and from the staged metadata used by accept
 - content is not copied into the live tree
 - the live tree and lock remain unchanged for that skill
 
-In the lightweight model, reject does not need a persistent rejection ledger. It may simply leave the revision unapplied and allow a future fetch to present a newer revision for review again.
+In the lightweight model, reject does not need a persistent rejection ledger. The combination of the `vendor-review` artifact and the absence of that skill from stage is enough.
 
-If repeated noise becomes a problem, a later enhancement can record rejected revisions explicitly.
+This creates an elimination workflow: review the staged batch, reject anything that should not go live, then accept whatever remains.
 
 ### Remove
 
@@ -292,7 +293,7 @@ Machine-generated records that are still part of the repository's accepted state
 Examples:
 
 - `config/skills/lock.json`
-- accepted baselines if the team chooses to track them
+- accepted baselines if the team chooses to track them for scanner-noise suppression
 
 ### Generated review artifacts
 
@@ -311,11 +312,13 @@ These invariants should hold regardless of implementation detail.
 
 1. Staged content is never automatically live.
 2. The lock describes only live accepted content.
-3. Review artifacts exist before baseline acceptance.
-4. Baseline acceptance is a post-review suppression step, not a substitute for review.
+3. Review artifacts exist before any baseline acceptance.
+4. Baseline acceptance, if used, is a post-review scanner-noise suppression step, not a substitute for review.
 5. Audit is read-only with respect to staged promotion.
 6. Accept and reject apply to staged revisions.
 7. Remove applies to live content.
+8. Reject must update both staged files and the staged metadata that accept consumes.
+9. Accept promotes whatever remains in stage, not whatever was originally fetched before rejection.
 
 ## Current Gap
 
