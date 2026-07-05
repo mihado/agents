@@ -26,13 +26,11 @@ export function fetchSkills(root: string): void {
   validateManifest(manifest);
 
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agents-vendor-"));
+  fs.mkdirSync(path.join(root, ".stage"), { recursive: true });
+  const tempStage = fs.mkdtempSync(path.join(root, ".stage/.fetch-tmp-"));
   let skillsCount = 0;
 
   try {
-    // Clean stage directory
-    fs.rmSync(stageDir, { recursive: true, force: true });
-    fs.mkdirSync(stageDir, { recursive: true });
-
     for (const sourceName of sortedKeys(manifest.sources)) {
       const source = manifest.sources[sourceName];
       const cloneDir = path.join(tempRoot, "sources", safeName(sourceName));
@@ -49,16 +47,22 @@ export function fetchSkills(root: string): void {
           fail(`missing SKILL.md at ${sourceName}:${skill.srcPath}`);
         }
 
-        copyPath(upstream, path.join(stageDir, skillName));
+        const relPath = skill.path.replace(/^skills\//, "");
+        copyPath(upstream, path.join(tempStage, relPath));
         skillsCount++;
       }
 
       console.log(`${sourceName}: ${commit}`);
     }
 
+    fs.rmSync(stageDir, { recursive: true, force: true });
+    fs.renameSync(tempStage, stageDir);
     console.log(`Fetched ${skillsCount} skills to stage.`);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
+    if (fs.existsSync(tempStage)) {
+      fs.rmSync(tempStage, { recursive: true, force: true });
+    }
   }
 }
 

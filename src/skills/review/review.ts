@@ -45,37 +45,37 @@ function getStagedDiffOutput(root: string): string | null {
   const stageDir = path.join(root, ".stage/skills");
   if (!fs.existsSync(stageDir)) return null;
 
-  const skillNames = fs.readdirSync(stageDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
-
-  if (skillNames.length === 0) return null;
-
   const parts: string[] = [];
 
-  for (const name of skillNames) {
-    const stagePath = `.stage/skills/${name}`;
-    const livePath = `.agents/skills/${name}`;
-    const liveExists = fs.existsSync(path.join(root, livePath));
+  for (const catEntry of fs.readdirSync(stageDir, { withFileTypes: true })) {
+    if (!catEntry.isDirectory()) continue;
+    const catPath = path.join(stageDir, catEntry.name);
+    for (const skillEntry of fs.readdirSync(catPath, { withFileTypes: true })) {
+      if (!skillEntry.isDirectory()) continue;
+      const relPath = `${catEntry.name}/${skillEntry.name}`;
+      const stageTarget = `.stage/skills/${relPath}`;
+      const liveTarget = `.agents/skills/${relPath}`;
 
-    if (liveExists) {
-      parts.push(runDiffCmd("git", [
-        "-C", root, "diff", "--no-color", "--unified=0", "--no-index",
-        livePath, stagePath,
-      ]));
-    } else {
-      const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), "agents-empty-"));
-      try {
+      if (fs.existsSync(path.join(root, liveTarget))) {
         parts.push(runDiffCmd("git", [
           "-C", root, "diff", "--no-color", "--unified=0", "--no-index",
-          emptyDir, stagePath,
+          liveTarget, stageTarget,
         ]));
-      } finally {
-        fs.rmSync(emptyDir, { recursive: true, force: true });
+      } else {
+        const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), "agents-empty-"));
+        try {
+          parts.push(runDiffCmd("git", [
+            "-C", root, "diff", "--no-color", "--unified=0", "--no-index",
+            emptyDir, stageTarget,
+          ]));
+        } finally {
+          fs.rmSync(emptyDir, { recursive: true, force: true });
+        }
       }
     }
   }
 
+  if (parts.length === 0) return null;
   const combined = parts.join("");
   return combined.replace(/^\+\+\+ b\/\.stage\/skills\//gm, "+++ b/.agents/skills/");
 }
