@@ -4,6 +4,7 @@ import { readBaseline, writeBaseline, mergeBaseline } from "./baseline.js";
 import { CODE_EXTS } from "./findings.js";
 import { scanCodeFiles } from "./semgrep.js";
 import { listAllSkillDirs, runSkillspector, generateBaseline } from "./skillspector.js";
+import { writeArtifact } from "./artifact.js";
 import type { Finding } from "../types.js";
 import type { SkillspectorOutput } from "./skillspector.js";
 
@@ -42,6 +43,7 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
   findings.push(...scanCodeFiles(root, codeFiles));
 
   if (accept) {
+    writeArtifact(root, "vendor-audit", "vendor-audit --accept", auditSkillNames(findings), findings, ["prose-scanner", "semgrep"]);
     const baseline = readBaseline(baselinePath);
     writeBaseline(baselinePath, mergeBaseline(baseline, findings));
     console.log(`Accepted ${findings.length} finding(s) into ${path.relative(root, baselinePath)}.`);
@@ -56,6 +58,8 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
   }
 
   if (jsonOutput) {
+    const auditScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
+    writeArtifact(root, "vendor-audit", "vendor-audit --json", auditSkillNames(findings), findings, auditScanners);
     const output: Record<string, unknown> = { findings, count: findings.length };
     if (withSkillspector) {
       const skillDirs = listAllSkillDirs(root);
@@ -121,5 +125,17 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
     }
   }
 
+  const auditScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
+  writeArtifact(root, "vendor-audit", "vendor-audit", auditSkillNames(findings), findings, auditScanners, undefined, skillspectorResult);
+
   return { findings, skillspector: skillspectorResult };
+}
+
+function auditSkillNames(findings: Finding[]): string[] {
+  const names = new Set<string>();
+  for (const f of findings) {
+    const parts = f.file.replace(/^\.agents\/skills\//, "").split("/");
+    if (parts.length >= 2) names.add(parts.slice(0, 2).join("/"));
+  }
+  return [...names].sort();
 }

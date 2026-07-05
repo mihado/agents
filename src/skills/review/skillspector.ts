@@ -3,11 +3,28 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { SemgrepInvocation } from "./semgrep.js";
 
+export interface SkillspectorIssue {
+  id: string;
+  category: string;
+  severity: string;
+  confidence?: number;
+  location?: {
+    file?: string;
+    start_line?: number;
+    end_line?: number;
+  };
+  explanation?: string;
+  remediation?: string;
+  code_snippet?: string;
+  tags?: string[];
+}
+
 export interface SkillspectorScanResult {
   dir: string;
   score?: number;
   severity?: string;
   issueCount?: number;
+  issues?: SkillspectorIssue[];
   error?: string;
 }
 
@@ -73,6 +90,7 @@ export function runSkillspector(
         score,
         severity,
         issueCount: report.issues?.length ?? 0,
+        issues: report.issues ?? [],
       });
     } catch {
       results.push({ dir: relDir, error: "could not parse output" });

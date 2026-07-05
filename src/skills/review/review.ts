@@ -4,6 +4,8 @@ import { parseDiff } from "./diff.js";
 import { readBaseline, writeBaseline, mergeBaseline, isSuppressed } from "./baseline.js";
 import { scanCodeFiles } from "./semgrep.js";
 import { runSkillspector } from "./skillspector.js";
+import type { SkillspectorOutput } from "./skillspector.js";
+import { writeArtifact } from "./artifact.js";
 import type { Finding } from "../types.js";
 
 export interface ReviewOptions {
@@ -41,6 +43,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
     console.log(
       "No staged/unstaged changes under .agents/skills. Run after `make vendor` and before committing.",
     );
+    writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
     process.exit(0);
   }
 
@@ -55,6 +58,11 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
   const baseline = readBaseline(baselinePath);
 
   if (accept) {
+    const changedPaths = [...changedFiles.keys()];
+    writeArtifact(
+      root, "vendor-review", "vendor-review --accept",
+      parseSkillNames(diffOutput), allFindings, ["prose-scanner", "semgrep"], changedPaths,
+    );
     writeBaseline(baselinePath, mergeBaseline(baseline, allFindings));
     console.log(`Accepted ${allFindings.length} finding(s) into ${path.relative(root, baselinePath)}.`);
     process.exit(0);
@@ -89,18 +97,21 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
   }
 
   const changedSkillDirs = findChangedSkillDirs(diffOutput);
+  const skillNames = parseSkillNames(diffOutput);
+  const reviewScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
 
+  let skillspectorResult: SkillspectorOutput | null = null;
   if (withSkillspector && changedSkillDirs.length > 0) {
-    const result = runSkillspector(root, changedSkillDirs, {
+    skillspectorResult = runSkillspector(root, changedSkillDirs, {
       baselinePath: skillspectorBaselinePath,
     });
-    if (!result) {
+    if (!skillspectorResult) {
       console.log("\nskillspector not available. Run `make deps` to install.");
     } else {
       console.log(
-        `\nSkillspector (${result.label}, static-only --no-llm) on ${result.results.length} changed skill(s):\n`,
+        `\nSkillspector (${skillspectorResult.label}, static-only --no-llm) on ${skillspectorResult.results.length} changed skill(s):\n`,
       );
-      for (const r of result.results) {
+      for (const r of skillspectorResult.results) {
         if (r.error) {
           console.log(`  ${path.basename(r.dir).padEnd(35)} error: ${r.error}`);
         } else {
@@ -112,7 +123,16 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
     }
   }
 
+  writeArtifact(
+    root, "vendor-review", "vendor-review", skillNames, allFindings, reviewScanners, [...changedFiles.keys()], skillspectorResult,
+  );
+
   return { newFindings, suppressedCount: suppressed.length, changedSkillDirs };
+}
+
+function parseSkillNames(diffOutput: string): string[] {
+  const skillDirs = findChangedSkillDirs(diffOutput);
+  return skillDirs.map((d) => d.replace(/^\.agents\/skills\//, ""));
 }
 
 function findChangedSkillDirs(diffOutput: string): string[] {
