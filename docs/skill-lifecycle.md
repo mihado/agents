@@ -176,8 +176,8 @@ Suggested home:
 
 ```text
 reports/security/
-  vendor-review/
-  vendor-audit/
+  skills-review/
+  skills-audit/
 ```
 
 These artifacts may be committed or left untracked. That is a workflow decision, not a lifecycle invariant.
@@ -241,7 +241,7 @@ Accept means:
 - the remaining staged revisions are approved
 - content still present in stage is copied into the live tree
 - `config/skills/lock.json` is updated to describe exactly what was promoted
-- the `vendor-review` artifact remains the review record for that batch
+- the `skills-review` artifact remains the review record for that batch
 
 ### Reject
 
@@ -252,7 +252,7 @@ Reject means:
 - content is not copied into the live tree
 - the live tree and lock remain unchanged for that skill
 
-In the lightweight model, reject does not need a persistent rejection ledger. The combination of the `vendor-review` artifact and the absence of that skill from stage is enough.
+In the lightweight model, reject does not need a persistent rejection ledger. The combination of the `skills-review` artifact and the absence of that skill from stage is enough.
 
 This creates an elimination workflow: review the staged batch, reject anything that should not go live, then accept whatever remains.
 
@@ -301,8 +301,8 @@ Intermediate reports used for human or agent judgment.
 
 Examples:
 
-- `reports/security/vendor-review/*.json`
-- `reports/security/vendor-audit/*.json`
+- `reports/security/skills-review/*.json`
+- `reports/security/skills-audit/*.json`
 
 These may be committed or left untracked.
 
@@ -320,10 +320,17 @@ These invariants should hold regardless of implementation detail.
 8. Reject must update both staged files and the staged metadata that accept consumes.
 9. Accept promotes whatever remains in stage, not whatever was originally fetched before rejection.
 
-## Current Gap
+## Current State
 
-The current repository still has a weaker trust boundary than this lifecycle intends.
+The staged boundary between upstream fetch and live tree activation now exists.
 
-The main missing enforcement is the staged boundary between upstream fetch and live tree activation. Until that lands, the security model remains weaker than the desired lifecycle.
+Current behavior:
 
-This document defines the intended operating model. Implementation plans may lag behind it temporarily.
+- fetched third-party content lands in stage first
+- staged content is reviewed before promotion
+- reject removes a staged candidate from promotion
+- accept promotes only whatever remains in stage
+
+The main remaining trust gap is isolation, not staging itself. Review and scanning still run on the normal host environment rather than inside an isolated evaluator.
+
+This document defines the operating model. Future implementation work should harden isolation and review depth without weakening the staged boundary.
