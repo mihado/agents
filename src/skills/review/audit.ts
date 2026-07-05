@@ -20,7 +20,12 @@ export interface AuditResult {
   skillspector: SkillspectorOutput | null;
 }
 
-export function runVendorAudit(opts: AuditOptions): AuditResult {
+export type AuditOutcome =
+  | { kind: "accepted"; accepted: number; baselinePath: string; skillspectorBaselineError?: string }
+  | { kind: "json-output"; output: Record<string, unknown> }
+  | (AuditResult & { kind: "audited" });
+
+export function runVendorAudit(opts: AuditOptions): AuditOutcome {
   const { root, jsonOutput, accept, withSkillspector } = opts;
   const baselinePath = path.join(root, "config", "skills", "vendor-review-baseline.json");
   const skillspectorBaselinePath = path.join(root, "config", "skills", "skillspector-baseline.yaml");
@@ -46,15 +51,21 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
     writeArtifact(root, "vendor-audit", "vendor-audit --accept", auditSkillNames(findings), findings, ["prose-scanner", "semgrep"]);
     const baseline = readBaseline(baselinePath);
     writeBaseline(baselinePath, mergeBaseline(baseline, findings));
-    console.log(`Accepted ${findings.length} finding(s) into ${path.relative(root, baselinePath)}.`);
 
-    console.log("Generating skillspector baseline (static-only, may take a minute)...");
-    const result = generateBaseline(root, ".agents/skills", skillspectorBaselinePath);
-    if (result !== true) {
-      console.error(result);
-      process.exit(1);
+    const skillspectorResult = generateBaseline(root, ".agents/skills", skillspectorBaselinePath);
+    if (skillspectorResult !== true) {
+      return {
+        kind: "accepted",
+        accepted: findings.length,
+        baselinePath: path.relative(root, baselinePath),
+        skillspectorBaselineError: skillspectorResult,
+      };
     }
-    process.exit(0);
+    return {
+      kind: "accepted",
+      accepted: findings.length,
+      baselinePath: path.relative(root, baselinePath),
+    };
   }
 
   if (jsonOutput) {
@@ -65,8 +76,7 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
       const skillDirs = listAllSkillDirs(root);
       output.skillspector = runSkillspector(root, skillDirs);
     }
-    console.log(JSON.stringify(output, null, 2));
-    process.exit(0);
+    return { kind: "json-output", output };
   }
 
   if (findings.length === 0) {
@@ -103,7 +113,7 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
   const auditScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
   writeArtifact(root, "vendor-audit", "vendor-audit", auditSkillNames(findings), findings, auditScanners, undefined, skillspectorResult);
 
-  return { findings, skillspector: skillspectorResult };
+  return { kind: "audited", findings, skillspector: skillspectorResult };
 }
 
 function auditSkillNames(findings: Finding[]): string[] {

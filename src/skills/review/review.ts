@@ -23,6 +23,12 @@ export interface ReviewResult {
   changedSkillDirs: string[];
 }
 
+export type ReviewOutcome =
+  | { kind: "no-stage" }
+  | { kind: "no-diff" }
+  | { kind: "accepted"; accepted: number; baselinePath: string }
+  | (ReviewResult & { kind: "reviewed" });
+
 function runDiffCmd(command: string, commandArgs: string[]): string {
   const result = spawnSync(command, commandArgs, { encoding: "utf8", maxBuffer: 1024 * 1024 * 64 });
   if (result.status !== 0 && result.status !== 1 && result.status !== null) {
@@ -71,7 +77,7 @@ function getStagedDiffOutput(root: string): string | null {
   return combined.replace(/^\+\+\+ b\/\.stage\/skills\//gm, "+++ b/.agents/skills/");
 }
 
-export function runVendorReview(opts: ReviewOptions): ReviewResult {
+export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
   const { root, accept, showSuppressed, withSkillspector } = opts;
   const baselinePath = path.join(root, "config", "skills", "vendor-review-baseline.json");
   const skillspectorBaselinePath = path.join(root, "config", "skills", "skillspector-baseline.yaml");
@@ -79,15 +85,13 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
   const diffOutput = getStagedDiffOutput(root);
 
   if (diffOutput === null) {
-    console.log("No skills in stage. Run `make vendor` to fetch skills.");
     writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
-    process.exit(0);
+    return { kind: "no-stage" };
   }
 
   if (!diffOutput.trim()) {
-    console.log("Staged content matches live tree — nothing to review.");
     writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
-    process.exit(0);
+    return { kind: "no-diff" };
   }
 
   const { changedFiles, findings } = parseDiff(diffOutput);
@@ -115,8 +119,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
       parseSkillNames(diffOutput), allFindings, ["prose-scanner", "semgrep"], changedPaths,
     );
     writeBaseline(baselinePath, mergeBaseline(baseline, allFindings));
-    console.log(`Accepted ${allFindings.length} finding(s) into ${path.relative(root, baselinePath)}.`);
-    process.exit(0);
+    return { kind: "accepted", accepted: allFindings.length, baselinePath: path.relative(root, baselinePath) };
   }
 
   const newFindings = allFindings.filter((f) => !isSuppressed(baseline, f));
@@ -160,7 +163,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
     root, "vendor-review", "vendor-review", skillNames, allFindings, reviewScanners, [...changedFiles.keys()], skillspectorResult,
   );
 
-  return { newFindings, suppressedCount: suppressed.length, changedSkillDirs };
+  return { kind: "reviewed", newFindings, suppressedCount: suppressed.length, changedSkillDirs };
 }
 
 function parseSkillNames(diffOutput: string): string[] {
