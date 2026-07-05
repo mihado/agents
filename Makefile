@@ -1,4 +1,4 @@
-.PHONY: install deps check test typecheck lint vendor vendor-review vendor-audit vendor-accept mcp providers help clean
+.PHONY: install deps check test typecheck lint vendor vendor-review vendor-audit vendor-accept mcp providers help clean clean-build clean-stage
 
 .DEFAULT_GOAL := help
 
@@ -11,7 +11,9 @@ help:
 	@echo "make deps           Install dev dependencies (uv sync — skillspector, semgrep)"
 	@echo "make check          Run machine integrity checks (doctor, MCP, providers, vendor)"
 	@echo "make build          Build TypeScript sources to dist/"
-	@echo "make clean          Remove build artifacts under dist/"
+	@echo "make clean          Remove all build artifacts and staged skills"
+	@echo "make clean-build    Remove build artifacts only"
+	@echo "make clean-stage    Remove staged skills only"
 	@echo "make typecheck      Type-check TypeScript sources (no emit)"
 	@echo "make lint           Lint all source files"
 	@echo "make test           Run tests"
@@ -36,8 +38,13 @@ $(BUILD_STAMP): $(BUILD_INPUTS)
 
 build: $(BUILD_STAMP)
 
-clean:
+clean: clean-build clean-stage
+
+clean-build:
 	rm -rf dist
+
+clean-stage:
+	rm -rf .stage/skills
 
 typecheck:
 	pnpm typecheck
