@@ -126,7 +126,6 @@ export function buildProgram(opts?: { root?: string }): Command {
     .description("remove a live skill from live tree and lock (manifest unchanged)")
     .action((skillName: string) => {
       removeSkillFromLock(root(), skillName);
-      console.log(`Removed ${skillName}.`);
     });
 
   vendor
