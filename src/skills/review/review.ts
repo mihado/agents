@@ -1,9 +1,11 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseDiff } from "./diff.js";
 import { readBaseline, writeBaseline, mergeBaseline, isSuppressed } from "./baseline.js";
 import { scanCodeFiles } from "./semgrep.js";
-import { runSkillspector } from "./skillspector.js";
+import { runSkillspectorWithProgress } from "./skillspector.js";
 import type { SkillspectorOutput } from "./skillspector.js";
 import { writeArtifact } from "./artifact.js";
 import type { Finding } from "../types.js";
@@ -30,28 +32,86 @@ function run(command: string, commandArgs: string[]): string {
   return result.stdout;
 }
 
+function runDiffCmd(command: string, commandArgs: string[]): string {
+  const result = spawnSync(command, commandArgs, { encoding: "utf8", maxBuffer: 1024 * 1024 * 64 });
+  if (result.status !== 0 && result.status !== 1 && result.status !== null) {
+    console.error(`error: ${command} ${commandArgs.join(" ")} failed:\n${result.stderr}`);
+    process.exit(1);
+  }
+  return result.stdout;
+}
+
+function getStagedDiffOutput(root: string): string | null {
+  const stageDir = path.join(root, ".stage/skills");
+  if (!fs.existsSync(stageDir)) return null;
+
+  const skillNames = fs.readdirSync(stageDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
+
+  if (skillNames.length === 0) return null;
+
+  const parts: string[] = [];
+
+  for (const name of skillNames) {
+    const stagePath = `.stage/skills/${name}`;
+    const livePath = `.agents/skills/${name}`;
+    const liveExists = fs.existsSync(path.join(root, livePath));
+
+    if (liveExists) {
+      parts.push(runDiffCmd("git", [
+        "-C", root, "diff", "--no-color", "--unified=0", "--no-index",
+        livePath, stagePath,
+      ]));
+    } else {
+      const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), "agents-empty-"));
+      try {
+        parts.push(runDiffCmd("git", [
+          "-C", root, "diff", "--no-color", "--unified=0", "--no-index",
+          emptyDir, stagePath,
+        ]));
+      } finally {
+        fs.rmSync(emptyDir, { recursive: true, force: true });
+      }
+    }
+  }
+
+  const combined = parts.join("");
+  return combined.replace(/^\+\+\+ b\/\.stage\/skills\//gm, "+++ b/.agents/skills/");
+}
+
 export function runVendorReview(opts: ReviewOptions): ReviewResult {
   const { root, accept, showSuppressed, withSkillspector } = opts;
   const baselinePath = path.join(root, "config", "skills", "vendor-review-baseline.json");
   const skillspectorBaselinePath = path.join(root, "config", "skills", "skillspector-baseline.yaml");
 
-  const diffOutput = run("git", [
-    "-C", root, "diff", "--no-color", "--unified=0", "HEAD", "--", ".agents/skills",
-  ]);
+  const diffOutput = getStagedDiffOutput(root);
+
+  if (diffOutput === null) {
+    console.log("No skills in stage. Run `make vendor` to fetch skills.");
+    writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
+    process.exit(0);
+  }
 
   if (!diffOutput.trim()) {
-    console.log(
-      "No staged/unstaged changes under .agents/skills. Run after `make vendor` and before committing.",
-    );
+    console.log("Staged content matches live tree — nothing to review.");
     writeArtifact(root, "vendor-review", "vendor-review", [], [], []);
     process.exit(0);
   }
 
   const { changedFiles, findings } = parseDiff(diffOutput);
 
-  const codeFindings = scanCodeFiles(root, [...changedFiles.keys()]).filter((finding) =>
-    changedFiles.get(finding.file)?.has(finding.lineNum ?? -1),
+  const codePaths = [...changedFiles.keys()].map((p) =>
+    p.replace(/^\.agents\/skills\//, ".stage/skills/"),
   );
+  const codeFindings = scanCodeFiles(root, codePaths)
+    .map((f) => ({
+      ...f,
+      file: f.file.replace(/^\.stage\/skills\//, ".agents/skills/"),
+    }))
+    .filter((finding) =>
+      changedFiles.get(finding.file)?.has(finding.lineNum ?? -1),
+    );
 
   const allFindings = [...findings, ...codeFindings];
 
@@ -102,25 +162,7 @@ export function runVendorReview(opts: ReviewOptions): ReviewResult {
 
   let skillspectorResult: SkillspectorOutput | null = null;
   if (withSkillspector && changedSkillDirs.length > 0) {
-    skillspectorResult = runSkillspector(root, changedSkillDirs, {
-      baselinePath: skillspectorBaselinePath,
-    });
-    if (!skillspectorResult) {
-      console.log("\nskillspector not available. Run `make deps` to install.");
-    } else {
-      console.log(
-        `\nSkillspector (${skillspectorResult.label}, static-only --no-llm) on ${skillspectorResult.results.length} changed skill(s):\n`,
-      );
-      for (const r of skillspectorResult.results) {
-        if (r.error) {
-          console.log(`  ${path.basename(r.dir).padEnd(35)} error: ${r.error}`);
-        } else {
-          console.log(
-            `  ${path.basename(r.dir).padEnd(35)} score=${String(r.score ?? "").padEnd(3)} severity=${String(r.severity ?? "").padEnd(8)} issues=${r.issueCount}`,
-          );
-        }
-      }
-    }
+    skillspectorResult = runSkillspectorWithProgress(root, changedSkillDirs, "changed", skillspectorBaselinePath);
   }
 
   writeArtifact(

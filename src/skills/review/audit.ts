@@ -3,7 +3,7 @@ import { scanFile, walk } from "./prose-scanner.js";
 import { readBaseline, writeBaseline, mergeBaseline } from "./baseline.js";
 import { CODE_EXTS } from "./findings.js";
 import { scanCodeFiles } from "./semgrep.js";
-import { listAllSkillDirs, runSkillspector, generateBaseline } from "./skillspector.js";
+import { listAllSkillDirs, runSkillspector, runSkillspectorWithProgress, generateBaseline } from "./skillspector.js";
 import { writeArtifact } from "./artifact.js";
 import type { Finding } from "../types.js";
 import type { SkillspectorOutput } from "./skillspector.js";
@@ -97,32 +97,7 @@ export function runVendorAudit(opts: AuditOptions): AuditResult {
   let skillspectorResult: SkillspectorOutput | null = null;
 
   if (withSkillspector) {
-    const skillDirs = listAllSkillDirs(root);
-    console.log(`\nRunning skillspector (static-only --no-llm) on ${skillDirs.length} skill(s)...`);
-    skillspectorResult = runSkillspector(root, skillDirs, {
-      baselinePath: skillspectorBaselinePath,
-      onProgress(dir, i, total) {
-        process.stdout.write(`\r  [${i + 1}/${total}] ${path.basename(dir)}...`);
-      },
-    });
-
-    if (!skillspectorResult) {
-      console.log("\nskillspector not available. Run `make deps` to install.");
-    } else {
-      process.stdout.write("\r" + " ".repeat(60) + "\r");
-      console.log(
-        `Skillspector (${skillspectorResult.label}) — ${skillspectorResult.results.length} skill(s):\n`,
-      );
-      for (const r of skillspectorResult.results) {
-        if (r.error) {
-          console.log(`  ${path.basename(r.dir).padEnd(35)} error: ${r.error}`);
-        } else {
-          console.log(
-            `  ${path.basename(r.dir).padEnd(35)} score=${String(r.score ?? "").padEnd(3)} severity=${String(r.severity ?? "").padEnd(8)} issues=${r.issueCount}`,
-          );
-        }
-      }
-    }
+    skillspectorResult = runSkillspectorWithProgress(root, listAllSkillDirs(root), "live", skillspectorBaselinePath);
   }
 
   const auditScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
