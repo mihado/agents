@@ -1,4 +1,4 @@
-.PHONY: install deps check test typecheck lint vendor vendor-review vendor-audit vendor-accept mcp providers help clean clean-build clean-stage
+.PHONY: install deps check test typecheck lint vendor vendor-review vendor-audit vendor-accept vendor-reject vendor-remove mcp providers help clean clean-build clean-stage
 
 .DEFAULT_GOAL := help
 
@@ -20,7 +20,9 @@ help:
 	@echo "make vendor         Fetch vendored skills to stage"
 	@echo "make vendor-review  Advisory scan of staged skill diffs (with skillspector)"
 	@echo "make vendor-audit   Audit entire live skill tree (regex + skillspector)"
-	@echo "make vendor-accept  Bless current findings into both baselines"
+	@echo "make vendor-accept  Accept findings, promote stage to live"
+	@echo "make vendor-reject  Remove a skill from stage (usage: make vendor-reject SKILL=<skill-name>)"
+	@echo "make vendor-remove  Remove a skill from live tree and lock (usage: make vendor-remove SKILL=<skill-name>)"
 	@echo "make mcp            Sync MCP configuration"
 	@echo "make providers      Sync OpenCode provider configuration"
 
@@ -44,7 +46,7 @@ clean-build:
 	rm -rf dist
 
 clean-stage:
-	rm -rf .stage/skills
+	rm -rf .stage/skills .stage/stage-lock.json
 
 typecheck:
 	pnpm typecheck
@@ -70,7 +72,13 @@ vendor-audit: build
 	node dist/cli/vendor-audit.js --skillspector
 
 vendor-accept: build
-	node dist/cli/vendor-audit.js --accept
+	node dist/cli/vendor-accept.js
+
+vendor-reject: build
+	node dist/cli/vendor-reject.js
+
+vendor-remove: build
+	node dist/cli/vendor-remove.js
 
 mcp: build
 	node dist/cli/mcp.js --install

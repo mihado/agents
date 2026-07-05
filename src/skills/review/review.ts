@@ -23,15 +23,6 @@ export interface ReviewResult {
   changedSkillDirs: string[];
 }
 
-function run(command: string, commandArgs: string[]): string {
-  const result = spawnSync(command, commandArgs, { encoding: "utf8", maxBuffer: 1024 * 1024 * 64 });
-  if (result.status !== 0 && result.status !== null) {
-    console.error(`error: ${command} ${commandArgs.join(" ")} failed:\n${result.stderr}`);
-    process.exit(1);
-  }
-  return result.stdout;
-}
-
 function runDiffCmd(command: string, commandArgs: string[]): string {
   const result = spawnSync(command, commandArgs, { encoding: "utf8", maxBuffer: 1024 * 1024 * 64 });
   if (result.status !== 0 && result.status !== 1 && result.status !== null) {

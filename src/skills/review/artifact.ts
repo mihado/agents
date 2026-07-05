@@ -3,7 +3,7 @@ import path from "node:path";
 import type { Finding } from "../types.js";
 import type { SkillspectorOutput, SkillspectorScanResult } from "./skillspector.js";
 
-export type ArtifactKind = "vendor-review" | "vendor-audit";
+export type ArtifactKind = "vendor-review" | "vendor-audit" | "vendor-accept";
 
 export interface ArtifactFinding {
   file: string;
@@ -65,7 +65,7 @@ function artifactPath(root: string, kind: ArtifactKind, timestamp: string): stri
     root,
     "reports",
     "security",
-    kind === "vendor-review" ? "vendor-review" : "vendor-audit",
+    kind === "vendor-accept" ? "vendor-accept" : kind === "vendor-review" ? "vendor-review" : "vendor-audit",
   );
   fs.mkdirSync(dir, { recursive: true });
   return path.join(dir, `${kind}-${safe}.json`);
