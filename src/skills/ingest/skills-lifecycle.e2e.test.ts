@@ -8,6 +8,7 @@ import type { Manifest } from "../inventory/manifest.js";
 import { promoteStagedContent } from "./promote.js";
 import { readJson } from "../../core/commands.js";
 import { removeSkillFromLock } from "./remove.js";
+import { rejectSkillFromStage } from "./reject.js";
 
 function makeTempRoot(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "skills-e2e-"));
@@ -247,6 +248,54 @@ describe("Scenario 2: reject newly declared skill, accept the rest", () => {
     expect(fileExists(root, ".stage/skills")).toBe(false);
 
     expect(() => validateLock(TWO_SKILL_MANIFEST, liveLock)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("rejectSkillFromStage", () => {
+  it("removes a staged skill, updates stage-lock, and prunes the source license when no siblings remain", () => {
+    const root = makeTempRoot();
+    try {
+      writeManifest(root, TWO_SKILL_MANIFEST);
+
+      const stageLock: Lock = {
+        version: 1,
+        sources: {
+          "source-a": {
+            repository: "https://example.com/source-a.git",
+            ref: "main",
+            license: "MIT",
+            licensePath: ".agents/licenses/source-a-LICENSE",
+            licenseSha256: "new-license-sha",
+          },
+        },
+        skills: {
+          "skill-a": {
+            source: "source-a",
+            srcPath: "skills/skill-a",
+            path: "skills/design/skill-a",
+            commit: "new-commit-a",
+            sha256: "new-a-sha",
+          },
+        },
+      };
+
+      writeStageLock(root, stageLock);
+      writeStagedSkill(root, "skills/design/skill-a", { "SKILL.md": "candidate skill A" });
+      writeStagedLicense(root, ".agents/licenses/source-a-LICENSE", "new-license");
+
+      const result = rejectSkillFromStage(root, "skill-a");
+      const updatedStageLock = readJson<Lock>(path.join(root, ".stage/stage-lock.json"));
+
+      expect(result.skillName).toBe("skill-a");
+      expect(result.remainingSkills).toBe(0);
+      expect(result.cleanedSourceName).toBe("source-a");
+      expect(updatedStageLock.skills["skill-a"]).toBeUndefined();
+      expect(updatedStageLock.sources["source-a"]).toBeUndefined();
+      expect(fileExists(root, ".stage/skills/design/skill-a/SKILL.md")).toBe(false);
+      expect(fileExists(root, ".stage/skills/licenses/source-a-LICENSE")).toBe(false);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

@@ -1,16 +1,14 @@
 import path from "node:path";
-import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { fetchSkills } from "../skills/ingest/fetch.js";
 import { promoteStagedContent } from "../skills/ingest/promote.js";
 import { removeSkillFromLock } from "../skills/ingest/remove.js";
+import { rejectSkillFromStage } from "../skills/ingest/reject.js";
 import { runVendorReview, type ReviewOptions, type ReviewOutcome } from "../skills/review/review.js";
 import { runVendorAudit, type AuditOptions, type AuditOutcome } from "../skills/review/audit.js";
 import { verifyLock } from "../skills/inventory/verify.js";
-import { validateStageLock, type Lock } from "../skills/inventory/lockfile.js";
 import { writeArtifact } from "../skills/review/artifact.js";
-import { fail, readJson, writeJson } from "../core/commands.js";
 import { installMcp, checkMcp } from "../providers/mcp.js";
 import { installProviders, checkProviders } from "../providers/opencode/sync.js";
 import { runDoctor } from "../providers/doctor.js";
@@ -83,41 +81,12 @@ export function buildProgram(opts?: { root?: string }): Command {
     .command("reject <skill-name>")
     .description("remove a staged skill from stage (does not touch live state)")
     .action((skillName: string) => {
-      const r = root();
-      const stageDir = path.join(r, ".stage/skills");
-      if (!fs.existsSync(stageDir)) {
-        fail("No stage found. Run `apm skills fetch` first.");
+      const result = rejectSkillFromStage(root(), skillName);
+      if (result.cleanedSourceName) {
+        console.log(`Cleaned up source '${result.cleanedSourceName}' and its staged license.`);
       }
-      const stageLockPath = path.join(r, ".stage", "stage-lock.json");
-      if (!fs.existsSync(stageLockPath)) {
-        fail("No stage-lock.json found. Run `apm skills fetch` first.");
-      }
-      const stageLock = readJson<Lock>(stageLockPath);
-      validateStageLock(stageLock);
-      if (!stageLock.skills[skillName]) {
-        fail(`Skill '${skillName}' not found in stage. Available: ${Object.keys(stageLock.skills).join(", ")}`);
-      }
-      const skill = stageLock.skills[skillName];
-      const stageSkillPath = path.join(stageDir, skill.path.replace(/^skills\//, ""));
-      if (fs.existsSync(stageSkillPath)) {
-        fs.rmSync(stageSkillPath, { recursive: true, force: true });
-      }
-      delete stageLock.skills[skillName];
-      const remainingSkills = Object.values(stageLock.skills).filter((s) => s.source === skill.source);
-      if (remainingSkills.length === 0) {
-        const source = stageLock.sources[skill.source];
-        if (source) {
-          const stagedLicensePath = path.join(stageDir, "licenses", path.basename(source.licensePath));
-          if (fs.existsSync(stagedLicensePath)) {
-            fs.rmSync(stagedLicensePath, { force: true });
-          }
-          delete stageLock.sources[skill.source];
-          console.log(`Cleaned up source '${skill.source}' and its staged license.`);
-        }
-      }
-      writeJson(stageLockPath, stageLock);
-      console.log(`Rejected ${skillName} from stage.`);
-      console.log(`Remaining: ${Object.keys(stageLock.skills).length} skills in stage.`);
+      console.log(`Rejected ${result.skillName} from stage.`);
+      console.log(`Remaining: ${result.remainingSkills} skills in stage.`);
     });
 
   skills
