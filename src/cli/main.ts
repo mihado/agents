@@ -11,6 +11,10 @@ import { verifyLock } from "../skills/inventory/verify.js";
 import { validateStageLock, type Lock } from "../skills/inventory/lockfile.js";
 import { writeArtifact } from "../skills/review/artifact.js";
 import { fail, readJson, writeJson } from "../core/commands.js";
+import { installMcp, checkMcp } from "../providers/mcp.js";
+import { installProviders, checkProviders } from "../providers/opencode/sync.js";
+import { runDoctor } from "../providers/doctor.js";
+import { runLink } from "../providers/link.js";
 
 const projectRoot = (): string => path.resolve(fileURLToPath(import.meta.url), "../../..");
 
@@ -23,24 +27,28 @@ export function buildProgram(opts?: { root?: string }): Command {
     .description("Agent tooling for the agents repository")
     .version("0.1.0");
 
-  const vendor = program.command("vendor").description("manage vendored skills");
+  // skills — vendored skill supply chain.
+  // The "accept" subcommand promotes stage to live. The "review --accept" flag
+  // adds findings to the review baseline. Different operations; same English
+  // verb. The CLI distinguishes by argument shape.
+  const skills = program.command("skills").description("manage vendored skills");
 
-  vendor
+  skills
     .command("fetch")
     .description("fetch declared third-party skills into .stage/skills")
     .action(() => {
       fetchSkills(root());
     });
 
-  vendor
+  skills
     .command("check")
     .description("verify live lock matches the working copy")
     .action(() => {
-      const { skills, licenses } = verifyLock(root());
-      console.log(`Verified ${skills} vendored skills and ${licenses} licenses.`);
+      const { skills: skillCount, licenses } = verifyLock(root());
+      console.log(`Verified ${skillCount} vendored skills and ${licenses} licenses.`);
     });
 
-  vendor
+  skills
     .command("review")
     .description("review staged skill content")
     .option("--accept", "accept all findings into the review baseline")
@@ -55,7 +63,7 @@ export function buildProgram(opts?: { root?: string }): Command {
       };
       const outcome: ReviewOutcome = runVendorReview(reviewOpts);
       if (outcome.kind === "no-stage") {
-        console.log("No skills in stage. Run `apm vendor fetch` to fetch skills.");
+        console.log("No skills in stage. Run `apm skills fetch` to fetch skills.");
         process.exit(0);
       }
       if (outcome.kind === "no-diff") {
@@ -69,7 +77,7 @@ export function buildProgram(opts?: { root?: string }): Command {
       process.exit(0);
     });
 
-  vendor
+  skills
     .command("accept")
     .description("promote stage to live")
     .action(() => {
@@ -80,18 +88,18 @@ export function buildProgram(opts?: { root?: string }): Command {
       console.log(`\nPromoted ${skillNames.length} skills to live tree.`);
     });
 
-  vendor
+  skills
     .command("reject <skill-name>")
     .description("remove a staged skill from stage (does not touch live state)")
     .action((skillName: string) => {
       const r = root();
       const stageDir = path.join(r, ".stage/skills");
       if (!fs.existsSync(stageDir)) {
-        fail("No stage found. Run `apm vendor fetch` first.");
+        fail("No stage found. Run `apm skills fetch` first.");
       }
       const stageLockPath = path.join(r, ".stage", "stage-lock.json");
       if (!fs.existsSync(stageLockPath)) {
-        fail("No stage-lock.json found. Run `apm vendor fetch` first.");
+        fail("No stage-lock.json found. Run `apm skills fetch` first.");
       }
       const stageLock = readJson<Lock>(stageLockPath);
       validateStageLock(stageLock);
@@ -121,14 +129,14 @@ export function buildProgram(opts?: { root?: string }): Command {
       console.log(`Remaining: ${Object.keys(stageLock.skills).length} skills in stage.`);
     });
 
-  vendor
+  skills
     .command("remove <skill-name>")
     .description("remove a live skill from live tree and lock (manifest unchanged)")
     .action((skillName: string) => {
       removeSkillFromLock(root(), skillName);
     });
 
-  vendor
+  skills
     .command("audit")
     .description("audit live skill content")
     .option("--json", "emit JSON output")
@@ -157,6 +165,56 @@ export function buildProgram(opts?: { root?: string }): Command {
       }
       process.exit(0);
     });
+
+  // mcp — MCP server configuration for Codex and Claude.
+  const mcp = program.command("mcp").description("sync and verify MCP server configuration");
+
+  mcp
+    .command("install")
+    .description("install MCP server entries from config/providers/mcp.json")
+    .action(() => installMcp(root()));
+
+  mcp
+    .command("check")
+    .description("verify MCP server entries match config/providers/mcp.json")
+    .action(() => checkMcp(root()));
+
+  // providers — provider module configuration (currently OpenCode).
+  const providers = program.command("providers").description("sync and verify provider configuration");
+
+  providers
+    .command("install")
+    .description("install provider configuration")
+    .action(() => installProviders(root()));
+
+  providers
+    .command("check")
+    .description("verify provider configuration")
+    .action(() => checkProviders(root()));
+
+  // doctor — read-only machine health check across all providers.
+  program
+    .command("doctor")
+    .description("read-only health check (git, node, lock, provider symlinks, duplicate skills)")
+    .action(() => runDoctor(root()));
+
+  // check — full integrity sweep. Runs doctor + mcp check + providers check + skills check.
+  program
+    .command("check")
+    .description("run doctor + mcp check + providers check + skills check")
+    .action(() => {
+      runDoctor(root());
+      checkMcp(root());
+      checkProviders(root());
+      const { skills: skillCount, licenses } = verifyLock(root());
+      console.log(`Verified ${skillCount} vendored skills and ${licenses} licenses.`);
+    });
+
+  // link — symlink agents/skills and AGENTS.md into ~/.codex, ~/.claude, ~/.agents, ~/.kiro.
+  program
+    .command("link")
+    .description("symlink agents/skills and AGENTS.md into provider homes")
+    .action(() => runLink(root()));
 
   return program;
 }

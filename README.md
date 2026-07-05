@@ -52,16 +52,18 @@ make install
 make check
 ```
 
-`make install` builds TypeScript sources, runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex), and writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
+`make install` builds TypeScript sources, runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex), and writes provider config (OpenCode). `./apm check` runs the full integrity suite (doctor, MCP, providers, skills). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
 
 To run individual steps:
 
 ```bash
-make deps         # set up Python venv (skillspector, semgrep) via uv sync
-make mcp          # sync MCP (Claude/Codex) and OpenCode remote config
-make providers    # sync OpenCode providers only
-make vendor       # fetch vendored skills
-make test         # run tests
+make deps             # set up Python venv (skillspector, semgrep) via uv sync
+make test             # run tests
+./apm skills fetch    # fetch vendored skills into .stage
+./apm mcp install     # sync MCP (Claude/Codex) from config/providers/mcp.json
+./apm providers install   # sync OpenCode providers
+./apm doctor          # read-only health check
+./apm check           # full integrity sweep
 ```
 
 The link script creates these symlinks:
@@ -82,13 +84,40 @@ Each entry is linked individually. Existing unrelated skills survive. A file, di
 
 `CODEX_HOME`, `CLAUDE_HOME`, `AGENTS_HOME`, and `KIRO_HOME` may be set to install into alternate locations.
 
+## CLI Reference
+
+`apm` is the canonical command-line interface. It is a Commander-based CLI built from `src/cli/main.ts`; the in-repo shim `./apm` runs the built entrypoint until a global install puts the binary on PATH. Run `./apm --help` to see the live surface.
+
+`make` keeps `install` (the multi-step orchestrator that runs `apm link` + `apm mcp install` + `apm providers install`) plus the build/test/lint targets. Individual actions go through `apm`.
+
+```text
+apm skills fetch                 fetch declared third-party skills into .stage/skills
+apm skills check                 verify live lock matches the working copy
+apm skills review                advisory scan of staged skill content
+apm skills review --accept       accept findings into the review baseline
+apm skills accept                promote stage to live
+apm skills reject <name>         remove a staged skill from stage
+apm skills remove <name>         remove a live skill from live tree and lock
+apm skills audit                 audit entire live skill tree
+apm skills audit --json          emit audit findings as JSON
+apm mcp install                  install MCP server entries from config/providers/mcp.json
+apm mcp check                    verify MCP server entries
+apm providers install            install provider configuration
+apm providers check              verify provider configuration
+apm doctor                       read-only health check (git, node, lock, symlinks, duplicates)
+apm check                        full integrity sweep (doctor + mcp + providers + skills)
+apm link                         symlink agents/skills and AGENTS.md into provider homes
+```
+
+`apm skills accept` and `apm skills review --accept` are different operations. The first promotes staged content into the live tree. The second adds review findings to the review baseline so future scans suppress them.
+
 ## Baseline MCP
 
 `config/providers/mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
 
 ```bash
-make mcp            # install all MCP config (dist/ is built automatically)
-make check          # verify without changing anything
+./apm mcp install    # install all MCP config
+./apm mcp check      # verify without changing anything
 ```
 
 Environment variable names may be documented in `config/providers/mcp.json`; values stay in the machine environment and are never stored here.
@@ -108,12 +137,16 @@ Skills are copied unchanged from upstream repositories declared in `config/skill
 - [lguz/humanize-writing-skill][https://github.com/lguz/humanize-writing-skill]
 
 ```bash
-make vendor       # fetch all declared skills, regenerate lock, then run vendor-review
-make check        # verify hashes offline without fetching (included in make check)
-make vendor-review          # advisory scan of the fetched diff for injection/exec risk
-make vendor-accept          # mark current findings as reviewed (silences future scans)
-make vendor-audit           # audit entire live skill tree (regex + skillspector)
+./apm skills fetch           # fetch all declared skills into .stage
+./apm skills review          # advisory scan of the staged diff for injection/exec risk
+./apm skills accept          # promote stage to live
+./apm skills audit           # audit entire live skill tree (regex + skillspector)
+./apm skills reject <skill>  # remove a staged skill from stage
+./apm skills remove <skill>  # remove a live skill from live tree and lock
+./apm check                  # integrity sweep (doctor + mcp + providers + skills check)
 ```
+
+`make` is for `install` (the multi-step orchestrator), `build`, `test`, `lint`, `typecheck`, and `clean`. Individual actions go through `./apm` directly. Run `./apm --help` for the full surface; see the CLI reference below.
 
 The vendor tool proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
 
@@ -147,10 +180,11 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ## Diagnostics
 
 ```bash
-make check            # full suite: doctor + MCP + providers + vendor integrity
+./apm doctor          # read-only health check (git, node, lock, symlinks, duplicates)
+./apm check           # full integrity sweep: doctor + mcp check + providers check + skills check
 ```
 
-`make check` runs doctor (symlink validation for all providers), MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
+`./apm check` runs doctor (symlink validation for all providers), MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
 
 
 ## License
