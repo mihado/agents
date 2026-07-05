@@ -27,7 +27,7 @@ export type AuditOutcome =
 
 export function runVendorAudit(opts: AuditOptions): AuditOutcome {
   const { root, jsonOutput, accept, withSkillspector } = opts;
-  const baselinePath = path.join(root, "config", "skills", "vendor-review-baseline.json");
+  const baselinePath = path.join(root, "config", "skills", "skills-review-baseline.json");
   const skillspectorBaselinePath = path.join(root, "config", "skills", "skillspector-baseline.yaml");
   const skillsDir = path.join(root, ".agents/skills");
 
@@ -48,7 +48,7 @@ export function runVendorAudit(opts: AuditOptions): AuditOutcome {
   findings.push(...scanCodeFiles(root, codeFiles));
 
   if (accept) {
-    writeArtifact(root, "vendor-audit", "vendor-audit --accept", auditSkillNames(findings), findings, ["prose-scanner", "semgrep"]);
+    writeArtifact(root, "skills-audit", "skills-audit --accept", auditSkillNames(findings), findings, ["prose-scanner", "semgrep"]);
     const baseline = readBaseline(baselinePath);
     writeBaseline(baselinePath, mergeBaseline(baseline, findings));
 
@@ -70,7 +70,7 @@ export function runVendorAudit(opts: AuditOptions): AuditOutcome {
 
   if (jsonOutput) {
     const auditScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
-    writeArtifact(root, "vendor-audit", "vendor-audit --json", auditSkillNames(findings), findings, auditScanners);
+    writeArtifact(root, "skills-audit", "skills-audit --json", auditSkillNames(findings), findings, auditScanners);
     const output: Record<string, unknown> = { findings, count: findings.length };
     if (withSkillspector) {
       const skillDirs = listAllSkillDirs(root);
@@ -111,7 +111,7 @@ export function runVendorAudit(opts: AuditOptions): AuditOutcome {
   }
 
   const auditScanners = withSkillspector ? ["prose-scanner", "semgrep", "skillspector"] : ["prose-scanner", "semgrep"];
-  writeArtifact(root, "vendor-audit", "vendor-audit", auditSkillNames(findings), findings, auditScanners, undefined, skillspectorResult);
+  writeArtifact(root, "skills-audit", "skills-audit", auditSkillNames(findings), findings, auditScanners, undefined, skillspectorResult);
 
   return { kind: "audited", findings, skillspector: skillspectorResult };
 }

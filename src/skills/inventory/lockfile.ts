@@ -103,7 +103,7 @@ export function validateLock(currentManifest: Manifest, raw: unknown): asserts r
   const referencedSources = new Set(Object.values(currentLock.skills).map((s) => s.source));
   for (const sourceName of sortedKeys(currentLock.sources)) {
     if (!referencedSources.has(sourceName)) {
-      fail(`lock.json source '${sourceName}' has no referencing skill; run \`make vendor-accept\` or prune it`);
+      fail(`lock.json source '${sourceName}' has no referencing skill; run \`apm skills accept\` or prune it`);
     }
   }
 
