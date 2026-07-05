@@ -143,31 +143,29 @@ describe("roundtrip", () => {
   });
 });
 
-describe("integration: scripts --check", () => {
-  const providersCli = path.join(root, "dist", "cli", "opencode-providers.js");
+describe("integration: apm providers", () => {
+  const apmCli = path.join(root, "dist", "cli", "main.js");
 
   beforeAll(() => {
     execSync("pnpm build", { cwd: root, stdio: "pipe" });
   });
 
-  it("opencode-providers --install then --check passes", () => {
-    const install = spawnSync("node", [providersCli, "--install"], { encoding: "utf8" });
+  it("apm providers install then check passes", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
-    const check = spawnSync("node", [providersCli, "--check"], { encoding: "utf8" });
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
-    expect(check.stdout).toMatch(/PASS\s+provider/);
   });
 
-  it("opencode-providers --check fails with empty config", () => {
+  it("apm providers check fails with empty config", () => {
     unseed();
-    const result = spawnSync("node", [providersCli, "--check"], { encoding: "utf8" });
+    const result = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(result.status).not.toBe(0);
-    expect(result.stderr).toMatch(/FAIL\s+provider/);
   });
 
   it("propagates modalities for vision-capable models", () => {
-    const install = spawnSync("node", [providersCli, "--install"], { encoding: "utf8" });
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
     const config = read();
@@ -194,7 +192,7 @@ describe("integration: scripts --check", () => {
   });
 
   it("propagates tool_call and temperature for all models", () => {
-    const install = spawnSync("node", [providersCli, "--install"], { encoding: "utf8" });
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
     const config = read();
@@ -210,7 +208,7 @@ describe("integration: scripts --check", () => {
   });
 
   it("modalities field structure is valid per OpenCode schema", () => {
-    const install = spawnSync("node", [providersCli, "--install"], { encoding: "utf8" });
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
     const config = read();

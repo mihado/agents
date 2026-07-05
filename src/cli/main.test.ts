@@ -12,23 +12,39 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("agents CLI smoke", () => {
+describe("apm CLI smoke", () => {
   it("reports the apm name and version", () => {
     const program = buildProgram();
     expect(program.name()).toBe("apm");
     expect(program.version()).toBe("0.1.0");
   });
 
-  it("exposes a vendor subcommand with fetch, check, review, accept, reject, remove, audit", () => {
+  it("exposes skills, providers, mcp, doctor, check, link as top-level commands", () => {
     const program = buildProgram();
-    const subcommandNames = program.commands[0]?.commands.map((c) => c.name()) ?? [];
-    expect(program.commands[0]?.name()).toBe("vendor");
+    const topLevel = program.commands.map((c) => c.name());
+    expect(topLevel).toEqual(
+      expect.arrayContaining(["skills", "providers", "mcp", "doctor", "check", "link"]),
+    );
+  });
+
+  it("skills exposes fetch, check, review, accept, reject, remove, audit", () => {
+    const program = buildProgram();
+    const skills = program.commands.find((c) => c.name() === "skills");
+    const subcommandNames = skills?.commands.map((c) => c.name()) ?? [];
     expect(subcommandNames).toEqual(
       expect.arrayContaining(["fetch", "check", "review", "accept", "reject", "remove", "audit"]),
     );
   });
 
-  it("vendor reject and remove require a positional <skill-name>", () => {
+  it("mcp and providers each expose install and check", () => {
+    const program = buildProgram();
+    const mcp = program.commands.find((c) => c.name() === "mcp");
+    const providers = program.commands.find((c) => c.name() === "providers");
+    expect(mcp?.commands.map((c) => c.name()).sort()).toEqual(["check", "install"]);
+    expect(providers?.commands.map((c) => c.name()).sort()).toEqual(["check", "install"]);
+  });
+
+  it("skills reject and remove require a positional <skill-name>", () => {
     const program = buildProgram();
     const stderrWrites: string[] = [];
     const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: string | Uint8Array) => {
@@ -39,18 +55,18 @@ describe("agents CLI smoke", () => {
       throw new Error(`process.exit:${code ?? 0}`);
     }) as never);
 
-    expect(() => program.parse(["node", "apm", "vendor", "reject"])).toThrow(/process\.exit:1/);
+    expect(() => program.parse(["node", "apm", "skills", "reject"])).toThrow(/process\.exit:1/);
     expect(stderrWrites.join("")).toMatch(/skill-name/);
 
     stderrWrites.length = 0;
-    expect(() => program.parse(["node", "apm", "vendor", "remove"])).toThrow(/process\.exit:1/);
+    expect(() => program.parse(["node", "apm", "skills", "remove"])).toThrow(/process\.exit:1/);
     expect(stderrWrites.join("")).toMatch(/skill-name/);
 
     exitSpy.mockRestore();
     stderrSpy.mockRestore();
   });
 
-  it("vendor reject against an empty project exits non-zero with no-stage error", () => {
+  it("skills reject against an empty project exits non-zero with no-stage error", () => {
     const root = makeTempRoot();
     try {
       const program = buildProgram({ root });
@@ -60,7 +76,7 @@ describe("agents CLI smoke", () => {
         throw new Error(`process.exit:${code ?? 0}`);
       }) as never);
 
-      expect(() => program.parse(["node", "apm", "vendor", "reject", "skill-a"])).toThrow(/process\.exit:1/);
+      expect(() => program.parse(["node", "apm", "skills", "reject", "skill-a"])).toThrow(/process\.exit:1/);
 
       exitSpy.mockRestore();
     } finally {
@@ -68,11 +84,20 @@ describe("agents CLI smoke", () => {
     }
   });
 
-  it("vendor --help lists every subcommand", () => {
+  it("skills --help lists every subcommand", () => {
     const program = buildProgram();
-    const vendorHelp = program.commands[0]?.helpInformation() ?? "";
+    const skills = program.commands.find((c) => c.name() === "skills");
+    const skillsHelp = skills?.helpInformation() ?? "";
     for (const name of ["fetch", "check", "review", "accept", "reject", "remove", "audit"]) {
-      expect(vendorHelp).toContain(name);
+      expect(skillsHelp).toContain(name);
+    }
+  });
+
+  it("apm --help lists every top-level command", () => {
+    const program = buildProgram();
+    const help = program.helpInformation();
+    for (const name of ["skills", "providers", "mcp", "doctor", "check", "link"]) {
+      expect(help).toContain(name);
     }
   });
 });
