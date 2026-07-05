@@ -1,5 +1,4 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import { readJson, writeJson, fail } from "../core/commands.js";
 import type { Lock } from "../skills/inventory/lockfile.js";
@@ -43,14 +42,3 @@ export function removeSkillFromLock(root: string, skillName: string): Lock {
   return lock;
 }
 
-const isMain = import.meta.url === `file://${process.argv[1]}`;
-if (isMain) {
-  const root = path.resolve(fileURLToPath(import.meta.url), "../../..");
-  const skillName = process.env.SKILL;
-  if (!skillName) {
-    console.error("Usage: make vendor-remove SKILL=<skill-name>");
-    process.exit(1);
-  }
-  removeSkillFromLock(root, skillName);
-  console.log(`Removed ${skillName}.`);
-}
