@@ -2,13 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { readJson, writeJson, fail } from "../../core/commands.js";
+import { readJson, fail } from "../../core/commands.js";
 import { validateManifest, sortedKeys } from "../inventory/manifest.js";
-import { validateLock } from "../inventory/lockfile.js";
-import { hashPath, verifyWorkingCopy } from "../integrity/integrity.js";
-import { applyFetchedContent } from "./apply.js";
 import type { Manifest } from "../inventory/manifest.js";
-import type { Lock } from "../inventory/lockfile.js";
 
 function runGit(command: string, args: string[]): string {
   const result = spawnSync("git", [command, ...args], { encoding: "utf8" });
@@ -24,37 +20,25 @@ function safeName(value: string): string {
 
 export function fetchSkills(root: string): void {
   const manifestPath = path.join(root, "config", "skills", "manifest.json");
-  const lockPath = path.join(root, "config", "skills", "lock.json");
-  const skillsRoot = path.join(root, ".agents/skills");
-  const licensesRoot = path.join(root, ".agents/licenses");
+  const stageDir = path.join(root, ".stage/skills");
 
   const manifest = readJson<Manifest>(manifestPath);
   validateManifest(manifest);
 
-  const previousLock: Lock | null = fs.existsSync(lockPath) ? readJson<Lock>(lockPath) : null;
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agents-vendor-"));
-  const nextLock: Lock = { version: 1, sources: {}, skills: {} };
+  let skillsCount = 0;
 
   try {
+    // Clean stage directory
+    fs.rmSync(stageDir, { recursive: true, force: true });
+    fs.mkdirSync(stageDir, { recursive: true });
+
     for (const sourceName of sortedKeys(manifest.sources)) {
       const source = manifest.sources[sourceName];
       const cloneDir = path.join(tempRoot, "sources", safeName(sourceName));
       runGit("clone", ["--quiet", source.repository, cloneDir]);
       runGit("-C", [cloneDir, "checkout", "--quiet", source.ref]);
       const commit = runGit("-C", [cloneDir, "rev-parse", "HEAD"]).trim();
-
-      const licenseFileName = `${safeName(sourceName)}-LICENSE`;
-      const stagedLicense = path.join(tempRoot, "licenses", licenseFileName);
-      copyPath(path.join(cloneDir, source.license.path), stagedLicense);
-
-      nextLock.sources[sourceName] = {
-        repository: source.repository,
-        ref: source.ref,
-        commit,
-        license: source.license.name,
-        licensePath: `.agents/licenses/${licenseFileName}`,
-        licenseSha256: hashPath(stagedLicense),
-      };
 
       for (const skillName of sortedKeys(manifest.skills)) {
         const skill = manifest.skills[skillName];
@@ -65,25 +49,14 @@ export function fetchSkills(root: string): void {
           fail(`missing SKILL.md at ${sourceName}:${skill.srcPath}`);
         }
 
-        const stagedSkill = path.join(tempRoot, "skills", skillName);
-        copyPath(upstream, stagedSkill);
-        nextLock.skills[skillName] = {
-          source: sourceName,
-          srcPath: skill.srcPath,
-          path: skill.path,
-          commit,
-          sha256: hashPath(stagedSkill),
-        };
+        copyPath(upstream, path.join(stageDir, skillName));
+        skillsCount++;
       }
 
       console.log(`${sourceName}: ${commit}`);
     }
 
-    applyFetchedContent(root, previousLock, nextLock, tempRoot, skillsRoot, licensesRoot);
-    writeJson(lockPath, nextLock);
-    validateLock(manifest, nextLock);
-    verifyWorkingCopy(root, nextLock);
-    console.log("Vendor fetch complete.");
+    console.log(`Fetched ${skillsCount} skills to stage.`);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

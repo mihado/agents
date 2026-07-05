@@ -15,8 +15,8 @@ help:
 	@echo "make typecheck      Type-check TypeScript sources (no emit)"
 	@echo "make lint           Lint all source files"
 	@echo "make test           Run tests"
-	@echo "make vendor         Fetch vendored skills, then run vendor-review"
-	@echo "make vendor-review  Advisory scan of vendored skill diffs"
+	@echo "make vendor         Fetch vendored skills to stage"
+	@echo "make vendor-review  Advisory scan of staged skill diffs (with skillspector)"
 	@echo "make vendor-audit   Audit entire live skill tree (regex + skillspector)"
 	@echo "make vendor-accept  Bless current findings into both baselines"
 	@echo "make mcp            Sync MCP configuration"
@@ -55,10 +55,9 @@ test: build
 
 vendor: build
 	node dist/cli/vendor.js --fetch
-	node dist/cli/vendor-review.js
 
 vendor-review: build
-	node dist/cli/vendor-review.js
+	node dist/cli/vendor-review.js --skillspector
 
 vendor-audit: build
 	node dist/cli/vendor-audit.js --skillspector

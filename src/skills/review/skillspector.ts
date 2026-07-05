@@ -3,6 +3,44 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { SemgrepInvocation } from "./semgrep.js";
 
+export function runSkillspectorWithProgress(
+  root: string,
+  dirs: string[],
+  contextLabel: string,
+  baselinePath?: string,
+): SkillspectorOutput | null {
+  if (dirs.length === 0) return null;
+
+  console.log(`\nRunning skillspector (static-only --no-llm) on ${dirs.length} ${contextLabel} skill(s)...`);
+  const result = runSkillspector(root, dirs, {
+    baselinePath,
+    onProgress(dir, i, total) {
+      process.stdout.write(`\r  [${i + 1}/${total}] ${path.basename(dir)}...`);
+    },
+  });
+
+  if (!result) {
+    console.log("\nskillspector not available. Run `make deps` to install.");
+    return null;
+  }
+
+  process.stdout.write("\r" + " ".repeat(60) + "\r");
+  console.log(
+    `Skillspector (${result.label}) — ${result.results.length} ${contextLabel} skill(s):\n`,
+  );
+  for (const r of result.results) {
+    if (r.error) {
+      console.log(`  ${path.basename(r.dir).padEnd(35)} error: ${r.error}`);
+    } else {
+      console.log(
+        `  ${path.basename(r.dir).padEnd(35)} score=${String(r.score ?? "").padEnd(3)} severity=${String(r.severity ?? "").padEnd(8)} issues=${r.issueCount}`,
+      );
+    }
+  }
+
+  return result;
+}
+
 export interface SkillspectorIssue {
   id: string;
   category: string;

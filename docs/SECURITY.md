@@ -164,10 +164,9 @@ stable even if the code-scanning engine changes.
 ## 6. Commands
 
 ```bash
-make vendor             # fetch + review
-make vendor-review      # scan staged diff, write artifact
-make vendor-audit       # scan live tree, write artifact
-make vendor-audit --skillspector  # including SkillSpector
+make vendor             # fetch skills to stage
+make vendor-review      # scan staged diff (with SkillSpector), write artifact
+make vendor-audit       # scan live tree, write artifact (with SkillSpector)
 make vendor-accept      # accept findings into baseline (prose + Semgrep only)
 make check              # verify lock integrity + MCP + providers
 ```
@@ -179,15 +178,15 @@ make check              # verify lock integrity + MCP + providers
 - no replacement for reading the actual diff
 - no claim that all prompt-injection patterns are covered
 - no claim that all code-execution paths are covered
-- no staged cache boundary yet between fetched content and live content
+- staged cache boundary exists but accept/reject flow is not yet implemented
 
-Today, vendored content is still written into `.agents/skills` before the full trust decision is complete.
+Today, vendored content is written to `.stage/skills` before review, but cannot yet be promoted to `.agents/skills`.
 
 ## 8. Improvements In Progress
 
 Work still to be done:
 
-- staged cache flow so fetched content can be reviewed before it becomes live
+- accept/reject flow to promote staged content to live `.agents/skills` tree
 - optional isolated staging evaluation for checkout, scanning, and review
 - filesystem-attribute checks for vendored content
 - persistence-mechanism checks such as shell profile or cron writes
