@@ -1,0 +1,62 @@
+rules:
+  - id: remote-script-execution
+    message: remote-script execution
+    severity: WARNING
+    languages: [bash, sh]
+    pattern-regex: 'curl\s+[^\n]*\|\s*(sh|bash|zsh)'
+
+  - id: rm-rf-root
+    message: rm -rf /
+    severity: WARNING
+    languages: [bash, sh]
+    pattern-regex: 'rm\s+-rf\s+/'
+
+  - id: base64-decode
+    message: base64 decode
+    severity: INFO
+    languages: [bash, sh]
+    pattern-regex: 'base64\s+-d'
+
+  - id: child_process
+    message: child_process
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-regex: >-
+      require\(["'](?:node:)?child_process["']\)|from\s+["'](?:node:)?child_process["']|import.*child_process
+
+  - id: shell-exec-string-command
+    message: shell exec() with string command
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-regex: >-
+      \b(child_process\.)?exec(Sync|File)?\s*\(\s*["`']
+
+  - id: eval-call
+    message: eval()
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-regex: '\beval\s*\('
+
+  - id: dynamic-env-var-access-js
+    message: dynamic env var access
+    severity: INFO
+    languages: [javascript, typescript]
+    pattern-regex: 'process\.env\['
+
+  - id: subprocess
+    message: subprocess
+    severity: WARNING
+    languages: [python]
+    pattern-regex: 'subprocess\.(run|Popen|call|check_output)'
+
+  - id: os-system
+    message: os.system()
+    severity: WARNING
+    languages: [python]
+    pattern-regex: 'os\.system\s*\('
+
+  - id: dynamic-env-var-access-py
+    message: dynamic env var access
+    severity: INFO
+    languages: [python]
+    pattern-regex: 'os\.environ\['
