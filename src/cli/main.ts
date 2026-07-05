@@ -28,9 +28,6 @@ export function buildProgram(opts?: { root?: string }): Command {
     .version("0.1.0");
 
   // skills — vendored skill supply chain.
-  // The "accept" subcommand promotes stage to live. The "review --accept" flag
-  // adds findings to the review baseline. Different operations; same English
-  // verb. The CLI distinguishes by argument shape.
   const skills = program.command("skills").description("manage vendored skills");
 
   skills
@@ -50,14 +47,12 @@ export function buildProgram(opts?: { root?: string }): Command {
 
   skills
     .command("review")
-    .description("review staged skill content")
-    .option("--accept", "accept all findings into the review baseline")
+    .description("review staged skill content before accept/reject")
     .option("--show-suppressed", "include findings already in the baseline")
     .option("--skillspector", "also run skillspector on changed skills")
-    .action((actionOpts: { accept?: boolean; showSuppressed?: boolean; skillspector?: boolean }) => {
+    .action((actionOpts: { showSuppressed?: boolean; skillspector?: boolean }) => {
       const reviewOpts: ReviewOptions = {
         root: root(),
-        accept: actionOpts.accept,
         showSuppressed: actionOpts.showSuppressed,
         withSkillspector: actionOpts.skillspector,
       };
@@ -68,10 +63,6 @@ export function buildProgram(opts?: { root?: string }): Command {
       }
       if (outcome.kind === "no-diff") {
         console.log("Staged content matches live tree — nothing to review.");
-        process.exit(0);
-      }
-      if (outcome.kind === "accepted") {
-        console.log(`Accepted ${outcome.accepted} finding(s) into ${outcome.baselinePath}.`);
         process.exit(0);
       }
       process.exit(0);
@@ -140,7 +131,7 @@ export function buildProgram(opts?: { root?: string }): Command {
     .command("audit")
     .description("audit live skill content")
     .option("--json", "emit JSON output")
-    .option("--accept", "accept all findings into the review baseline")
+    .option("--accept", "accept current live findings into the review baseline")
     .option("--skillspector", "also run skillspector on live skills")
     .action((actionOpts: { json?: boolean; accept?: boolean; skillspector?: boolean }) => {
       const auditOpts: AuditOptions = {
@@ -192,16 +183,25 @@ export function buildProgram(opts?: { root?: string }): Command {
     .description("verify provider configuration")
     .action(() => checkProviders(root()));
 
-  // doctor — read-only machine health check across all providers.
+  program
+    .command("install")
+    .description("install local agent setup (links + mcp + providers)")
+    .action(() => {
+      runLink(root());
+      installMcp(root());
+      installProviders(root());
+    });
+
+  // doctor — local machine and repo sanity, without external config sweeps.
   program
     .command("doctor")
-    .description("read-only health check (git, node, lock, provider symlinks, duplicate skills)")
+    .description("read-only local sanity check (git, node, lock shape, symlinks, duplicates)")
     .action(() => runDoctor(root()));
 
   // check — full integrity sweep. Runs doctor + mcp check + providers check + skills check.
   program
     .command("check")
-    .description("run doctor + mcp check + providers check + skills check")
+    .description("run full integrity sweep (doctor + mcp + providers + skills)")
     .action(() => {
       runDoctor(root());
       checkMcp(root());
@@ -210,7 +210,7 @@ export function buildProgram(opts?: { root?: string }): Command {
       console.log(`Verified ${skillCount} vendored skills and ${licenses} licenses.`);
     });
 
-  // link — symlink agents/skills and AGENTS.md into ~/.codex, ~/.claude, ~/.agents, ~/.kiro.
+  // link — low-level setup step retained as a compatibility alias.
   program
     .command("link")
     .description("symlink agents/skills and AGENTS.md into provider homes")

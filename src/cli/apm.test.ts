@@ -19,11 +19,11 @@ describe("apm CLI smoke", () => {
     expect(program.version()).toBe("0.1.0");
   });
 
-  it("exposes skills, providers, mcp, doctor, check, link as top-level commands", () => {
+  it("exposes skills, providers, mcp, install, doctor, and check as top-level commands", () => {
     const program = buildProgram();
     const topLevel = program.commands.map((c) => c.name());
     expect(topLevel).toEqual(
-      expect.arrayContaining(["skills", "providers", "mcp", "doctor", "check", "link"]),
+      expect.arrayContaining(["skills", "providers", "mcp", "install", "doctor", "check"]),
     );
   });
 
@@ -91,12 +91,13 @@ describe("apm CLI smoke", () => {
     for (const name of ["fetch", "check", "review", "accept", "reject", "remove", "audit"]) {
       expect(skillsHelp).toContain(name);
     }
+    expect(skillsHelp).not.toContain("--accept");
   });
 
   it("apm --help lists every top-level command", () => {
     const program = buildProgram();
     const help = program.helpInformation();
-    for (const name of ["skills", "providers", "mcp", "doctor", "check", "link"]) {
+    for (const name of ["skills", "providers", "mcp", "install", "doctor", "check", "link"]) {
       expect(help).toContain(name);
     }
   });

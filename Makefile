@@ -7,7 +7,7 @@ TS_SOURCES := $(shell find src -name '*.ts' -print)
 BUILD_INPUTS := $(TS_SOURCES) tsconfig.json package.json pnpm-lock.yaml
 
 help:
-	@echo "make install        Install user config (link + MCP + providers)"
+	@echo "make install        Install user config (links + MCP + providers)"
 	@echo "make deps           Install dev dependencies (uv sync — skillspector, semgrep)"
 	@echo "make build          Build TypeScript sources to dist/"
 	@echo "make clean          Remove all build artifacts and staged skills"
@@ -18,15 +18,13 @@ help:
 	@echo "make test           Run tests"
 	@echo ""
 	@echo "Make is for build and install. For individual actions, use ./apm:"
-	@echo "  ./apm skills fetch | check | review | accept | reject <s> | remove <s> | audit"
+	@echo "  ./apm skills fetch | check | review | accept | reject <s> | remove <s> | audit [--accept]"
 	@echo "  ./apm mcp install | check"
 	@echo "  ./apm providers install | check"
-	@echo "  ./apm doctor | check | link"
+	@echo "  ./apm install | doctor | check"
 
 install: build
-	./apm link
-	./apm mcp install
-	./apm providers install
+	./apm install
 
 deps:
 	uv sync
