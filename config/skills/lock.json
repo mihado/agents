@@ -4,7 +4,6 @@
     "addyosmani/agent-skills": {
       "repository": "https://github.com/addyosmani/agent-skills.git",
       "ref": "main",
-      "commit": "aba7c4e9695c363e65cb59effe926c7f1d1abe3d",
       "license": "MIT",
       "licensePath": ".agents/licenses/addyosmani-agent-skills-LICENSE",
       "licenseSha256": "f877a8366ac7fcbe83485940745bc6018bc884db812585ecf52af44233590095"
@@ -12,7 +11,6 @@
     "lguz/humanize-writing-skill": {
       "repository": "https://github.com/lguz/humanize-writing-skill.git",
       "ref": "main",
-      "commit": "4b7c37fa5148fd499e18498fcc91bb10ed801733",
       "license": "MIT",
       "licensePath": ".agents/licenses/lguz-humanize-writing-skill-LICENSE",
       "licenseSha256": "1711302ebe1dda490d728fc7ac4685ada617455e0241a75589ce458d268b7581"
@@ -20,7 +18,6 @@
     "mattpocock/skills": {
       "repository": "https://github.com/mattpocock/skills.git",
       "ref": "main",
-      "commit": "0877403d1e867fd9d574117e9b34ade404f36d2a",
       "license": "MIT",
       "licensePath": ".agents/licenses/mattpocock-skills-LICENSE",
       "licenseSha256": "d4cbbee3e786322cfa7d0b4e8568eb9908a4e1efd6e3b46b1356094bcacfb93b"
@@ -28,7 +25,6 @@
     "nutlope/hallmark": {
       "repository": "https://github.com/Nutlope/hallmark.git",
       "ref": "main",
-      "commit": "aeb42fb354ff4efa36ab475773a082315a3af2ce",
       "license": "MIT",
       "licensePath": ".agents/licenses/nutlope-hallmark-LICENSE",
       "licenseSha256": "580cb9c5a50e90ca7963fb033484b90da8f204261780f8b57ff43dba98497ce9"
@@ -36,7 +32,6 @@
     "pbakaus/impeccable": {
       "repository": "https://github.com/pbakaus/impeccable.git",
       "ref": "main",
-      "commit": "c979ac37c361da564dcce100a4f2623d94ef54c8",
       "license": "Apache-2.0",
       "licensePath": ".agents/licenses/pbakaus-impeccable-LICENSE",
       "licenseSha256": "f884b107a27cf03d14dd9f72d54fb2622a1f6d527e9ed416ea17f0662f0c7a3f"
@@ -44,7 +39,6 @@
     "shadcn/improve": {
       "repository": "https://github.com/shadcn/improve.git",
       "ref": "main",
-      "commit": "03369ee6d7cafbfcecc4346539b05b3dc0a603bb",
       "license": "MIT",
       "licensePath": ".agents/licenses/shadcn-improve-LICENSE",
       "licenseSha256": "d193e06c5c0c5a10fe41e0bece27137441e516ec5f4808e3fa1b5f98b9370fdc"
@@ -52,7 +46,6 @@
     "tw93/kami": {
       "repository": "https://github.com/tw93/Kami.git",
       "ref": "main",
-      "commit": "594bfb8f2c62f26102a377c2e6cdb8cafa7d61f1",
       "license": "MIT",
       "licensePath": ".agents/licenses/tw93-kami-LICENSE",
       "licenseSha256": "e16d8ee95d1b030db84de6e7ccd60f1fde36bb5e796b385830a468f880c91a35"
@@ -60,7 +53,6 @@
     "wondelai/skills": {
       "repository": "https://github.com/wondelai/skills.git",
       "ref": "main",
-      "commit": "7ae09b1acd981d035fd2d63d109e9100c5b57525",
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"

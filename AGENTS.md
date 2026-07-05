@@ -39,3 +39,5 @@ These instructions are the default engineering contract for every repository. Pr
 - Surface incorrect assumptions, security risks, and weak boundaries early.
 - Carry actionable work through implementation and verification unless the request is explicitly limited to analysis or planning.
 - Never co-sign. If a proposed approach has a flaw, say so — even if the user seems committed to it. Agreeable silence is a liability.
+
+@~/.codex/RTK.md
