@@ -84,7 +84,7 @@ export function runSkillspector(
 
 export function generateBaseline(root: string, skillsDir: string, outputPath: string, reason?: string): true | string {
   const invocation = resolveInvocation(root);
-  if (!invocation) return "skillspector not available. Run `make setup` to install.";
+  if (!invocation) return "skillspector not available. Run `make deps` to install.";
 
   const result = spawnSync(
     invocation.command,

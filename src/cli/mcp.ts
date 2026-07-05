@@ -39,11 +39,11 @@ if (command === "--check") {
   for (const [name, server] of Object.entries(manifest.servers)) {
     if (tools.codex && server.command) {
       installCodexMcp(tools.codex, name, server.command, server.args);
-      console.log(`installed: Codex ${name}`);
+      console.log(`linked  Codex ${name}`);
     }
     if (tools.claude) {
-      installClaudeMcp(tools.claude, name, server.command, server.args);
-      console.log(`installed: Claude ${name}`);
+      const added = installClaudeMcp(tools.claude, name, server.command, server.args);
+      console.log(added ? `linked  Claude ${name}` : `ok      Claude ${name}`);
     }
   }
 }

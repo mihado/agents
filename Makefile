@@ -1,4 +1,4 @@
-.PHONY: install setup check test typecheck lint vendor vendor-review vendor-audit vendor-accept mcp providers help clean
+.PHONY: install deps check test typecheck lint vendor vendor-review vendor-audit vendor-accept mcp providers help clean
 
 .DEFAULT_GOAL := help
 
@@ -7,8 +7,8 @@ TS_SOURCES := $(shell find src -name '*.ts' -print)
 BUILD_INPUTS := $(TS_SOURCES) tsconfig.json package.json pnpm-lock.yaml
 
 help:
-	@echo "make install        Install everything (symlinks, MCP, providers, Python tooling)"
-	@echo "make setup          Set up Python venv (skillspector, etc.) via uv"
+	@echo "make install        Install user config (symlinks, MCP, providers)"
+	@echo "make deps           Install dev dependencies (uv sync — skillspector, semgrep)"
 	@echo "make check          Run machine integrity checks (doctor, MCP, providers, vendor)"
 	@echo "make build          Build TypeScript sources to dist/"
 	@echo "make clean          Remove build artifacts under dist/"
@@ -24,10 +24,9 @@ help:
 
 install: build
 	node dist/cli/link.js
-	$(MAKE) setup
 	$(MAKE) mcp
 
-setup:
+deps:
 	uv sync
 
 $(BUILD_STAMP): $(BUILD_INPUTS)
