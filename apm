@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# In-repo CLI shim. Runs the built apm entrypoint against this repo
+# regardless of cwd. Use until a proper package install puts `apm` on PATH.
+set -euo pipefail
+
+# Resolve repo root from this script's location, not from cwd.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd "$SCRIPT_DIR"
+
+if [ ! -f "dist/cli/main.js" ]; then
+  echo "error: dist/cli/main.js not found. Run \`pnpm build\` first." >&2
+  exit 1
+fi
+
+exec node "dist/cli/main.js" "$@"

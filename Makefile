@@ -1,34 +1,54 @@
-.PHONY: install check test vendor mcp providers help
+.PHONY: install deps test typecheck lint help clean clean-build clean-stage
 
 .DEFAULT_GOAL := help
 
+BUILD_STAMP := dist/.build-stamp
+TS_SOURCES := $(shell find src -name '*.ts' -print)
+BUILD_INPUTS := $(TS_SOURCES) tsconfig.json package.json pnpm-lock.yaml
+
 help:
-	@echo "make install     Install everything (symlinks, MCP, providers)"
-	@echo "make check       Run machine integrity checks (doctor, MCP, providers, vendor)"
-	@echo "make test        Run tests"
-	@echo "make vendor      Fetch vendored skills"
-	@echo "make mcp         Sync MCP configuration"
-	@echo "make providers   Sync OpenCode provider configuration"
+	@echo "make install        Install user config (links + MCP + providers)"
+	@echo "make deps           Install dev dependencies (uv sync — skillspector, semgrep)"
+	@echo "make build          Build TypeScript sources to dist/"
+	@echo "make clean          Remove all build artifacts and staged skills"
+	@echo "make clean-build    Remove build artifacts only"
+	@echo "make clean-stage    Remove staged skills only"
+	@echo "make typecheck      Type-check TypeScript sources (no emit)"
+	@echo "make lint           Lint all source files"
+	@echo "make test           Run tests"
+	@echo ""
+	@echo "Make is for build and install. For individual actions, use ./apm:"
+	@echo "  ./apm skills fetch | check | review | accept | reject <s> | remove <s> | audit [--accept]"
+	@echo "  ./apm mcp install | check"
+	@echo "  ./apm providers install | check"
+	@echo "  ./apm install | doctor | check"
 
-install:
-	./scripts/link
-	$(MAKE) mcp
-	$(MAKE) providers
+install: build
+	./apm install
 
-check:
-	./scripts/doctor
-	./scripts/mcp --check
-	./scripts/opencode-providers --check
-	./scripts/vendor --check
+deps:
+	uv sync
 
-test:
-	node --test scripts/lib/opencode-config.test.js
+$(BUILD_STAMP): $(BUILD_INPUTS)
+	pnpm build
+	@mkdir -p dist
+	@touch $(BUILD_STAMP)
 
-vendor:
-	./scripts/vendor --fetch
+build: $(BUILD_STAMP)
 
-mcp:
-	./scripts/mcp --install
+clean: clean-build clean-stage
 
-providers:
-	./scripts/opencode-providers --install
+clean-build:
+	rm -rf dist
+
+clean-stage:
+	rm -rf .stage/skills .stage/stage-lock.json
+
+typecheck:
+	pnpm typecheck
+
+lint:
+	pnpm lint
+
+test: build
+	pnpm test

@@ -1,0 +1,12 @@
+[project]
+name = "agents"
+version = "0.1.0"
+description = "Agent skills vendor tooling"
+requires-python = ">=3.12"
+dependencies = [
+    "semgrep==1.168.0",
+    "skillspector @ git+https://github.com/NVIDIA/skillspector.git@dde36f258729b5aec7c835295a9556e64a2def0c",
+]
+
+[dependency-groups]
+dev = []

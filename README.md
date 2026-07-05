@@ -26,24 +26,24 @@ CLAUDE.md                  Claude wrapper around AGENTS.md
   skills/business/         business and operations skills
   skills/calibrated/minh/  skills containing Minh-calibrated context
   licenses/                upstream license notices
-scripts/
-  link                     symlinks instructions and skills into Claude, Codex, and ~/.agents (universal)
-  doctor                   checks installation and integrity
-  mcp                      installs and verifies baseline MCP servers
-  vendor                   fetches and verifies vendored skills
-  opencode-providers       syncs providers.json → OpenCode provider config
-  lib/                     shared utilities (opencode config I/O)
-Makefile                   convenience targets for install, check, test
-mcp.json                   baseline MCP server definitions
-providers.json             AI provider manifest (models, limits, reasoning flags)
-skills.json                selected skills and their upstream sources
-skills.lock                resolved commits, provenance, and content hashes
-LICENSE                    Apache-2.0
+src/
+  cli/                     apm CLI entrypoint (main.ts) and smoke tests
+  core/                    shared infrastructure (commands, paths, reporter)
+  providers/               provider modules + apm helpers (link, doctor, mcp, sync)
+  skills/                  inventory, integrity, ingest, review subdomains
+dist/                      compiled output (gitignored)
+config/
+  providers/               mcp.json, opencode.json
+  skills/                  manifest.json, lock.json, semgrep.yml
+pyproject.toml             uv project: pins skillspector and Python tooling dependencies
+uv.lock                    locked dependency graph (committed, reproducible installs)
+.python-version            Python version pin (3.12)
+Makefile                   convenience targets for install, deps, check, test
 ```
 
 ## Install
 
-Requirements: Git, Node.js, Claude Code, Codex, and/or OpenCode.
+Requirements: Git, Node.js, [uv](https://docs.astral.sh/uv/), Claude Code, Codex, and/or OpenCode.
 
 ```bash
 git clone git@github.com:mihado/agents.git ~/path/to/repo
@@ -52,15 +52,17 @@ make install
 make check
 ```
 
-`make install` runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex) and OpenCode remote config, then writes provider config (OpenCode). `make check` runs the full integrity suite (doctor, MCP, providers, vendor).
+`make install` builds TypeScript sources, then runs `./apm install` to set up local links, MCP config, and provider config. `./apm check` runs the full integrity suite (doctor, MCP, providers, skills). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
 
 To run individual steps:
 
 ```bash
-make mcp          # sync MCP (Claude/Codex) and OpenCode remote config
-make providers    # sync OpenCode providers only
-make vendor       # fetch vendored skills
-make test         # run tests
+make deps                # set up Python venv (skillspector, semgrep) via uv sync
+make test                # run tests
+./apm install            # setup local links + MCP + provider config
+./apm skills fetch       # fetch vendored skills into .stage
+./apm doctor             # read-only local sanity check
+./apm check              # full integrity sweep
 ```
 
 The link script creates these symlinks:
@@ -81,21 +83,48 @@ Each entry is linked individually. Existing unrelated skills survive. A file, di
 
 `CODEX_HOME`, `CLAUDE_HOME`, `AGENTS_HOME`, and `KIRO_HOME` may be set to install into alternate locations.
 
-## Baseline MCP
+## CLI Reference
 
-`mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
+`apm` is the canonical command-line interface. It is a Commander-based CLI built from `src/cli/main.ts`; the in-repo shim `./apm` runs the built entrypoint until a global install puts the binary on PATH. Run `./apm --help` to see the live surface.
 
-```bash
-./scripts/mcp --install   # install
-./scripts/mcp --check     # verify without changing anything
-# or: make mcp
+`make` keeps `install` (the multi-step orchestrator that runs `apm install`) plus the build/test/lint targets. Individual actions go through `apm`.
+
+```text
+apm skills fetch                 fetch declared third-party skills into .stage/skills
+apm skills check                 verify live lock matches the working copy
+apm skills review                review staged skill content before accept/reject
+apm skills accept                promote stage to live
+apm skills reject <name>         remove a staged skill from stage
+apm skills remove <name>         remove a live skill from live tree and lock
+apm skills audit                 audit entire live skill tree
+apm skills audit --accept        accept current live findings into the review baseline
+apm skills audit --json          emit audit findings as JSON
+apm install                      install local agent setup (links + mcp + providers)
+apm mcp install                  install MCP server entries from config/providers/mcp.json
+apm mcp check                    verify MCP server entries
+apm providers install            install provider configuration
+apm providers check              verify provider configuration
+apm doctor                       read-only local sanity check (git, node, lock shape, symlinks, duplicates)
+apm check                        full integrity sweep (doctor + mcp + providers + skills)
 ```
 
-Environment variable names may be documented in `mcp.json`; values stay in the machine environment and are never stored here.
+Lifecycle: fetch, review, reject anything unwanted, then accept whatever remains in stage into the live tree. Baseline acceptance is optional and happens later through `apm skills audit --accept` against already-live content.
+
+## Baseline MCP
+
+`config/providers/mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
+
+```bash
+./apm mcp install    # install all MCP config
+./apm mcp check      # verify without changing anything
+```
+
+Environment variable names may be documented in `config/providers/mcp.json`; values stay in the machine environment and are never stored here.
+
 
 ## Vendored Skills
 
-Skills are copied unchanged from upstream repositories declared in `skills.json`:
+Skills are copied unchanged from upstream repositories declared in `config/skills/manifest.json`:
 
 - [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
 - [mattpocock/skills](https://github.com/mattpocock/skills)
@@ -107,12 +136,30 @@ Skills are copied unchanged from upstream repositories declared in `skills.json`
 - [lguz/humanize-writing-skill][https://github.com/lguz/humanize-writing-skill]
 
 ```bash
-./scripts/vendor --fetch   # fetch all declared skills and regenerate skills.lock
-./scripts/vendor --check   # verify hashes offline without fetching
-# or: make vendor
+./apm skills fetch           # fetch all declared skills into .stage
+./apm skills review          # advisory scan of the staged diff for injection/exec risk
+./apm skills accept          # promote stage to live
+./apm skills audit           # audit entire live skill tree (regex + skillspector)
+./apm skills reject <skill>  # remove a staged skill from stage
+./apm skills remove <skill>  # remove a live skill from live tree and lock
+./apm check                  # integrity sweep (doctor + mcp + providers + skills check)
 ```
 
-After fetching, review the Git diff before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `skills.json`.
+`make` is for `install` (the multi-step orchestrator), `build`, `test`, `lint`, `typecheck`, and `clean`. Individual actions go through `./apm` directly. Run `./apm --help` for the full surface; see the CLI reference below.
+
+`apm skills` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
+
+Fetched third-party content lands in `.stage/skills` first. It does not become live agent-visible content until `./apm skills accept` promotes it into `.agents/skills`.
+
+`apm skills review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (custom regexes for instruction overrides, concealment, credential/secret access, exfiltration phrasing) and code-execution risk in scripts (Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic env access). Findings are fingerprinted and filtered against the skills-review baseline so only genuinely new hits surface.
+
+`apm skills audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to inspect accepted content, or after a staged accept if you want to decide whether current live findings should be recorded into the baseline with `./apm skills audit --accept`. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+
+Both tools share patterns and utilities from `src/skills/review/`. [`semgrep`](https://semgrep.dev/) and [`skillspector`](https://github.com/NVIDIA/skillspector) are installed in the repo-local venv via `uv sync`. No skill content leaves the machine.
+
+This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
+
+After fetching, review the Git diff and the `apm skills review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `config/skills/manifest.json`.
 
 Skill directory names must be globally unique across all installed repositories.
 
@@ -134,11 +181,11 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ## Diagnostics
 
 ```bash
-make check        # full suite
-./scripts/doctor  # doctor only
+./apm doctor          # read-only local sanity check (git, node, lock shape, symlinks, duplicates)
+./apm check           # full integrity sweep: doctor + mcp check + providers check + skills check
 ```
 
-`make check` runs doctor (Claude/Codex/Kiro symlinks), MCP config verification (Claude/Codex) and OpenCode remote config, provider config verification (OpenCode), and vendored skill hash checks. `./scripts/doctor` reports missing commands, broken or foreign symlinks, manifest and lock integrity, content hash mismatches, and MCP configuration — without changing the machine.
+`./apm doctor` is the quick local sanity pass. `./apm check` runs the full sweep: doctor, MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
 
 
 ## License
