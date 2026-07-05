@@ -18,9 +18,9 @@ Examples:
 
 ## 2. Current Controls
 
-### 2.1. We verify integrity with `make vendor`
+### 2.1. We verify integrity with `apm skills fetch` and `apm skills check`
 
-`make vendor` handles vendoring mechanics:
+`apm skills fetch` handles vendoring mechanics:
 
 - fetch upstream repositories declared in `config/skills/manifest.json`
 - copy selected skills unchanged
@@ -30,9 +30,27 @@ Examples:
 
 This proves integrity. It does not prove safety.
 
-### 2.2. We scan skill prose with the local regex scanner
+### 2.2. We keep candidate skill content out of the live tree until explicit accept
 
-`make vendor-review` and `make vendor-audit` use `src/skills/review/prose-scanner.ts` for prose-like files such as:
+Fetched third-party skill content lands in `.stage/skills`, not in `.agents/skills`.
+
+Current trust boundary:
+
+```text
+upstream repository
+-> .stage/skills
+-> scan and review
+-> explicit accept
+-> live .agents/skills tree
+```
+
+This is safer than the old direct-live flow because unreviewed upstream prose is not immediately loadable by agent sessions through the live skill symlinks.
+
+The staged boundary does not prove safety. It creates the place where review, rejection, and explicit acceptance happen before content becomes active.
+
+### 2.3. We scan skill prose with the local regex scanner
+
+`apm skills review` and `apm skills audit` use `src/skills/review/prose-scanner.ts` for prose-like files such as:
 
 - `.md`
 - `.mdx`
@@ -48,9 +66,9 @@ This scanner looks for prompt-injection and instruction-risk patterns, including
 
 We keep this scanner local and simple because this is plain-text policy scanning, not classic code analysis.
 
-### 2.3. We scan code with Semgrep
+### 2.4. We scan code with Semgrep
 
-`make vendor-review` and `make vendor-audit` use Semgrep for code files such as:
+`apm skills review` and `apm skills audit` use Semgrep for code files such as:
 
 - `.sh`
 - `.py`
@@ -76,9 +94,9 @@ The current rules look for:
 
 We use Semgrep here because code scanning should rely on a maintained scanner and rule format, not a custom engine.
 
-### 2.4. We use SkillSpector as a secondary scanner
+### 2.5. We use SkillSpector as a secondary scanner
 
-`make vendor-review --skillspector` and `make vendor-audit --skillspector` run NVIDIA SkillSpector.
+`apm skills review --skillspector` and `apm skills audit --skillspector` run NVIDIA SkillSpector.
 
 We use it for an extra static-analysis pass. We do not use it as the primary source of truth.
 
@@ -90,29 +108,29 @@ Reason:
 
 ## 3. Command Roles
 
-### 3.1. `make vendor-review`
+### 3.1. `apm skills review`
 
 Purpose:
 
-- scan only the current Git diff under `.agents/skills`
+- scan only the staged diff between `.stage/skills` and the live `.agents/skills` tree
 - report only findings introduced by the current change
-- write structured artifact to `reports/security/vendor-review/`
+- write structured artifact to `reports/security/skills-review/`
 
 Behavior:
 
 - prose findings come from the local regex scanner
 - code findings come from Semgrep
-- findings are filtered against `config/skills/vendor-review-baseline.json`
+- findings are filtered against `config/skills/skills-review-baseline.json`
 - optional SkillSpector pass can be added
 - artifact written regardless of whether findings exist
 
-### 3.2. `make vendor-audit`
+### 3.2. `apm skills audit`
 
 Purpose:
 
 - scan the entire live skill tree
 - produce a full current finding set
-- write structured artifact to `reports/security/vendor-audit/`
+- write structured artifact to `reports/security/skills-audit/`
 
 Behavior:
 
@@ -125,7 +143,7 @@ Behavior:
 
 We keep separate baselines for separate scanners.
 
-### 4.1. `config/skills/vendor-review-baseline.json`
+### 4.1. `config/skills/skills-review-baseline.json`
 
 Used by the local review pipeline.
 
@@ -155,8 +173,8 @@ Semgrep output is normalized in `src/skills/review/semgrep.ts` into the same int
 
 This keeps:
 
-- `vendor-review`
-- `vendor-audit`
+- `skills-review`
+- `skills-audit`
 - fingerprint baselines
 
 stable even if the code-scanning engine changes.
@@ -164,11 +182,13 @@ stable even if the code-scanning engine changes.
 ## 6. Commands
 
 ```bash
-make vendor             # fetch skills to stage
-make vendor-review      # scan staged diff (with SkillSpector), write artifact
-make vendor-audit       # scan live tree, write artifact (with SkillSpector)
-make vendor-accept      # promote remaining staged skills to live and update lock
-make check              # verify lock integrity + MCP + providers
+./apm skills fetch                 # fetch skills to stage
+./apm skills review                # scan staged diff, write artifact
+./apm skills review --skillspector # add SkillSpector on changed skills
+./apm skills audit                 # scan live tree, write artifact
+./apm skills audit --skillspector  # add SkillSpector on live skills
+./apm skills accept                # promote remaining staged skills to live and update lock
+./apm check                        # verify lock integrity + MCP + providers
 ```
 
 ## 7. Current Limits
@@ -178,46 +198,26 @@ make check              # verify lock integrity + MCP + providers
 - no replacement for reading the actual diff
 - no claim that all prompt-injection patterns are covered
 - no claim that all code-execution paths are covered
-- staged cache boundary exists but reject/remove flow is still being finished
 
-Today, vendored content is written to `.stage/skills` before review. The intended workflow is review, reject unwanted staged skills, then accept whatever remains.
+The current workflow is: fetch to `.stage/skills`, review, reject unwanted staged skills with `apm skills reject <skill-name>`, then accept whatever remains with `apm skills accept`.
 
 ## 8. Improvements In Progress
 
 Work still to be done:
 
-- reject/remove flow and exact post-rejection promotion semantics
 - optional isolated staging evaluation for checkout, scanning, and review
 - filesystem-attribute checks for vendored content
 - persistence-mechanism checks such as shell profile or cron writes
 - stronger diff-to-finding range mapping for multi-line code findings
 - possible commit-age or release-age trust gates for upstream changes
 
-Reference plan:
+### 8.1. Isolated staging evaluation
 
-- `docs/plans/2026-07-05-skill-lifecycle-implementation.md`
-
-### 8.1. Staged cache boundary
-
-The next trust boundary should be:
-
-```text
-upstream repository
--> inert cache
--> scan and review
--> explicit accept
--> live .agents/skills tree
-```
-
-This is safer than the current flow because unreviewed upstream prose is not immediately loadable by agent sessions through the live skill symlinks.
-
-The staged cache does not prove safety. It only creates the place where safety review can happen before content becomes active.
-
-### 8.2. Isolated staging evaluation
-
-The staging phase may eventually run inside an isolated execution environment such as agentOS or another sandbox-like VM.
+The staged review boundary exists today, but it still runs on the normal host environment. The next improvement is to perform checkout, scanning, and review preparation inside an isolated evaluator.
 
 Possible shape:
+
+The staging phase may eventually run inside an isolated execution environment such as agentOS or another sandbox-like VM.
 
 ```text
 isolated evaluator
