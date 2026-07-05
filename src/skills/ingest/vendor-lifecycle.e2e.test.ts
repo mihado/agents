@@ -7,7 +7,7 @@ import { validateLock } from "../inventory/lockfile.js";
 import type { Manifest } from "../inventory/manifest.js";
 import { promoteStagedContent } from "./promote.js";
 import { readJson } from "../../core/commands.js";
-import { removeSkillFromLock } from "../../cli/vendor-remove.js";
+import { removeSkillFromLock } from "./remove.js";
 
 function makeTempRoot(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "vendor-e2e-"));

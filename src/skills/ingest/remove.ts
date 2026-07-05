@@ -1,8 +1,8 @@
 import path from "node:path";
 import fs from "node:fs";
-import { readJson, writeJson, fail } from "../core/commands.js";
-import type { Lock } from "../skills/inventory/lockfile.js";
-import { validateSkillPath, validateLicensePath } from "../skills/inventory/lockfile.js";
+import { readJson, writeJson, fail } from "../../core/commands.js";
+import type { Lock } from "../inventory/lockfile.js";
+import { validateSkillPath, validateLicensePath } from "../inventory/lockfile.js";
 
 export function removeSkillFromLock(root: string, skillName: string): Lock {
   const lockPath = path.join(root, "config", "skills", "lock.json");
@@ -41,4 +41,3 @@ export function removeSkillFromLock(root: string, skillName: string): Lock {
   writeJson(lockPath, lock);
   return lock;
 }
-
