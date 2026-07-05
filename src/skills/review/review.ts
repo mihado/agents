@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseDiff } from "./diff.js";
-import { readBaseline, writeBaseline, mergeBaseline, isSuppressed } from "./baseline.js";
+import { readBaseline, isSuppressed } from "./baseline.js";
 import { scanCodeFiles } from "./semgrep.js";
 import { runSkillspectorWithProgress } from "./skillspector.js";
 import type { SkillspectorOutput } from "./skillspector.js";
@@ -12,7 +12,6 @@ import type { Finding } from "../types.js";
 
 export interface ReviewOptions {
   root: string;
-  accept?: boolean;
   showSuppressed?: boolean;
   withSkillspector?: boolean;
 }
@@ -26,7 +25,6 @@ export interface ReviewResult {
 export type ReviewOutcome =
   | { kind: "no-stage" }
   | { kind: "no-diff" }
-  | { kind: "accepted"; accepted: number; baselinePath: string }
   | (ReviewResult & { kind: "reviewed" });
 
 function runDiffCmd(command: string, commandArgs: string[]): string {
@@ -78,7 +76,7 @@ function getStagedDiffOutput(root: string): string | null {
 }
 
 export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
-  const { root, accept, showSuppressed, withSkillspector } = opts;
+  const { root, showSuppressed, withSkillspector } = opts;
   const baselinePath = path.join(root, "config", "skills", "skills-review-baseline.json");
   const skillspectorBaselinePath = path.join(root, "config", "skills", "skillspector-baseline.yaml");
 
@@ -111,16 +109,6 @@ export function runVendorReview(opts: ReviewOptions): ReviewOutcome {
   const allFindings = [...findings, ...codeFindings];
 
   const baseline = readBaseline(baselinePath);
-
-  if (accept) {
-    const changedPaths = [...changedFiles.keys()];
-    writeArtifact(
-      root, "skills-review", "skills-review --accept",
-      parseSkillNames(diffOutput), allFindings, ["prose-scanner", "semgrep"], changedPaths,
-    );
-    writeBaseline(baselinePath, mergeBaseline(baseline, allFindings));
-    return { kind: "accepted", accepted: allFindings.length, baselinePath: path.relative(root, baselinePath) };
-  }
 
   const newFindings = allFindings.filter((f) => !isSuppressed(baseline, f));
   const suppressed = allFindings.filter((f) => isSuppressed(baseline, f));
