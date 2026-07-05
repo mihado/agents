@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# In-repo CLI shim. Runs the built agents entrypoint against this repo
+
+# In-repo CLI shim. Runs the built apm entrypoint against this repo
 # regardless of cwd. Use until a proper package install puts `apm` on PATH.
 set -euo pipefail
 

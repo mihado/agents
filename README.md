@@ -27,9 +27,9 @@ CLAUDE.md                  Claude wrapper around AGENTS.md
   skills/calibrated/minh/  skills containing Minh-calibrated context
   licenses/                upstream license notices
 src/
-  cli/                     thin CLI entrypoints (link, doctor, mcp, vendor, etc.)
+  cli/                     apm CLI entrypoint (main.ts) and smoke tests
   core/                    shared infrastructure (commands, paths, reporter)
-  providers/               provider modules + shared utilities
+  providers/               provider modules + apm helpers (link, doctor, mcp, sync)
   skills/                  inventory, integrity, ingest, review subdomains
 dist/                      compiled output (gitignored)
 config/
@@ -148,17 +148,17 @@ Skills are copied unchanged from upstream repositories declared in `config/skill
 
 `make` is for `install` (the multi-step orchestrator), `build`, `test`, `lint`, `typecheck`, and `clean`. Individual actions go through `./apm` directly. Run `./apm --help` for the full surface; see the CLI reference below.
 
-The vendor tool proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
+`apm skills` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
 
-`vendor-review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (custom regexes for instruction overrides, concealment, credential/secret access, exfiltration phrasing) and code-execution risk in scripts (Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic env access). Findings are fingerprinted and filtered against the vendor-review baseline so only genuinely new hits surface.
+`apm skills review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (custom regexes for instruction overrides, concealment, credential/secret access, exfiltration phrasing) and code-execution risk in scripts (Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic env access). Findings are fingerprinted and filtered against the skills-review baseline so only genuinely new hits surface.
 
-`vendor-audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+`apm skills audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
 
 Both tools share patterns and utilities from `src/skills/review/`. [`semgrep`](https://semgrep.dev/) and [`skillspector`](https://github.com/NVIDIA/skillspector) are installed in the repo-local venv via `uv sync`. No skill content leaves the machine.
 
 This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
 
-After fetching, review the Git diff and `vendor-review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `config/skills/manifest.json`.
+After fetching, review the Git diff and the `apm skills review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `config/skills/manifest.json`.
 
 Skill directory names must be globally unique across all installed repositories.
 
