@@ -16,7 +16,7 @@ export function promoteStagedContent(root: string): Lock {
   validateManifest(manifest);
 
   if (!fs.existsSync(stageLockPath)) {
-    fail("No stage-lock.json found. Run `make vendor` first.");
+    fail("No stage-lock.json found. Run `apm skills fetch` first.");
   }
   const stageLock = readJson<Lock>(stageLockPath);
   validateStageLock(stageLock);
