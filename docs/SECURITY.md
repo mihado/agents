@@ -186,6 +186,7 @@ stable even if the code-scanning engine changes.
 ./apm skills review                # scan staged diff, write artifact
 ./apm skills review --skillspector # add SkillSpector on changed skills
 ./apm skills audit                 # scan live tree, write artifact
+./apm skills audit --accept        # accept current live findings into the baseline
 ./apm skills audit --skillspector  # add SkillSpector on live skills
 ./apm skills accept                # promote remaining staged skills to live and update lock
 ./apm check                        # verify lock integrity + MCP + providers

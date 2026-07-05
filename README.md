@@ -52,18 +52,17 @@ make install
 make check
 ```
 
-`make install` builds TypeScript sources, runs the link script (Claude/Codex/universal symlinks), syncs baseline MCP (Claude/Codex), and writes provider config (OpenCode). `./apm check` runs the full integrity suite (doctor, MCP, providers, skills). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
+`make install` builds TypeScript sources, then runs `./apm install` to set up local links, MCP config, and provider config. `./apm check` runs the full integrity suite (doctor, MCP, providers, skills). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
 
 To run individual steps:
 
 ```bash
-make deps             # set up Python venv (skillspector, semgrep) via uv sync
-make test             # run tests
-./apm skills fetch    # fetch vendored skills into .stage
-./apm mcp install     # sync MCP (Claude/Codex) from config/providers/mcp.json
-./apm providers install   # sync OpenCode providers
-./apm doctor          # read-only health check
-./apm check           # full integrity sweep
+make deps                # set up Python venv (skillspector, semgrep) via uv sync
+make test                # run tests
+./apm install            # setup local links + MCP + provider config
+./apm skills fetch       # fetch vendored skills into .stage
+./apm doctor             # read-only local sanity check
+./apm check              # full integrity sweep
 ```
 
 The link script creates these symlinks:
@@ -88,28 +87,28 @@ Each entry is linked individually. Existing unrelated skills survive. A file, di
 
 `apm` is the canonical command-line interface. It is a Commander-based CLI built from `src/cli/main.ts`; the in-repo shim `./apm` runs the built entrypoint until a global install puts the binary on PATH. Run `./apm --help` to see the live surface.
 
-`make` keeps `install` (the multi-step orchestrator that runs `apm link` + `apm mcp install` + `apm providers install`) plus the build/test/lint targets. Individual actions go through `apm`.
+`make` keeps `install` (the multi-step orchestrator that runs `apm install`) plus the build/test/lint targets. Individual actions go through `apm`.
 
 ```text
 apm skills fetch                 fetch declared third-party skills into .stage/skills
 apm skills check                 verify live lock matches the working copy
-apm skills review                advisory scan of staged skill content
-apm skills review --accept       accept findings into the review baseline
+apm skills review                review staged skill content before accept/reject
 apm skills accept                promote stage to live
 apm skills reject <name>         remove a staged skill from stage
 apm skills remove <name>         remove a live skill from live tree and lock
 apm skills audit                 audit entire live skill tree
+apm skills audit --accept        accept current live findings into the review baseline
 apm skills audit --json          emit audit findings as JSON
+apm install                      install local agent setup (links + mcp + providers)
 apm mcp install                  install MCP server entries from config/providers/mcp.json
 apm mcp check                    verify MCP server entries
 apm providers install            install provider configuration
 apm providers check              verify provider configuration
-apm doctor                       read-only health check (git, node, lock, symlinks, duplicates)
+apm doctor                       read-only local sanity check (git, node, lock shape, symlinks, duplicates)
 apm check                        full integrity sweep (doctor + mcp + providers + skills)
-apm link                         symlink agents/skills and AGENTS.md into provider homes
 ```
 
-`apm skills accept` and `apm skills review --accept` are different operations. The first promotes staged content into the live tree. The second adds review findings to the review baseline so future scans suppress them.
+Lifecycle: fetch, review, reject anything unwanted, then accept whatever remains in stage into the live tree. Baseline acceptance is optional and happens later through `apm skills audit --accept` against already-live content.
 
 ## Baseline MCP
 
@@ -154,7 +153,7 @@ Fetched third-party content lands in `.stage/skills` first. It does not become l
 
 `apm skills review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (custom regexes for instruction overrides, concealment, credential/secret access, exfiltration phrasing) and code-execution risk in scripts (Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic env access). Findings are fingerprinted and filtered against the skills-review baseline so only genuinely new hits surface.
 
-`apm skills audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to calibrate the scanner against the current corpus, or to hand findings to another agent for review. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+`apm skills audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to inspect accepted content, or after a staged accept if you want to decide whether current live findings should be recorded into the baseline with `./apm skills audit --accept`. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
 
 Both tools share patterns and utilities from `src/skills/review/`. [`semgrep`](https://semgrep.dev/) and [`skillspector`](https://github.com/NVIDIA/skillspector) are installed in the repo-local venv via `uv sync`. No skill content leaves the machine.
 
@@ -182,11 +181,11 @@ All categories are installed on Minh's machines and discovered under a flat skil
 ## Diagnostics
 
 ```bash
-./apm doctor          # read-only health check (git, node, lock, symlinks, duplicates)
+./apm doctor          # read-only local sanity check (git, node, lock shape, symlinks, duplicates)
 ./apm check           # full integrity sweep: doctor + mcp check + providers check + skills check
 ```
 
-`./apm check` runs doctor (symlink validation for all providers), MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
+`./apm doctor` is the quick local sanity pass. `./apm check` runs the full sweep: doctor, MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
 
 
 ## License
