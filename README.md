@@ -184,6 +184,26 @@ Chain skills compose multiple vendored skills into a single workflow (e.g., `des
 
 The directory structure documents ownership and portability, not runtime profiles. Skill directory names must be globally unique across all installed repositories. Review calibrated material before pushing to a public repo.
 
+## Provider Routing
+
+OpenCode supports custom providers through `config/providers/opencode.json`. You can point it directly at your own provider accounts, or route requests through a local proxy if you want an extra control layer.
+
+I use [9Router](https://github.com/mihado/9router) as one example of that second setup, but it is optional. Adjust the provider endpoints, proxy layer, and account layout to fit your own OpenCode configuration.
+
+```text
+# Direct setup
+Your CLI tool ──► OpenCode config ──► your provider
+
+# Custom routed setup
+Your CLI tool ──► OpenCode config ──► your proxy/router ──► provider A
+                  (providers.json)                      └─► provider B
+                                                        └─► provider C
+```
+
+- **`config/providers/opencode.json`** - defines the providers and models exposed to OpenCode
+- **`./apm providers install`** - syncs that config into `~/.config/opencode/opencode.jsonc`
+- **Custom routing layer** - optional; useful if you want centralized quota handling, fallback, model shaping, or account management outside OpenCode itself
+- **Fusion models** - optional routed models that can combine capabilities behind a single OpenCode-facing model ID
 
 ## License
 
