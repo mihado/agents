@@ -1,248 +1,77 @@
 # Security
 
-This repository vendors third-party agent skills. That creates two review surfaces:
+This repository vendors third-party agent skills. Two review surfaces: skill prose an agent reads and follows, and vendored code that may execute.
 
-- skill prose that an agent may read and follow
-- vendored code that may execute or assist execution
+## Threat Model
 
-This document records the current security path.
+Defending against unsafe upstream content: `SKILL.md` with instruction overrides, concealment, secret access, or exfiltration; scripts that shell out, decode payloads, or read dynamic environment state.
 
-## 1. Threat Model
+## Current Controls
 
-We are defending against unsafe upstream skill content.
+- **Staged boundary**: content lands in `.stage/skills` before explicit accept into `.agents/skills`. Unreviewed upstream prose is not immediately loadable by agents. See `docs/skill-lifecycle.md` for the full lifecycle.
+- **Integrity**: `apm skills fetch` pins commits and hashes in the lock; `apm skills check` verifies them. Integrity does not prove safety.
 
-Examples:
+## Scanners
 
-- a `SKILL.md` that tells an agent to ignore instructions, hide behavior, read secrets, or exfiltrate data
-- a script that shells out, decodes payloads, reads dynamic environment state, or runs obviously dangerous commands
+All scanners run during `apm skills review` (staged diff only) and `apm skills audit` (full live tree). Both write structured artifacts to `reports/security/skills-review/` and `reports/security/skills-audit/`.
 
-## 2. Current Controls
+Output is normalized to a unified finding shape: `file`, `label`, `snippet`, `lineNum`, `fingerprint`. This keeps artifacts stable across engine changes.
 
-### 2.1. We verify integrity with `apm skills fetch` and `apm skills check`
+### Prose scanner (`src/skills/review/prose-scanner.ts`)
 
-`apm skills fetch` handles vendoring mechanics:
+Targets `.md`, `.mdx`, `.txt`. Local regex — no external dependency.
 
-- fetch upstream repositories declared in `config/skills/manifest.json`
-- copy selected skills unchanged
-- verify content against `config/skills/lock.json`
-- enforce path-safe extraction
-- track upstream license files
+Patterns: instruction overrides, concealment from user, credential access phrasing, exfiltration language, zero-width or invisible characters.
 
-This proves integrity. It does not prove safety.
+### Semgrep
 
-### 2.2. We keep candidate skill content out of the live tree until explicit accept
+Targets `.sh`, `.py`, `.js`, `.mjs`, `.cjs`, `.ts`. Rules in `config/skills/semgrep.yml`.
 
-Fetched third-party skill content lands in `.stage/skills`, not in `.agents/skills`.
+Patterns: `curl | sh`, `rm -rf /`, `base64 -d`, `child_process`, `exec()`, `eval()`, `process.env[...]`, `subprocess.*`, `os.system()`, `os.environ[...]`.
 
-Current trust boundary:
+We use Semgrep for code scanning because it is a maintained scanner and rule format, not a custom engine.
 
-```text
-upstream repository
--> .stage/skills
--> scan and review
--> explicit accept
--> live .agents/skills tree
-```
+### SkillSpector (`--skillspector`)
 
-This is safer than the old direct-live flow because unreviewed upstream prose is not immediately loadable by agent sessions through the live skill symlinks.
+Secondary static-analysis pass via NVIDIA SkillSpector. Not primary — useful as a second opinion, noisy enough that default workflows don't depend on it.
 
-The staged boundary does not prove safety. It creates the place where review, rejection, and explicit acceptance happen before content becomes active.
+## Baselines
 
-### 2.3. We scan skill prose with the local regex scanner
+Separate baselines per scanner, used to suppress known-accepted noise:
 
-`apm skills review` and `apm skills audit` use `src/skills/review/prose-scanner.ts` for prose-like files such as:
+- `config/skills/skills-review-baseline.json` — prose + Semgrep findings, fingerprinted by `file`/`label`/`snippet`
+- `config/skills/skillspector-baseline.yaml` — SkillSpector noise only. Optional; not part of staged promotion.
 
-- `.md`
-- `.mdx`
-- `.txt`
-
-This scanner looks for prompt-injection and instruction-risk patterns, including:
-
-- instruction overrides
-- concealment from the user
-- secret or credential access phrasing
-- obvious exfiltration language
-- zero-width or invisible characters
-
-We keep this scanner local and simple because this is plain-text policy scanning, not classic code analysis.
-
-### 2.4. We scan code with Semgrep
-
-`apm skills review` and `apm skills audit` use Semgrep for code files such as:
-
-- `.sh`
-- `.py`
-- `.js`
-- `.mjs`
-- `.cjs`
-- `.ts`
-
-The Semgrep rules live in `config/skills/semgrep.yml`.
-
-The current rules look for:
-
-- `curl | sh`
-- `rm -rf /`
-- `base64 -d`
-- `child_process`
-- string `exec(...)`
-- `eval(...)`
-- `process.env[...]`
-- `subprocess.*`
-- `os.system(...)`
-- `os.environ[...]`
-
-We use Semgrep here because code scanning should rely on a maintained scanner and rule format, not a custom engine.
-
-### 2.5. We use SkillSpector as a secondary scanner
-
-`apm skills review --skillspector` and `apm skills audit --skillspector` run NVIDIA SkillSpector.
-
-We use it for an extra static-analysis pass. We do not use it as the primary source of truth.
-
-Reason:
-
-- it can catch things the lighter scanners miss
-- it is useful as a second opinion
-- it is noisy enough that we do not want the default workflow to depend on it
-
-## 3. Command Roles
-
-### 3.1. `apm skills review`
-
-Purpose:
-
-- scan only the staged diff between `.stage/skills` and the live `.agents/skills` tree
-- report only findings introduced by the current change
-- write structured artifact to `reports/security/skills-review/`
-
-Behavior:
-
-- prose findings come from the local regex scanner
-- code findings come from Semgrep
-- findings are filtered against `config/skills/skills-review-baseline.json`
-- optional SkillSpector pass can be added
-- artifact written regardless of whether findings exist
-
-### 3.2. `apm skills audit`
-
-Purpose:
-
-- scan the entire live skill tree
-- produce a full current finding set
-- write structured artifact to `reports/security/skills-audit/`
-
-Behavior:
-
-- prose findings come from the local regex scanner
-- code findings come from Semgrep
-- optional SkillSpector pass recommended (`--skillspector`)
-- artifact captures scanners, findings, summary by skill, and SkillSpector issue details
-
-## 4. Baselines
-
-We keep separate baselines for separate scanners.
-
-### 4.1. `config/skills/skills-review-baseline.json`
-
-Used by the local review pipeline.
-
-Stores accepted findings for prose and Semgrep-normalized code results.
-
-Fingerprints are based on:
-
-- file
-- label
-- snippet
-
-### 4.2. `config/skills/skillspector-baseline.yaml`
-
-Used by SkillSpector.
-
-This baseline is optional scanner-noise suppression state. It is not part of the core staged promotion path.
-
-## 5. Output Normalization
-
-Semgrep output is normalized in `src/skills/review/semgrep.ts` into the same internal finding shape used by the rest of the review pipeline:
-
-- `file`
-- `label`
-- `snippet`
-- `lineNum`
-- `fingerprint`
-
-This keeps:
-
-- `skills-review`
-- `skills-audit`
-- fingerprint baselines
-
-stable even if the code-scanning engine changes.
-
-## 6. Commands
+## Commands
 
 ```bash
-./apm skills fetch                 # fetch skills to stage
-./apm skills review                # scan staged diff, write artifact
-./apm skills review --skillspector # add SkillSpector on changed skills
-./apm skills audit                 # scan live tree, write artifact
-./apm skills audit --accept        # accept current live findings into the baseline
-./apm skills audit --skillspector  # add SkillSpector on live skills
-./apm skills accept                # promote remaining staged skills to live and update lock
-./apm check                        # verify lock integrity + MCP + providers
+./apm skills fetch
+./apm skills review [--skillspector]
+./apm skills audit [--skillspector] [--accept]
+./apm skills reject <name>
+./apm skills accept
 ```
 
-## 7. Current Limits
+## Current Limits
 
-- no sandboxing of skill execution
+- no sandboxed execution of skill content
 - no guarantee that vendored content is safe
 - no replacement for reading the actual diff
-- no claim that all prompt-injection patterns are covered
-- no claim that all code-execution paths are covered
+- prompt-injection and code-execution coverage is incomplete
+- staged review still runs on the host environment
 
-The current workflow is: fetch to `.stage/skills`, review, reject unwanted staged skills with `apm skills reject <skill-name>`, then accept whatever remains with `apm skills accept`.
+## Improvements Planned
 
-## 8. Improvements In Progress
-
-Work still to be done:
-
-- optional isolated staging evaluation for checkout, scanning, and review
+- isolated staging evaluation (sandboxed checkout, scan, review)
 - filesystem-attribute checks for vendored content
-- persistence-mechanism checks such as shell profile or cron writes
-- stronger diff-to-finding range mapping for multi-line code findings
-- possible commit-age or release-age trust gates for upstream changes
+- persistence-mechanism checks (shell profile, cron)
+- stronger multi-line code finding mapping
+- commit-age or release-age trust gates
 
-### 8.1. Isolated staging evaluation
+Isolated evaluator shape:
 
-The staged review boundary exists today, but it still runs on the normal host environment. The next improvement is to perform checkout, scanning, and review preparation inside an isolated evaluator.
-
-Possible shape:
-
-The staging phase may eventually run inside an isolated execution environment such as agentOS or another sandbox-like VM.
-
-```text
-isolated evaluator
--> clone upstream content
--> copy candidate skills into a staged filesystem
--> run regex scanner
--> run Semgrep and optional SkillSpector
--> optionally run LLM review over skill prose as inert data
--> emit findings, diffs, and content hashes
-
-host
--> human reviews output
--> accepted content is copied into .agents/skills
--> skills.lock is updated
-```
-
-The evaluator should have restricted permissions:
-
-- no mount of the host home directory
-- no access to `~/.ssh`, `.env`, cloud credentials, agent config, or other secrets
-- only temporary checkout and cache paths mounted
-- outbound network disabled after checkout, or allowlisted to required upstream and scanner endpoints
-- no broad process or filesystem access outside the staged workspace
-
-If LLM review is used, the candidate `SKILL.md` must be provided as untrusted quoted data, not loaded as an active skill. The LLM review is advisory only and must not automatically approve content.
-
-This reduces blast radius if candidate code or prose attempts secret access, persistence, or exfiltration during evaluation. It does not replace human diff review, does not guarantee semantic prompt-injection detection, and does not protect a normal host agent session after a skill has been accepted into the live tree.
+- no mount of host home directory, no access to `~/.ssh`, `.env`, cloud credentials, or agent config
+- temporary checkout and cache paths only; outbound network disabled or allowlisted after checkout
+- restrictive filesystem and process permissions
+- candidate `SKILL.md` treated as untrusted quoted data in any LLM review — never loaded as an active skill
+- does not replace human diff review or guarantee semantic prompt-injection detection

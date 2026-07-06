@@ -1,8 +1,6 @@
 # agents
 
-Shared engineering instructions and workflows for Claude Code, Codex, and OpenCode.
-
-This repository contains portable engineering practice only. Product context, company policy, credentials, MCP configuration, and machine-specific paths belong in domain, project, or local configuration.
+Engineering instructions and skill content for OpenCode, Claude Code, Codex, and Kiro. Portable practice only: no product context, no credentials, no machine-specific paths.
 
 ## Instruction Layers
 
@@ -43,13 +41,13 @@ Makefile                   convenience targets for install, deps, check, test
 
 ## Install
 
-Requirements: Git, Node.js, [uv](https://docs.astral.sh/uv/), Claude Code, Codex, and/or OpenCode.
+Requirements: Git, Node.js, [uv](https://docs.astral.sh/uv/), OpenCode, Claude Code, and/or Codex.
 
 ```bash
 git clone git@github.com:mihado/agents.git ~/path/to/repo
 cd ~/path/to/repo
 make install
-make check
+./apm check
 ```
 
 `make install` builds TypeScript sources, then runs `./apm install` to set up local links, MCP config, and provider config. `./apm check` runs the full integrity suite (doctor, MCP, providers, skills). Run `make deps` separately to install Python tooling (skillspector, semgrep) via `uv sync`.
@@ -58,10 +56,8 @@ To run individual steps:
 
 ```bash
 make deps                # set up Python venv (skillspector, semgrep) via uv sync
-make test                # run tests
-./apm install            # setup local links + MCP + provider config
-./apm skills fetch       # fetch vendored skills into .stage
-./apm doctor             # read-only local sanity check
+./apm install            # link + mcp + providers
+./apm doctor             # quick local sanity check
 ./apm check              # full integrity sweep
 ```
 
@@ -77,7 +73,7 @@ The link script creates these symlinks:
 ~/.kiro/skills/<name>    -> <repo>/.agents/skills/<name>
 ```
 
-`~/.agents/skills/` is the universal skills path — OpenCode and Zed discover skills here. `~/.kiro/skills/` is Kiro's global skills path. If `~/.kiro` doesn't exist yet (Kiro not installed on this machine), the link script creates it so skills are ready the moment Kiro is installed.
+`~/.agents/skills/` is the universal skills path: OpenCode and Zed discover skills here. `~/.kiro/skills/` is Kiro's global skills path. If `~/.kiro` doesn't exist yet (Kiro not installed on this machine), the link script creates it so skills are ready the moment Kiro is installed.
 
 Each entry is linked individually. Existing unrelated skills survive. A file, directory, or foreign symlink at the same path causes installation to stop rather than overwrite.
 
@@ -85,11 +81,14 @@ Each entry is linked individually. Existing unrelated skills survive. A file, di
 
 ## CLI Reference
 
-`apm` is the canonical command-line interface. It is a Commander-based CLI built from `src/cli/main.ts`; the in-repo shim `./apm` runs the built entrypoint until a global install puts the binary on PATH. Run `./apm --help` to see the live surface.
+`apm` (**A**gent **P**ackage **M**anager) is the canonical command-line interface. It is a Commander-based CLI built from `src/cli/main.ts`; the in-repo shim `./apm` runs the built entrypoint until a global install puts the binary on PATH. Run `./apm --help` to see the live surface.
 
-`make` keeps `install` (the multi-step orchestrator that runs `apm install`) plus the build/test/lint targets. Individual actions go through `apm`.
+`make` keeps `install` (the multi-step orchestrator that runs `./apm install`) plus build/test/lint targets. Individual actions go through `apm`.
 
 ```text
+apm install                      install local agent setup (links + mcp + providers)
+apm doctor                       read-only local sanity check (git, node, lock shape, symlinks, duplicates)
+apm check                        full integrity sweep (doctor + mcp check + providers check + skills check)
 apm skills fetch                 fetch declared third-party skills into .stage/skills
 apm skills check                 verify live lock matches the working copy
 apm skills review                review staged skill content before accept/reject
@@ -99,20 +98,34 @@ apm skills remove <name>         remove a live skill from live tree and lock
 apm skills audit                 audit entire live skill tree
 apm skills audit --accept        accept current live findings into the review baseline
 apm skills audit --json          emit audit findings as JSON
-apm install                      install local agent setup (links + mcp + providers)
 apm mcp install                  install MCP server entries from config/providers/mcp.json
 apm mcp check                    verify MCP server entries
 apm providers install            install provider configuration
 apm providers check              verify provider configuration
-apm doctor                       read-only local sanity check (git, node, lock shape, symlinks, duplicates)
-apm check                        full integrity sweep (doctor + mcp + providers + skills)
 ```
 
-Lifecycle: fetch, review, reject anything unwanted, then accept whatever remains in stage into the live tree. Baseline acceptance is optional and happens later through `apm skills audit --accept` against already-live content.
+## Diagnostics
+
+```bash
+./apm doctor          # quick local sanity check (git, node, lock shape, symlinks, duplicates)
+./apm check           # full integrity sweep: doctor + mcp check + providers check + skills check
+```
+
+`./apm doctor` is the fast local pass. `./apm check` runs the full sweep: symlink validation, MCP config verification, provider config verification, and vendored skill hash checks. Nothing changes on your machine.
+
+The skills lifecycle:
+
+- **Fetch** declared skills from upstream into `.stage/skills/`: inert, not loaded by any agent
+- **Review** the staged diff against prose injection and code execution risk patterns
+- **Reject** any staged skill you don't want: remove it from stage, keep everything else intact
+- **Accept** whatever remains in stage, promoting it into `.agents/skills/` and updating the lock
+- **Audit** the live tree after promotion, optionally recording accepted findings into the baseline with `apm skills audit --accept`
+
+Reject operates on individual skills: if you approve three out of four staged skills, reject the fourth and accept the rest. The lock always reflects only what is live. For the full security model and scanner details, see [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Baseline MCP
 
-`config/providers/mcp.json` declares shared baseline MCP servers (currently Context7). The script configures whichever of Claude Code, Codex, and OpenCode are present. OpenCode MCP servers are mapped to their remote endpoint equivalents and written to `~/.config/opencode/opencode.jsonc`:
+`config/providers/mcp.json` declares shared MCP servers (currently Context7). The installer configures whichever of OpenCode, Claude Code, and Codex are present on your machine.
 
 ```bash
 ./apm mcp install    # install all MCP config
@@ -127,65 +140,49 @@ Environment variable names may be documented in `config/providers/mcp.json`; val
 Skills are copied unchanged from upstream repositories declared in `config/skills/manifest.json`:
 
 - [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)
+- [lguz/humanize-writing-skill](https://github.com/lguz/humanize-writing-skill)
 - [mattpocock/skills](https://github.com/mattpocock/skills)
-- [wondelai/skills](https://github.com/wondelai/skills)
-- [shadcn/improve](https://github.com/shadcn/improve)
 - [nutlope/hallmark](https://github.com/nutlope/hallmark)
 - [pbakaus/impeccable](https://github.com/pbakaus/impeccable)
+- [shadcn/improve](https://github.com/shadcn/improve)
 - [tw93/kami](https://github.com/tw93/Kami)
-- [lguz/humanize-writing-skill][https://github.com/lguz/humanize-writing-skill]
+- [wondelai/skills](https://github.com/wondelai/skills)
 
-```bash
-./apm skills fetch           # fetch all declared skills into .stage
-./apm skills review          # advisory scan of the staged diff for injection/exec risk
-./apm skills accept          # promote stage to live
-./apm skills audit           # audit entire live skill tree (regex + skillspector)
-./apm skills reject <skill>  # remove a staged skill from stage
-./apm skills remove <skill>  # remove a live skill from live tree and lock
-./apm check                  # integrity sweep (doctor + mcp + providers + skills check)
-```
+See [CLI Reference](#cli-reference) for all available commands (fetch, review, accept, reject, remove, audit, check).
 
-`make` is for `install` (the multi-step orchestrator), `build`, `test`, `lint`, `typecheck`, and `clean`. Individual actions go through `./apm` directly. Run `./apm --help` for the full surface; see the CLI reference below.
+The lifecycle: fetch, review, reject anything you don't want, then accept what's left. Fetched content lands in `.stage/skills/` first (inert, not loaded by any agent) until `./apm skills accept` promotes it into `.agents/skills/`. Baseline acceptance is optional and happens separately via `./apm skills audit --accept` against already-live content.
 
-`apm skills` proves *integrity* — hash-locked content, path-safe extraction, tracked licenses. It cannot prove *safety*: a vendored `SKILL.md` is prose an agent reads and follows as instructions, and vendored scripts run under agent hooks.
+First-party skills can live directly in `.agents/skills/` without being listed in the manifest. If you want them in the managed supply chain, add them to `config/skills/manifest.json`.
 
-Fetched third-party content lands in `.stage/skills` first. It does not become live agent-visible content until `./apm skills accept` promotes it into `.agents/skills`.
+### What the scanners actually check
 
-`apm skills review` scans the git diff (newly fetched changes) for two risk classes hashing can't catch: prompt-injection language in prose files (custom regexes for instruction overrides, concealment, credential/secret access, exfiltration phrasing) and code-execution risk in scripts (Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic env access). Findings are fingerprinted and filtered against the skills-review baseline so only genuinely new hits surface.
+`apm skills review` scans the staged diff for two things hashing can't catch:
 
-`apm skills audit` walks the entire live skill tree — prose regex scan plus Semgrep code scan, no baseline filtering. Use it to inspect accepted content, or after a staged accept if you want to decide whether current live findings should be recorded into the baseline with `./apm skills audit --accept`. Also runs NVIDIA SkillSpector (AST/taint/YARA, static-only `--no-llm`) across all skill directories.
+- **Prompt injection in prose.** Regex patterns for instruction overrides, concealment, credential access, and exfiltration phrasing in markdown and text files.
+- **Code execution risk in scripts.** Semgrep rules for `curl | sh`, `eval`, `subprocess`, `child_process`, `rm -rf /`, and dynamic `process.env` access.
 
-Both tools share patterns and utilities from `src/skills/review/`. [`semgrep`](https://semgrep.dev/) and [`skillspector`](https://github.com/NVIDIA/skillspector) are installed in the repo-local venv via `uv sync`. No skill content leaves the machine.
+Findings are fingerprinted and filtered against the `skills-review` baseline so only genuinely new hits surface. This is advisory: a human reads the findings and the actual diff.
 
-This is advisory, not a gate — findings need a human to read them, and none of this replaces actually reading the diff of any repo you don't control.
+`apm skills audit` walks the entire live tree with the same prose and Semgrep scan, plus optional [SkillSpector](https://github.com/NVIDIA/skillspector) (AST/taint/YARA, static-only `--no-llm`). Use it to inspect accepted content, or after a staged accept to decide whether current live findings should be recorded into the baseline.
 
-After fetching, review the Git diff and the `apm skills review` output before committing. First-party skills can be added directly to `.agents/skills/` without being listed in `config/skills/manifest.json`.
+Both tools share patterns from `src/skills/review/`. [`semgrep`](https://semgrep.dev/) and `skillspector` are installed in the repo-local venv via `make deps`. **The venv needs Python 3.12+ (`uv sync` installs it), so review and audit won't work without it.** The other commands: fetch, check, accept, reject, remove, doctor. They work with just pnpm.
 
-Skill directory names must be globally unique across all installed repositories.
+No skill content leaves the machine.
 
-### First-Party Skill Boundaries
+### Skill boundaries
 
-First-party skills are grouped by portability and calibration:
+Skills are grouped by portability and calibration:
 
-- `engineering/` contains portable engineering practice and ship chains.
-- `productivity/` contains portable workflows that are useful beyond a single person or domain.
-- `product/` contains product framework skills and discovery chains.
-- `design/` contains UI/UX design skills and review chains.
-- `business/` contains business and operations skills.
-- `calibrated/minh/` contains skills and references calibrated to Minh's voice, judgment, history, or preferences.
+- `engineering/` - portable engineering practice and ship chains
+- `productivity/` - portable workflows useful beyond a single person
+- `product/` - product framework skills and discovery chains
+- `design/` - UI/UX design skills and review chains
+- `business/` - business and operations skills
+- `calibrated/minh/` - skills calibrated to Minh's voice, judgment, and preferences
 
-Chain skills compose multiple vendored skills into a single workflow (e.g., `design-review` chains refactoring-ui, ux-heuristics, and microinteractions). They live next to the skills they compose.
+Chain skills compose multiple vendored skills into a single workflow (e.g., `design-review` chains `refactoring-ui`, `ux-heuristics`, and `microinteractions`). They live next to the skills they compose.
 
-All categories are installed on Minh's machines and discovered under a flat skill namespace. The directory structure documents ownership and portability; it is not a runtime profile system. Review calibrated material before pushing it to a public repository.
-
-## Diagnostics
-
-```bash
-./apm doctor          # read-only local sanity check (git, node, lock shape, symlinks, duplicates)
-./apm check           # full integrity sweep: doctor + mcp check + providers check + skills check
-```
-
-`./apm doctor` is the quick local sanity pass. `./apm check` runs the full sweep: doctor, MCP config verification (Claude/Codex/OpenCode), provider config verification (OpenCode), and vendored skill hash checks — all without changing the machine.
+The directory structure documents ownership and portability, not runtime profiles. Skill directory names must be globally unique across all installed repositories. Review calibrated material before pushing to a public repo.
 
 
 ## License

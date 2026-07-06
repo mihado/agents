@@ -45,8 +45,8 @@ _Avoid_: Install (which is the broader setup workflow)
 Top-level machine setup workflow for a provider. May call link plus provider-specific config setup (MCP, model config, etc.).
 
 **Check**:
-Verification workflow that confirms a provider's current machine state is correct. The CLI command name for this workflow is `doctor`.
-_Avoid_: Doctor, verify (for provider context)
+Verification workflow that confirms a provider module's current machine state is correct. The CLI command name for this workflow is `check` (for example `apm providers check`).
+_Avoid_: Doctor, verify (for provider-module context)
 
 ### Core Types
 
@@ -63,7 +63,7 @@ A discovered skill directory at a specific path, with its name and relative path
 The declared set of sources (upstream repositories) and skills that this repo intends to vend. Stored in `config/skills/manifest.json`.
 
 **Lock**:
-The pinned, resolved state of the manifest — the specific commits, content hashes, and license hashes for every declared source and skill. Stored in `config/skills/lock.json`.
+The pinned, resolved live state of the manifest — the specific commits, content hashes, and license hashes for accepted live sources and skills only. It may be a subset of the declared manifest. Stored in `config/skills/lock.json`.
 
 **Source**:
 An upstream repository from which skill content is fetched.
