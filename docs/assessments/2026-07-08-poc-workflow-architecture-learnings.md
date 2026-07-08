@@ -30,6 +30,18 @@ What we took:
 
 - **Permission posture.** CE proved that prompt prose is the effective control surface for read-only analysis agents. Our assessment confirmed the same: granular bash allowlists created friction without meaningfully increasing safety during POC. All subagents now get `bash: allow` with only `edit: deny` as the hard boundary.
 
+### From firstmate
+
+firstmate's strongest useful signal for us is not worktrees or fleet backends. It is the orchestrator discipline: one user-facing coordinator, durable state as truth, recovery as reconciliation instead of restart, and outcome-facing reporting that hides crew mechanics unless they matter.
+
+What we took:
+
+- **Single front door.** The conductor is the main conversational surface. Workers should stay behind it.
+- **Durable state beats memory.** Artifacts and logs are canonical. Model memory is a cache.
+- **Recovery is reconciliation.** On return after context decay, reconstruct from state and live evidence before planning new work.
+- **Escalate only actionable state changes.** Surface blocked, failed, needs-decision, completed, and ready-for-review states rather than every internal step.
+- **Outcome-facing communication.** Report what matters to the user, not orchestration mechanics by default.
+
 ### From Matt Pocock's skills
 
 Matt's wayfinder handles ambiguity upstream of any spec: create investigation tickets (research, prototype, grilling, task) to resolve fog one decision at a time, with blocking edges between them. The map is deliberately incomplete — "fog of war" for what can't be ticketed yet, graduated into new tickets as decisions resolve.
@@ -65,6 +77,8 @@ These are our own decisions, not borrowed:
 
 - **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap typist on minimax-m3, strong reviewer-adversarial on Kiro Sonnet, judge on GPT-5.5) requires agent frontmatter. The lesson is not to drop agents but to keep prompts lean and move reusable behavior toward skills over time.
 
+- **Persona over provider.** The meaningful unit is the agent persona and its mandate, not whether it ran in OpenCode, Kiro, Claude, or another harness. A durable record should preserve which persona thought what, what evidence it used, and what conclusion it reached. Provider/runtime is secondary metadata.
+
 ## Permission posture for POC
 
 Permissions are intentionally light:
@@ -82,7 +96,27 @@ No granular allowlists. Prompt constraints ("Do not edit any files," "Return out
 - Prototype and research dispatch as think-stage investigation tools
 - Non-OpenCode provider adapters (Claude, Codex)
 - Durability and recovery (session checkpoints, resume protocol)
+- Persona-scoped durable logs for collaborative thinking across multiple agent personas
 - GitHub-based review dispatch via Actions + labels
+
+## Emerging durability need
+
+The current collaboration pattern is already exposing a missing primitive: durable per-persona thinking records.
+
+The need is not "OpenCode log" versus "Kiro log." The useful distinction is persona-level:
+
+- planner log
+- adversarial reviewer log
+- DeepSeek-style exploratory log
+- conductor synthesis log
+
+That suggests a future record shape such as:
+
+- `logs/<persona>.md` or `.agent-contexts/logs/<persona>.md`
+- append major conclusions, evidence, reversals, and open questions
+- later add a clerk-style compaction pass that trims stale or superseded entries while preserving durable signal
+
+This would let multiple agent personas think in parallel across providers without losing the thread or overloading the canonical workflow artifacts.
 
 ## Revision Notes
 
