@@ -422,6 +422,13 @@
       "path": "skills/design/web-typography",
       "commit": "7ae09b1acd981d035fd2d63d109e9100c5b57525",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
+    },
+    "writing-great-skills": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/writing-great-skills",
+      "path": "skills/productivity/writing-great-skills",
+      "commit": "d574778f94cf620fcc8ce741584093bc650a61d3",
+      "sha256": "396fd1098e3f311f0f4373bab9c503b365f0ffcfe3c5bfbc74840a7e0b046c21"
     }
   }
 }

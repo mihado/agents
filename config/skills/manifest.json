@@ -197,6 +197,11 @@
       "srcPath": "skills/productivity/teach",
       "path": "skills/productivity/teach"
     },
+    "writing-great-skills": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/productivity/writing-great-skills",
+      "path": "skills/productivity/writing-great-skills"
+    },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/test-driven-development",

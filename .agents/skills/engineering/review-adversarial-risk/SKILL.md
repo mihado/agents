@@ -5,7 +5,7 @@ description: Reviews a diff for invariants, auth, data, concurrency, and operati
 
 # Review Adversarial Risk
 
-## Purpose
+## Overview
 
 Pressure-test a change for what breaks, especially where the constructive review may miss hidden risk.
 
@@ -19,13 +19,35 @@ Primary risk areas:
 
 This is elevation across Standards and Spec, not a separate style-only review.
 
-## Inputs
+## Process
+
+### Step 1: Read the risk surface
 
 Use the diff plus any available:
 
 - `brief.md`
 - `plan.md`
 - `verify.md`
+
+Completion criterion: you know what changed, what assumptions the change claims, and what verification evidence exists.
+
+### Step 2: Pressure-test the risk axes
+
+Check, at minimum:
+
+- invariants
+- authorization and access control
+- data integrity and transaction boundaries
+- concurrency and async coordination
+- operational failure paths
+
+Completion criterion: every credible hidden-risk issue worth surfacing has been classified by severity and cited to `file:line`.
+
+### Step 3: Return only credible breakage
+
+Do not pad the review with generic warnings or style concerns.
+
+Completion criterion: every reported issue names a concrete failure mode that could plausibly happen in this change.
 
 ## Rules
 
@@ -35,6 +57,7 @@ Use the diff plus any available:
 - Do not propose solutions unless the missing safeguard itself must be named clearly to explain the risk
 - Focus on what breaks, not general style or readability
 - If verification evidence is missing, note that build-time or runtime failure modes were not fully assessed
+- Do not run build, test, lint, or verification commands
 
 ## Severity
 

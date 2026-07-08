@@ -94,9 +94,9 @@ Shared skill source of truth lives under `.agents/skills/`. Provider runtime ski
 
 The first shared extraction targets are:
 
-- `.agents/skills/recovery-orientation/SKILL.md`
-- `.agents/skills/review-standards-spec/SKILL.md`
-- `.agents/skills/review-adversarial-risk/SKILL.md`
+- `.agents/skills/engineering/recovery-orientation/SKILL.md`
+- `.agents/skills/engineering/review-standards-spec/SKILL.md`
+- `.agents/skills/engineering/review-adversarial-risk/SKILL.md`
 
 OpenCode is the place where that workflow is specified most fully. Other provider bindings should preserve the contract as far as their harness allows, rather than forcing the contract downward to the lowest common denominator.
 
@@ -149,7 +149,7 @@ Expected source shape:
 ```text
 config/providers/claude/
   agents/
-    reviewer.md
+    reviewer.json
     ...
 ```
 
@@ -158,7 +158,7 @@ Expected runtime target:
 ```text
 ~/.claude/
   agents/
-    reviewer.md
+    reviewer.json
 ```
 
 Claude-specific agent files should be installed and checked by the Claude provider module. They should not live at repo-root `.claude/` paths.
@@ -656,8 +656,8 @@ OpenCode only. POC proves the conductor can drive think, brief, plan, act, verif
 | `planner-adversarial.md` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | adversarial: what breaks, what's missed |
 | `typist.md` | subagent | `minimax-m3` | edit + bash | implement execution plan |
 | `verifier.md` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | typecheck, lint, tests, runtime/browser evidence |
-| `reviewer.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | constructive: correctness, regressions |
-| `reviewer-adversarial.md` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | adversarial: invariants, auth, concurrency |
+| `reviewer.json` | custom agent | `claude-sonnet-4` | read + shell | constructive: correctness, regressions |
+| `reviewer-adversarial.json` | custom agent | `claude-sonnet-4` | read + shell | adversarial: invariants, auth, concurrency |
 | `judge.md` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | synthesis, disagreement resolution, confidence |
 
 **Commands** (`config/providers/opencode/commands/`):
@@ -712,4 +712,7 @@ After POC validates the loop:
 - [OpenCode Commands](https://opencode.ai/docs/commands/)
 - [OpenCode Formatters](https://opencode.ai/docs/formatters/)
 - [OpenCode Permissions](https://opencode.ai/docs/permissions/)
+- [Kiro CLI v3 overview](https://kiro.dev/docs/cli/v3/)
+- [Kiro CLI v3 agent config](https://kiro.dev/docs/cli/v3/agent-config/)
+- [Kiro CLI v3 permissions](https://kiro.dev/docs/cli/v3/permissions/)
 - OpenCode agent, command, permission, and formatter documentation

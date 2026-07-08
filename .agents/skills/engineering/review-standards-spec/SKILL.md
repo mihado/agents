@@ -5,7 +5,7 @@ description: Reviews a diff against Standards and Spec. Use for constructive rev
 
 # Review Standards Spec
 
-## Purpose
+## Overview
 
 Review a change along two primary axes:
 
@@ -14,13 +14,35 @@ Review a change along two primary axes:
 
 This is a constructive review, not an implementation pass.
 
-## Inputs
+## Process
+
+### Step 1: Read the review surface
 
 Use the diff plus any available:
 
 - `brief.md`
 - `plan.md`
 - `verify.md`
+
+Completion criterion: you know what changed and what stated scope or evidence exists.
+
+### Step 2: Review on the Standards axis
+
+Check correctness, regressions, repo conventions, and Fowler smell baseline when repo standards are silent.
+
+Completion criterion: every standards issue worth surfacing has been classified by severity and cited to `file:line`.
+
+### Step 3: Review on the Spec axis
+
+Check whether the change matches the Brief, Plan, or stated scope.
+
+Completion criterion: every scope or conformance issue worth surfacing has been classified by severity and cited to `file:line`.
+
+### Step 4: Return only findings that matter
+
+Do not pad the review with praise, summaries, or speculative cleanup.
+
+Completion criterion: every reported issue is concrete, actionable, and worth the reader's attention.
 
 ## Rules
 
@@ -30,6 +52,7 @@ Use the diff plus any available:
 - Do not propose refactors unless the issue is itself the finding
 - If verification evidence is missing, note the gap explicitly
 - Keep Standards and Spec findings separate so one does not mask the other
+- Do not run build, test, lint, or verification commands
 
 ## Severity
 

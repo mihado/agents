@@ -118,7 +118,152 @@ Near-term extraction targets for cross-provider testing:
 
 These have now been created under `.agents/skills/` as the shared source-of-truth layer.
 
+Skill-writing guidance was also revisited against Matt Pocock's `writing-great-skills` reference. The main adoption was to make skills more process-predictable:
+
+- clearer invocation surface
+- step/reference hierarchy instead of prose-only explanation
+- checkable completion criteria per step
+- less descriptive text that does not change agent behavior
+
 The stable interface should be the skill contract, not any one provider's agent file format.
+
+## Kiro review-agent status
+
+Kiro work stayed review-first. We did not port the conductor loop.
+
+### Goal
+
+Bind the shared review skills into Kiro CLI v3 with the thinnest possible provider-specific layer so review behavior is portable between OpenCode and Kiro.
+
+### Shared source of truth
+
+Keep review behavior in:
+
+- `.agents/skills/engineering/review-standards-spec/SKILL.md`
+- `.agents/skills/engineering/review-adversarial-risk/SKILL.md`
+- `.agents/skills/engineering/recovery-orientation/SKILL.md`
+
+Kiro should consume these as shared behavior, not duplicate their prose into Kiro-only instructions.
+
+### Provider binding shape
+
+Repo source:
+
+```text
+config/providers/kiro/
+  agents/
+    reviewer.json
+    reviewer-adversarial.json
+```
+
+Runtime target:
+
+```text
+~/.kiro/agents/
+~/.kiro/skills/
+```
+
+or workspace `.kiro/` when explicitly testing locally.
+
+These agent files now exist and are installed by `apm`.
+
+### Kiro v3 config direction
+
+Use Kiro CLI v3 custom-agent JSON config:
+
+- JSON custom-agent files under `~/.kiro/agents/`
+- `tools` are the built-in Kiro tool names
+- `resources` should load shared skills
+- `toolsSettings.shell` should stay read-only in practice
+
+Minimal review-agent shape:
+
+- `reviewer.json`
+  - description: Standards + Spec review
+  - model: `claude-sonnet-4`
+  - tools: enough for read/search/shell review work
+  - resources:
+    - shared review skill
+  - shell commands limited to read-only git/repo inspection
+
+- `reviewer-adversarial.json`
+  - same thin shell
+  - loads `review-adversarial-risk`
+  - same read-only posture
+
+### Permission stance
+
+Keep the same semantic contract as OpenCode:
+
+- reviewers are non-editing
+- read and repo inspection are allowed
+- keep the shell allowlist narrow and read-only
+
+Map this into Kiro v3 custom-agent config, not older CLI patterns.
+
+### What not to do
+
+- do not port the whole conductor
+- do not build Kiro-only review behavior
+- do not let `.kiro/skills/` become the source of truth
+- do not overfit to Kiro features before proving that the shared review skills behave well there
+
+### What was implemented
+
+Completed:
+
+1. Added repo source files:
+
+```text
+config/providers/kiro/agents/
+  reviewer.json
+  reviewer-adversarial.json
+```
+
+2. Extended `src/providers/kiro.ts` so provider install/check now:
+
+- installs shared skills into `~/.kiro/skills/`
+- installs provider-managed Kiro agent files into `~/.kiro/agents/`
+- checks both sets of links
+- prunes stale managed Kiro agent symlinks
+
+3. Fixed provider command routing so `./apm providers install` and `./apm providers check` run the full provider registry, not only OpenCode.
+
+Bug found during verification:
+
+- `src/providers/opencode/sync.ts` was hardcoded to the OpenCode provider only
+- result: Kiro provider code existed but never ran from `apm providers install/check`
+- fix: iterate the provider registry instead of selecting only `opencode`
+
+4. Kept code change minimal for shared skills:
+
+- do not broaden skill discovery code
+- instead move shared extracted skills into a real category under `.agents/skills/engineering/`
+
+### Suggested next test order
+
+1. Install shared skills into Kiro runtime
+2. Bind `reviewer.json` to `review-standards-spec`
+3. Bind `reviewer-adversarial.json` to `review-adversarial-risk`
+4. Run review on a real diff in Kiro v3
+5. Compare output quality and tone against OpenCode
+6. Only then decide whether Kiro needs extra steering or hooks
+
+### Why this order
+
+Review is the cleanest portability test:
+
+- strong shared skill contract already exists
+- no need to port full orchestration
+- easy to compare behavior across runtimes
+- low risk of Kiro-specific workflow drift
+
+### What does not need to happen yet:
+
+- no full Kiro conductor binding
+- no Kiro hook system work
+- no Kiro spec workflow integration
+- no provider-wide abstraction rewrite unless the first agent binding exposes a real duplication problem
 
 ## Install/check
 
@@ -138,11 +283,20 @@ Install now prunes stale managed symlinks before relinking (handles removed file
 ## Verification performed
 
 - `pnpm build` — clean
-- `eslint src/` — no issues
-- `vitest run` — 79/79 passing
 - `./apm providers install` — passes
 - `./apm providers check` — passes
 - stale runtime symlinks for removed files confirmed gone after install
+- Kiro runtime links verified:
+  - `~/.kiro/agents/reviewer.json`
+  - `~/.kiro/agents/reviewer-adversarial.json`
+  - `~/.kiro/skills/review-standards-spec`
+  - `~/.kiro/skills/review-adversarial-risk`
+  - `~/.kiro/skills/recovery-orientation`
+
+Not yet verified:
+
+- actual Kiro CLI runtime behavior on a real diff
+- whether the loaded `resources` skill context in Kiro produces the same review quality and tone as OpenCode
 
 ## Useful review questions
 
