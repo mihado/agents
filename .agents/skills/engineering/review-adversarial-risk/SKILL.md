@@ -29,6 +29,8 @@ Use the diff plus any available:
 - `plan.md`
 - `verify.md`
 
+Inspect surrounding local code only as needed to explain a concrete risk.
+
 Completion criterion: you know what changed, what assumptions the change claims, and what verification evidence exists.
 
 ### Step 2: Pressure-test the risk axes
@@ -58,6 +60,11 @@ Completion criterion: every reported issue names a concrete failure mode that co
 - Focus on what breaks, not general style or readability
 - If verification evidence is missing, note that build-time or runtime failure modes were not fully assessed
 - Do not run build, test, lint, or verification commands
+- Review changed files first
+- Inspect only directly related local application code needed to explain a finding
+- Do not inspect `node_modules`, generated files, vendor code, or unrelated framework internals
+- Do not create helper scripts, temporary files, or ad hoc tooling
+- Prefer direct file/code inspection over broad exploratory searching
 
 ## Severity
 

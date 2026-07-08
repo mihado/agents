@@ -75,7 +75,7 @@ These are our own decisions, not borrowed:
 
 - **Typist self-check.** Before the implementer declares done, it reads brief.md + plan.md and checks its own diff against acceptance criteria. Catches spec mismatches before burning a verifier cycle. Neither CE nor Matt prescribe this explicitly — inferred from their general discipline of checking work against the spec.
 
-- **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap typist on minimax-m3, strong reviewer-adversarial on Kiro Sonnet, judge on GPT-5.5) requires agent frontmatter. The lesson is not to drop agents but to keep prompts lean and move reusable behavior toward skills over time.
+- **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap typist on minimax-m3, constructive planner/reviewer on DeepSeek V4 Pro, adversarial planner/reviewer on GPT-5.4, judge on GPT-5.5) requires agent frontmatter. The lesson is not to drop agents but to keep prompts lean and move reusable behavior toward skills over time.
 
 - **Persona over provider.** The meaningful unit is the agent persona and its mandate, not whether it ran in OpenCode, Kiro, Claude, or another harness. A durable record should preserve which persona thought what, what evidence it used, and what conclusion it reached. Provider/runtime is secondary metadata.
 

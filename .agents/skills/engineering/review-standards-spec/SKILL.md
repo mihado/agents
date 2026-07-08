@@ -24,6 +24,8 @@ Use the diff plus any available:
 - `plan.md`
 - `verify.md`
 
+Inspect surrounding local code only as needed to understand the changed behavior.
+
 Completion criterion: you know what changed and what stated scope or evidence exists.
 
 ### Step 2: Review on the Standards axis
@@ -53,6 +55,9 @@ Completion criterion: every reported issue is concrete, actionable, and worth th
 - If verification evidence is missing, note the gap explicitly
 - Keep Standards and Spec findings separate so one does not mask the other
 - Do not run build, test, lint, or verification commands
+- Use Fowler smells only as a heuristic backstop when repo standards are silent; they are judgment calls, not hard violations
+- Prefer direct file/code inspection over broad exploratory searching
+- Do not create helper scripts, temporary files, or ad hoc tooling
 
 ## Severity
 

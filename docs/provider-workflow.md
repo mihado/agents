@@ -230,14 +230,14 @@ The workflow roles below are the current architecture targets for OpenCode.
 | Conductor | `conductor` | primary | `cx/gpt-5.4` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop |
 | Safe analysis surface | `plan` | primary | inherited or `cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
 | Thinker | `thinker` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed; question allowed | POC | ideation pass: pressure-test assumptions and produce Brief |
-| Thinker high | `thinker-high` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed; question allowed | post-POC | deeper probing |
+| Thinker high | `thinker-high` | subagent | `cx/gpt-5.4` | edit denied; bash allowed; question allowed | post-POC | deeper probing |
 | Planner | `planner` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
-| Planner adversarial | `planner-adversarial` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
+| Planner adversarial | `planner-adversarial` | subagent | `cx/gpt-5.4` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
 | Planner high | `planner-high` | subagent | `kiro-claude-opus` | edit denied; bash allowed | post-POC | adversarial at higher capability (`/planx` lane) |
-| Implementer | `typist` | subagent | `minimax-m3` (consider `kiro-claude-sonnet`) | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
+| Implementer | `typist` | subagent | `minimax-m3` | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
 | Verifier | `verifier` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
 | Reviewer | `reviewer` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
-| Reviewer adversarial | `reviewer-adversarial` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
+| Reviewer adversarial | `reviewer-adversarial` | subagent | `cx/gpt-5.4` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
 | Reviewer high | `reviewer-high` | subagent | `kiro-claude-opus` | edit denied; bash allowed | post-POC | adversarial at higher capability (`/reviewx` lane) |
 | Judge | `judge` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
 
@@ -399,7 +399,7 @@ Review always exists, but escalation is conditional. The conductor should start 
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
-| Review | `/review` | `cx/gpt-5.4` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial + judge | `.agent-contexts/review.md` |
+| Review | `/review` | `cx/gpt-5.4` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (GPT-5.4) + judge | `.agent-contexts/review.md` |
 
 **Post-POC:** `/reviewx` with `reviewer-high` (Kiro Opus) as adversarial worker.
 
@@ -653,11 +653,11 @@ OpenCode only. POC proves the conductor can drive think, brief, plan, act, verif
 | `conductor.md` | primary | `cx/gpt-5.4` | edit + bash + task | owns fan-out, judge handoff, artifact writes, act retry loop |
 | `thinker.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | ideation and Brief generation |
 | `planner.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | constructive: architecture, touchpoints, order |
-| `planner-adversarial.md` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | adversarial: what breaks, what's missed |
+| `planner-adversarial.md` | subagent | `cx/gpt-5.4` | edit denied; bash allowed | adversarial: what breaks, what's missed |
 | `typist.md` | subagent | `minimax-m3` | edit + bash | implement execution plan |
 | `verifier.md` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | typecheck, lint, tests, runtime/browser evidence |
-| `reviewer.json` | custom agent | `claude-sonnet-4` | read + shell | constructive: correctness, regressions |
-| `reviewer-adversarial.json` | custom agent | `claude-sonnet-4` | read + shell | adversarial: invariants, auth, concurrency |
+| `reviewer.json` | custom agent | `claude-sonnet-5` | read + shell | constructive: correctness, regressions |
+| `reviewer-adversarial.json` | custom agent | `claude-sonnet-5` | read + shell | adversarial: invariants, auth, concurrency |
 | `judge.md` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | synthesis, disagreement resolution, confidence |
 
 **Commands** (`config/providers/opencode/commands/`):

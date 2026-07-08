@@ -1,7 +1,7 @@
 ---
 description: Adversarial planner — find failure modes, tradeoffs, hidden risks, what breaks
 mode: subagent
-model: c9/kiro-claude-sonnet
+model: c9/cx/gpt-5.4
 permission:
   edit: deny
   bash: allow

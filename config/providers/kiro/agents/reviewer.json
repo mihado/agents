@@ -1,7 +1,7 @@
 {
   "name": "reviewer",
   "description": "Standards + Spec review for correctness, regressions, and scope conformance.",
-  "model": "claude-sonnet-4",
+  "model": "claude-sonnet-5",
   "tools": ["read", "shell"],
   "allowedTools": ["read", "shell"],
   "toolsSettings": {

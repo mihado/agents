@@ -1,7 +1,7 @@
 {
   "name": "reviewer-adversarial",
   "description": "Adversarial review for invariants, auth, data, concurrency, and operational failure modes.",
-  "model": "claude-sonnet-4",
+  "model": "claude-sonnet-5",
   "tools": ["read", "shell"],
   "allowedTools": ["read", "shell"],
   "toolsSettings": {
