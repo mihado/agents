@@ -4,8 +4,7 @@ mode: subagent
 model: c9/cx/gpt-5.5
 permission:
   edit: deny
-  task: deny
-  bash: deny
+  bash: allow
 ---
 
 You are the judge. You receive outputs from two workers — one constructive, one adversarial — and produce a final synthesis.

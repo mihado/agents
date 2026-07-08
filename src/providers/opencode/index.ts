@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getConfigHome } from "../../core/paths.js";
-import { linkTarget, checkLink } from "../shared/symlinks.js";
+import { linkTarget, checkLink, pruneManagedSymlinks } from "../shared/symlinks.js";
 import type { Provider } from "../types.js";
 import {
   loadMcpManifest,
@@ -17,10 +17,33 @@ function getOpenCodeHome(): string {
   return path.join(getConfigHome(), "opencode");
 }
 
+function getManagedMarkdownNames(sourceDir: string): Set<string> {
+  if (!fs.existsSync(sourceDir)) return new Set<string>();
+
+  return new Set(
+    fs.readdirSync(sourceDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map((entry) => entry.name),
+  );
+}
+
 function installProviderFiles(root: string): void {
   const home = getOpenCodeHome();
   const agentSrc = path.join(root, "config", "providers", "opencode", "agents");
   const cmdSrc = path.join(root, "config", "providers", "opencode", "commands");
+
+  pruneManagedSymlinks(
+    path.join(home, "agents"),
+    agentSrc,
+    getManagedMarkdownNames(agentSrc),
+    "OpenCode agent",
+  );
+  pruneManagedSymlinks(
+    path.join(home, "commands"),
+    cmdSrc,
+    getManagedMarkdownNames(cmdSrc),
+    "OpenCode command",
+  );
 
   if (fs.existsSync(agentSrc)) {
     for (const entry of fs.readdirSync(agentSrc, { withFileTypes: true })) {

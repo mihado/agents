@@ -1,8 +1,8 @@
 ---
-description: Adversarial code review — two workers review the current diff, judge synthesizes
+description: Review the current diff against the Brief, Plan, and verification evidence
 agent: conductor
 ---
 
 Run the review lane.
 
-Feature description: `$ARGUMENTS`
+Scope arguments: `$ARGUMENTS`

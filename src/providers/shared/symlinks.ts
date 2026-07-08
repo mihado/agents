@@ -61,6 +61,28 @@ export function pruneStaleSkills(home: string, root: string, labelPrefix: string
   }
 }
 
+export function pruneManagedSymlinks(
+  dir: string,
+  managedSourceDir: string,
+  expectedNames: Set<string>,
+  labelPrefix: string,
+): void {
+  if (!fs.existsSync(dir)) return;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const linkPath = path.join(dir, entry.name);
+    if (!fs.lstatSync(linkPath, { throwIfNoEntry: false })?.isSymbolicLink()) continue;
+    const target = fs.readlinkSync(linkPath);
+    if (!target.startsWith(managedSourceDir)) continue;
+
+    if (!fs.existsSync(target) || !expectedNames.has(entry.name)) {
+      fs.unlinkSync(linkPath);
+      const reason = !fs.existsSync(target) ? "target gone" : "no longer managed";
+      console.log(`pruned  ${labelPrefix} ${entry.name} (${reason})`);
+    }
+  }
+}
+
 export function checkLink(
   expectedTarget: string,
   linkPath: string,

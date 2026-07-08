@@ -44,6 +44,8 @@ The conductor is the custom primary agent. Commands select the conductor with la
 - artifact writes
 - act retry loop
 
+For this POC, agents remain the provider-level shell for model pinning and permission posture. The direction after the loop is proven is to keep those agent profiles thin and defer more reusable behavior to shared skills.
+
 ```text
 /think  -> conductor -> [interview-me style think path, optional thinker workers] -> brief.md
 /plan   -> conductor -> planner (+ planner-adversarial if needed) -> (judge if 2+) -> plan.md
@@ -125,6 +127,14 @@ Review report grounded in the Brief, Plan, code/diff, and verification evidence 
 
 ### Agents — `config/providers/opencode/agents/`
 
+Permission posture for POC:
+
+- conductor: `edit: allow`, `bash: allow`, `task: allow`
+- typist: `edit: allow`, `bash: allow`
+- planner, planner-adversarial, verifier, reviewer, reviewer-adversarial, judge: `edit: deny`, `bash: allow`
+
+Do not expand per-agent allowlists during POC unless a real safety boundary requires it. Prove the loop first.
+
 Required POC agents:
 
 | File | Mode | Model | Purpose |
@@ -189,13 +199,24 @@ Removed from the current POC shape:
 
 For POC, do not prune unmanaged files, handle merge conflicts, or support downstream customization.
 
+### Operational note: stale runtime files
+
+`apm providers install` now prunes stale managed OpenCode symlinks for agents and commands before relinking.
+
+Implication for this POC:
+
+- removing `plan-write.md` from the repo source now removes the stale managed runtime symlink under `~/.config/opencode/commands/` on the next install
+- removing `plan-writer.md` from the repo source now removes the stale managed runtime symlink under `~/.config/opencode/agents/` on the next install
+
+This prune is intentionally narrow. It removes only managed symlinks that point back into the repo-managed OpenCode source directories and are now missing or no longer managed. It does not remove unrelated runtime files or foreign symlinks.
+
 ## Conductor contracts
 
 ### Idea stage
 
 `idea` is optional and upstream of `think`.
 
-Use it when the task is too ambiguous to safely write a Brief. The likely future adoption path is Matt's `wayfinder` pattern, but full tracker-backed wayfinding is not required for POC.
+Use it when the task is too ambiguous to safely write a Brief. The likely future adoption path is tracked investigation tickets, but full tracker-backed wayfinding is not required for POC.
 
 POC rule:
 
@@ -206,7 +227,9 @@ POC rule:
 
 `think` produces `brief.md`.
 
-Primary discipline: `interview-me`, not Matt's `grill-me`.
+Before normal think behavior, the conductor should detect recovery-style prompts whose latent intent is re-orientation after context decay. In that case, reconstruct working context first from repo state and existing artifacts, then decide whether a fresh Brief or Plan is actually needed.
+
+Primary discipline: `interview-me`.
 
 Required behavior:
 
@@ -220,6 +243,12 @@ Fact-vs-decision rule:
 
 - if a question is about a fact the codebase or docs can answer, look it up first
 - if a question is about intent, priorities, constraints, or tradeoffs, ask the user
+
+Recovery rule:
+
+- for prompts like "what did we do", "where are we", or similar, inspect branch, worktree, recent commits, diff, and any existing `.agent-contexts/*` artifacts first
+- synthesize what was being attempted, what is in flight, what is blocked, and the next sensible move
+- do not write a new artifact by default for recovery requests
 
 Escalation signals:
 
@@ -341,7 +370,7 @@ The conductor creates `.agent-contexts/` if it does not exist before writing any
 ## Install verification
 
 ```bash
-pnpm build && ./apm providers install opencode
+pnpm build && ./apm providers install
 ls -la ~/.config/opencode/agents/
 ls -la ~/.config/opencode/commands/
 ```

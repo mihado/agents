@@ -1,5 +1,5 @@
 ---
-description: Run typecheck, lint, and tests — report pass/fail
+description: Run verification checks and produce verification evidence
 agent: conductor
 ---
 

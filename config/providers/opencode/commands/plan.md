@@ -1,8 +1,8 @@
 ---
-description: Adversarial planning — constructive + adversarial workers, judge synthesizes into a design doc
+description: Read the Brief, plan the work, and write an execution plan
 agent: conductor
 ---
 
 Run the plan lane.
 
-Feature description: `$ARGUMENTS`
+Additional planning context: `$ARGUMENTS`

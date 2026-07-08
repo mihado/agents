@@ -87,6 +87,8 @@ Keep these distinct.
 
 The workflow can be shared conceptually. The provider bindings should be separate implementations.
 
+Longer term, keep provider agents thin. The agent should primarily carry model pinning, permission posture, and lane-routing instructions, then dispatch into shared skills for reusable behavior. Do not collapse agents away while model routing and permission boundaries still live in the provider layer.
+
 OpenCode is the place where that workflow is specified most fully. Other provider bindings should preserve the contract as far as their harness allows, rather than forcing the contract downward to the lowest common denominator.
 
 ## Shared Workflow Primitive
@@ -241,7 +243,7 @@ Notes:
 
 `idea` is optional and upstream of `think`.
 
-Use it when the task is too ambiguous to safely write a Brief. The likely future adoption path is Matt Pocock's `wayfinder` pattern, but full tracker-backed idea-stage workflow is post-POC.
+Use it when the task is too ambiguous to safely write a Brief. The likely future adoption path is tracked investigation tickets, but full tracker-backed idea-stage workflow is post-POC.
 
 POC rule:
 
@@ -252,16 +254,24 @@ POC rule:
 
 The workflow always starts with thinking, but the amount of rigor is dynamic. For simple tasks the conductor may produce a lightweight Brief directly from the user's request. For ambiguous or high-risk tasks it should dispatch one or more thinker passes, then synthesize `brief.md`.
 
+When the user returns after context decay, the conductor should first infer whether the real intent is re-orientation rather than fresh thinking. Prompts like "what did we do", "where are we", "catch me up", or similar should trigger a recovery pass over repo state and existing workflow artifacts before the conductor decides whether a new Brief or Plan is needed.
+
 The Brief is the design-thinking artifact. There is no separate `design.md` in the current model.
 
 Escalation signals for think/brief include ambiguous requirements, broad scope, product-semantics decisions, auth or data risk, irreversible external effects, and unclear acceptance criteria.
 
-Primary think discipline: `interview-me`, not Matt's `grill-me`.
+Primary think discipline: `interview-me`.
 
 Fact-vs-decision rule:
 
 - if a question is about a fact the codebase or docs can answer, look it up first
 - if a question is about intent, priorities, constraints, or tradeoffs, ask the user
+
+Recovery / re-orientation rule:
+
+- if the user's real need is working-context recovery, reconstruct state first instead of asking planning questions too early
+- synthesize from branch, worktree, recent commits, diff, and `.agent-contexts/*` artifacts
+- present the next sensible move, not just a passive status dump
 
 Judge rule for think:
 
@@ -431,13 +441,22 @@ The role matrix should be enforced through permissions where the boundary matter
 | Agent type | Minimum permission stance | Phase |
 |-----------|---------------------------|-------|
 | Conductor | edit + bash + task | POC |
-| Planning agents | read-only | POC |
-| Review agents | read-only | POC |
-| Judge | read-only | POC |
+| Planning agents | edit denied; bash allowed | POC |
+| Review agents | edit denied; bash allowed | POC |
+| Judge | edit denied; bash allowed | POC |
 | Implementer | edit allowed; bash allowed | POC |
-| Verifier | read-only code; bash allowed | POC |
+| Verifier | edit denied; bash allowed | POC |
 
-Permissions are intentionally lighter for POC than the final system. Preserve the editor vs non-editor boundary and the judge's read-only synthesis boundary first. Do not overfit per-agent permission tuning before the escalation policy stabilizes.
+Permissions are intentionally lighter for POC than the final system. Preserve the editor vs non-editor boundary first. Do not grow command-specific allowlists before the loop is proven end-to-end.
+
+POC permission rule:
+
+- default to broad shared permissions for subagents
+- keep `edit: deny` on non-implementer agents
+- keep `edit: allow` on the implementer and conductor
+- avoid per-agent `read`, `grep`, `glob`, or Git allowlists unless a real boundary requires them
+
+This is deliberately closer to CE's low-friction posture. Prove the loop first, then tighten only the boundaries that matter.
 
 #### OpenCode Architectural Question To Keep Visible
 
@@ -548,6 +567,14 @@ Even when workflow roles share names, provider files remain distinct.
 The workflow contract (roles, mandates, lane routing) is shared. The provider bindings (agent file format, model pinning, permissions, command structure) are separate implementations.
 
 OpenCode defines the richest binding. Other providers should preserve the semantics where possible, but they are allowed to be lossy adapters.
+
+Target direction across providers:
+
+- thin provider agents as the shell for model pinning and permissions
+- shared skills as the reusable behavior layer
+- commands as lane entrypoints
+
+That pattern should be portable to Claude, Codex, and Kiro even when each adapter has different native constraints.
 
 ## `apm` Responsibilities
 
@@ -670,4 +697,4 @@ After POC validates the loop:
 - [OpenCode Commands](https://opencode.ai/docs/commands/)
 - [OpenCode Formatters](https://opencode.ai/docs/formatters/)
 - [OpenCode Permissions](https://opencode.ai/docs/permissions/)
-- [Compound Engineering Plugin](https://github.com/EveryInc/compound-engineering-plugin) — borrowed the multi-persona adversarial review pattern, scaled from 13 reviewers to 2
+- OpenCode agent, command, permission, and formatter documentation
