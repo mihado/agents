@@ -46,6 +46,15 @@ The conductor is the custom primary agent. Commands select the conductor with la
 
 For this POC, agents remain the provider-level shell for model pinning and permission posture. The direction after the loop is proven is to keep those agent profiles thin and defer more reusable behavior to shared skills.
 
+Shared skills should live in `.agents/skills/` as the provider-neutral source of truth. Provider runtime skill directories are adapter targets, not source directories.
+
+Conductor should also serve as the everyday direct profile:
+
+- small clear tasks can be handled directly
+- recovery-style prompts should be handled directly through context reconstruction
+- worker dispatch is conditional, not mandatory
+- explicit lanes remain available when the user wants control or the task needs more rigor
+
 ```text
 /think  -> conductor -> [interview-me style think path, optional thinker workers] -> brief.md
 /plan   -> conductor -> planner (+ planner-adversarial if needed) -> (judge if 2+) -> plan.md
@@ -174,6 +183,32 @@ Required POC commands:
 Removed from the current POC shape:
 
 - `plan-write.md`
+
+## Provider portability direction
+
+The current POC is implemented most fully in OpenCode, but the intended stable interface is not the OpenCode agent files themselves. The stable interface is:
+
+- shared skill behavior in `.agents/skills/`
+- thin provider agents/config that load those skills
+- a shared workflow contract in the docs
+
+Near-term extraction targets:
+
+- `recovery-orientation`
+- `review-standards-spec`
+- `review-adversarial-risk`
+
+These now exist under `.agents/skills/` as provider-neutral skill definitions.
+
+These should be written once as provider-neutral skills, then bound separately by OpenCode and Kiro.
+
+Kiro direction:
+
+- source in repo: `config/providers/kiro/`
+- shared behavior source: `.agents/skills/`
+- runtime target: `~/.kiro/` or workspace `.kiro/` depending install mode
+- Kiro custom-agent config should stay thin and load shared skills rather than duplicate workflow prose
+- target Kiro CLI v3 conventions for agent config, permissions, hooks, and specs
 
 ### Code change
 

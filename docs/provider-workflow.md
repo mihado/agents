@@ -46,6 +46,7 @@ This is intentional. OpenCode currently offers the most direct path to explicit 
 | OpenCode | `config/providers/opencode/` | `~/.config/opencode/` | primary reference implementation |
 | Claude | `config/providers/claude/` | `~/.claude/` | secondary adapter target |
 | Codex | `config/providers/codex/` | `~/.codex/` | secondary adapter target / stub acceptable |
+| Kiro | `config/providers/kiro/` | `~/.kiro/` or workspace `.kiro/` | secondary adapter target with custom-agent binding |
 
 The provider directories are unique. Shared skills remain shareable across tools, but provider runtime formats should not be conflated.
 
@@ -89,6 +90,14 @@ The workflow can be shared conceptually. The provider bindings should be separat
 
 Longer term, keep provider agents thin. The agent should primarily carry model pinning, permission posture, and lane-routing instructions, then dispatch into shared skills for reusable behavior. Do not collapse agents away while model routing and permission boundaries still live in the provider layer.
 
+Shared skill source of truth lives under `.agents/skills/`. Provider runtime skill directories such as `.kiro/skills/` are adapter targets, not source directories.
+
+The first shared extraction targets are:
+
+- `.agents/skills/recovery-orientation/SKILL.md`
+- `.agents/skills/review-standards-spec/SKILL.md`
+- `.agents/skills/review-adversarial-risk/SKILL.md`
+
 OpenCode is the place where that workflow is specified most fully. Other provider bindings should preserve the contract as far as their harness allows, rather than forcing the contract downward to the lowest common denominator.
 
 ## Shared Workflow Primitive
@@ -100,6 +109,8 @@ idea -> think -> plan -> act -> verify -> review
 ```
 
 Every task should still pass through the same mental topology even when the rigor is light: resolve ambiguity if needed, think through the task until it is briefable, write a Brief, turn that Brief into an Execution plan, implement, verify, then review. The conductor decides how rigorous each stage must be for the current task.
+
+In day-to-day use, the conductor should also work as an everyday direct profile: handle small, clear requests directly, use recovery behavior for re-orientation requests, and dispatch specialized workers only when the task benefits from the extra rigor.
 
 This is the topological contract across providers, even if the concrete provider bindings differ.
 
@@ -218,17 +229,17 @@ The workflow roles below are the current architecture targets for OpenCode.
 |------|----------------------|------|--------------|------------------|-------|---------|
 | Conductor | `conductor` | primary | `cx/gpt-5.4` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop |
 | Safe analysis surface | `plan` | primary | inherited or `cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
-| Thinker | `thinker` | subagent | `deepseek-v4-pro-fusion` | read-only; question allowed | POC | ideation pass: pressure-test assumptions and produce Brief |
-| Thinker high | `thinker-high` | subagent | `kiro-claude-sonnet` | read-only; question allowed | post-POC | deeper probing |
-| Planner | `planner` | subagent | `deepseek-v4-pro-fusion` | read-only | POC | constructive design pass: architecture mapping, touchpoints, execution order |
-| Planner adversarial | `planner-adversarial` | subagent | `kiro-claude-sonnet` | read-only | POC | elevated design pass: find what breaks, what's missed, where it fails |
-| Planner high | `planner-high` | subagent | `kiro-claude-opus` | read-only | post-POC | adversarial at higher capability (`/planx` lane) |
+| Thinker | `thinker` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed; question allowed | POC | ideation pass: pressure-test assumptions and produce Brief |
+| Thinker high | `thinker-high` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed; question allowed | post-POC | deeper probing |
+| Planner | `planner` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
+| Planner adversarial | `planner-adversarial` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
+| Planner high | `planner-high` | subagent | `kiro-claude-opus` | edit denied; bash allowed | post-POC | adversarial at higher capability (`/planx` lane) |
 | Implementer | `typist` | subagent | `minimax-m3` (consider `kiro-claude-sonnet`) | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
-| Verifier | `verifier` | subagent | `c9/mino-v2.5` | read-only; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
-| Reviewer | `reviewer` | subagent | `deepseek-v4-pro-fusion` | read-only | POC | default review pass: correctness, regressions, test sufficiency |
-| Reviewer adversarial | `reviewer-adversarial` | subagent | `kiro-claude-sonnet` | read-only | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
-| Reviewer high | `reviewer-high` | subagent | `kiro-claude-opus` | read-only | post-POC | adversarial at higher capability (`/reviewx` lane) |
-| Judge | `judge` | subagent | `cx/gpt-5.5` | read-only | POC | final synthesis, disagreement resolution, confidence verdict |
+| Verifier | `verifier` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
+| Reviewer | `reviewer` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
+| Reviewer adversarial | `reviewer-adversarial` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
+| Reviewer high | `reviewer-high` | subagent | `kiro-claude-opus` | edit denied; bash allowed | post-POC | adversarial at higher capability (`/reviewx` lane) |
+| Judge | `judge` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
 
 Notes:
 
@@ -576,6 +587,10 @@ Target direction across providers:
 
 That pattern should be portable to Claude, Codex, and Kiro even when each adapter has different native constraints.
 
+Kiro should follow the same adapter rule: keep provider mechanics under `config/providers/kiro/`, keep reusable behavior in `.agents/skills/`, and use Kiro custom-agent config only as the thin binding layer that loads those shared skills.
+
+Target Kiro CLI v3 specifically. The Kiro binding should follow v3 agent-config, permissions, hooks, and spec conventions rather than older CLI patterns.
+
 ## `apm` Responsibilities
 
 `apm providers install` and `apm providers check` should become the single managed path for provider-global workflow files.
@@ -636,14 +651,14 @@ OpenCode only. POC proves the conductor can drive think, brief, plan, act, verif
 | File | Mode | Model | Permission | Purpose |
 |------|------|-------|------------|---------|
 | `conductor.md` | primary | `cx/gpt-5.4` | edit + bash + task | owns fan-out, judge handoff, artifact writes, act retry loop |
-| `thinker.md` | subagent | `deepseek-v4-pro-fusion` | read-only | ideation and Brief generation |
-| `planner.md` | subagent | `deepseek-v4-pro-fusion` | read-only | constructive: architecture, touchpoints, order |
-| `planner-adversarial.md` | subagent | `kiro-claude-sonnet` | read-only | adversarial: what breaks, what's missed |
+| `thinker.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | ideation and Brief generation |
+| `planner.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | constructive: architecture, touchpoints, order |
+| `planner-adversarial.md` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | adversarial: what breaks, what's missed |
 | `typist.md` | subagent | `minimax-m3` | edit + bash | implement execution plan |
-| `verifier.md` | subagent | `mino-v2.5` | read + bash | typecheck, lint, tests, runtime/browser evidence |
-| `reviewer.md` | subagent | `deepseek-v4-pro-fusion` | read-only | constructive: correctness, regressions |
-| `reviewer-adversarial.md` | subagent | `kiro-claude-sonnet` | read-only | adversarial: invariants, auth, concurrency |
-| `judge.md` | subagent | `cx/gpt-5.5` | read-only | synthesis, disagreement resolution, confidence |
+| `verifier.md` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | typecheck, lint, tests, runtime/browser evidence |
+| `reviewer.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | constructive: correctness, regressions |
+| `reviewer-adversarial.md` | subagent | `kiro-claude-sonnet` | edit denied; bash allowed | adversarial: invariants, auth, concurrency |
+| `judge.md` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | synthesis, disagreement resolution, confidence |
 
 **Commands** (`config/providers/opencode/commands/`):
 

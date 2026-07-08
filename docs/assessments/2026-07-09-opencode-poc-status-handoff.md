@@ -14,6 +14,8 @@ Current direction:
 - move toward thinner agents and more reusable skills over time
 - avoid premature permission hardening during POC
 - prove the conductor loop end-to-end first
+- keep shared behavior in `.agents/skills/` and bind it separately in OpenCode and Kiro
+- use conductor as an everyday direct profile, with dispatch only when specialization helps
 
 ## Workflow shape
 
@@ -58,6 +60,13 @@ All subagents: `edit: deny`, `bash: allow`. No granular allowlists. Conductor an
 
 Latent-intent recovery is in the conductor prompt (not a separate command). For prompts like "where are we," "catch me up," "what did we do" — the conductor inspects branch, status, commits, diff, and all `.agent-contexts/` artifacts, then synthesizes working context and next move. Recovery requests do not write new artifacts by default.
 
+More broadly, conductor is intended to be usable as the daily profile:
+
+- handle small clear requests directly
+- use recovery behavior directly for re-orientation requests
+- dispatch workers when specialization, adversarial analysis, or independent verification adds value
+- do not force the full workflow ceremony on every ask
+
 ## Additional orchestration signal
 
 firstmate validated several orchestration patterns that fit our conductor direction even though we do not want its worktree/session machinery:
@@ -90,6 +99,26 @@ Potential future direction:
 - later add a clerk/compactor pass to trim legacy or superseded entries
 
 This would preserve collaborative reasoning across multiple personas without overloading the main workflow artifacts.
+
+## Shared-skill direction
+
+Provider portability is now clearer:
+
+- shared behavior should live under `.agents/skills/`
+- `config/providers/opencode/` should stay the OpenCode binding layer
+- `config/providers/kiro/` should become the Kiro binding layer
+- Kiro should not get a separate workflow architecture; it should load the same shared skills through thin custom-agent config
+- the Kiro binding should target CLI v3 conventions, not older Kiro CLI patterns
+
+Near-term extraction targets for cross-provider testing:
+
+- `recovery-orientation`
+- `review-standards-spec`
+- `review-adversarial-risk`
+
+These have now been created under `.agents/skills/` as the shared source-of-truth layer.
+
+The stable interface should be the skill contract, not any one provider's agent file format.
 
 ## Install/check
 
