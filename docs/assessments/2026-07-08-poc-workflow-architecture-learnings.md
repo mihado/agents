@@ -34,6 +34,8 @@ What we took:
 
 firstmate's strongest useful signal for us is not worktrees or fleet backends. It is the orchestrator discipline: one user-facing coordinator, durable state as truth, recovery as reconciliation instead of restart, and outcome-facing reporting that hides crew mechanics unless they matter.
 
+This is convergent validation more than a borrow: we arrived at the single-front-door conductor pattern independently, and firstmate's design corroborates it. We did not take much mechanically from them.
+
 What we took:
 
 - **Single front door.** The conductor is the main conversational surface. Workers should stay behind it.
@@ -118,6 +120,24 @@ That suggests a future record shape such as:
 
 This would let multiple agent personas think in parallel across providers without losing the thread or overloading the canonical workflow artifacts.
 
+## Upstream Sources
+
+The POC architecture borrows selectively from external efforts. See the "What we took" sections above for the specific mechanisms.
+
+- Compound Engineering plugin (conditional escalation, persona selection by diff surface, prompt-prose permission posture): https://github.com/EveryInc/compound-engineering-plugin
+- firstmate (convergent validation of the single-front-door conductor pattern; not a heavy borrow): https://github.com/kunchenguid/firstmate
+- Matt Pocock's skills (wayfinder ambiguity resolution, tracer-bullet tickets, two-axis Standards/Spec review, fact-vs-decision rule): https://github.com/mattpocock
+- Superpowers (portable skills library + fixed methodology; brainstorming → plans → subagent-driven-dev with two-stage review; related-work reference, not a borrow): https://github.com/obra/superpowers
+
+## Where we sit
+
+The workflow is a third path between two extremes:
+
+- **Compound Engineering** — max parallelism, min structure: one 800-line skill, zero agents, 13-way persona fan-out.
+- **Superpowers** — max structure, min dynamism: a fixed, auto-triggered pipeline over a curated, harness-portable skill library, always two-stage review.
+- **Us** — the middle: explicit roles with provider-pinned model routing (more structure than CE), but conductor-chosen rigor instead of a fixed stage (more dynamism than Superpowers). Not 13-way, not always-two-stage — a cheap default pass, escalating to adversarial + judge only when the task warrants it. The conductor is the everyday surface and does most of the orchestration directly; specialized subagents are dispatched only when the task benefits from the extra rigor.
+
 ## Revision Notes
 
 - 2026-07-08: Written after POC iteration, condensing fragmentation signals and learnings from the Compound Engineering plugin and Matt Pocock's skills into a single reference.
+- 2026-07-09: Added upstream source URLs; framed firstmate as convergent validation; added Superpowers as related-work reference and the third-path positioning statement.

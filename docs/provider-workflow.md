@@ -46,7 +46,7 @@ This is intentional. OpenCode currently offers the most direct path to explicit 
 | OpenCode | `config/providers/opencode/` | `~/.config/opencode/` | primary reference implementation |
 | Claude | `config/providers/claude/` | `~/.claude/` | secondary adapter target |
 | Codex | `config/providers/codex/` | `~/.codex/` | secondary adapter target / stub acceptable |
-| Kiro | `config/providers/kiro/` | `~/.kiro/` or workspace `.kiro/` | secondary adapter target with custom-agent binding |
+| Kiro | `config/providers/kiro/` | `~/.kiro/` | secondary adapter target with custom-agent binding |
 
 The provider directories are unique. Shared skills remain shareable across tools, but provider runtime formats should not be conflated.
 
@@ -82,7 +82,7 @@ Keep these distinct.
 
 | Layer | What belongs there |
 |------|---------------------|
-| Workflow layer | thinker, planner, writer, implementer, verifier, reviewer, judge roles; handoff contracts; escalation rules |
+| Workflow layer | conductor (idea + think modes), planner, implementer, verifier, reviewer, judge roles; handoff contracts; escalation rules |
 | Provider layer | Claude/OpenCode/Codex-specific file formats, install targets, permissions, model pinning, commands |
 | Shared skill layer | reusable instructions or rubrics that multiple tools can load |
 
@@ -92,11 +92,11 @@ Longer term, keep provider agents thin. The agent should primarily carry model p
 
 Shared skill source of truth lives under `.agents/skills/`. Provider runtime skill directories such as `.kiro/skills/` are adapter targets, not source directories.
 
-The first shared extraction targets are:
+The first shared extraction targets are (these are the behavior "chapters"; this doc is the map):
 
-- `.agents/skills/engineering/recovery-orientation/SKILL.md`
-- `.agents/skills/engineering/review-standards-spec/SKILL.md`
-- `.agents/skills/engineering/review-adversarial-risk/SKILL.md`
+- [`.agents/skills/engineering/recovery-orientation/SKILL.md`](.agents/skills/engineering/recovery-orientation/SKILL.md) — re-orientation after context decay
+- [`.agents/skills/engineering/review-standards-spec/SKILL.md`](.agents/skills/engineering/review-standards-spec/SKILL.md) — default review pass (Standards + Spec)
+- [`.agents/skills/engineering/review-adversarial-risk/SKILL.md`](.agents/skills/engineering/review-adversarial-risk/SKILL.md) — adversarial review pass (invariants, auth, data, concurrency)
 
 OpenCode is the place where that workflow is specified most fully. Other provider bindings should preserve the contract as far as their harness allows, rather than forcing the contract downward to the lowest common denominator.
 
@@ -110,7 +110,7 @@ idea -> think -> plan -> act -> verify -> review
 
 Every task should still pass through the same mental topology even when the rigor is light: resolve ambiguity if needed, think through the task until it is briefable, write a Brief, turn that Brief into an Execution plan, implement, verify, then review. The conductor decides how rigorous each stage must be for the current task.
 
-In day-to-day use, the conductor should also work as an everyday direct profile: handle small, clear requests directly, use recovery behavior for re-orientation requests, and dispatch specialized workers only when the task benefits from the extra rigor.
+In day-to-day use, the conductor should also work as an everyday direct profile: handle small, clear requests directly, use [`recovery-orientation`](.agents/skills/engineering/recovery-orientation/SKILL.md) behavior for re-orientation requests, and dispatch specialized workers only when the task benefits from the extra rigor.
 
 This is the topological contract across providers, even if the concrete provider bindings differ.
 
@@ -134,9 +134,14 @@ The workflow should stay rigorous where leverage is highest, but the rigor shoul
 - think and review may be lightweight or escalated depending on task risk and ambiguity
 - planning and review escalation are selected by the conductor based on risk, ambiguity, and changed surface
 - concurrency and adversarial passes are tools to apply when needed, not mandatory shape for every task
-- when only one substantive worker runs, the conductor finalizes the artifact directly; when two or more workers run, the judge synthesizes
 - implementation consumes a bounded handoff contract
 - verification is explicit in the plan even if phased in operationally later
+
+### Escalation & Judge
+
+Rigor is chosen by the conductor per task from risk, ambiguity, and changed surface — not by separate high-lane commands. Default to a single cheap worker (planner, reviewer); add the adversarial worker and judge only when the task warrants it. The shared skills (`review-standards-spec`, `review-adversarial-risk`) carry the escalation rubric.
+
+Judge rule: one substantive worker → conductor finalizes the artifact directly; two or more workers → judge synthesizes the final artifact.
 
 ## Provider Binding Expectations
 
@@ -214,12 +219,15 @@ That means the workflow is not fully specified unless the agent-role matrix is a
 | Rule | Why |
 |------|-----|
 | Pin models on all meaningful workflow agents | otherwise subagents inherit the parent model and the architecture collapses into one model wearing different hats |
-| Use commands to choose workflow lanes, not to do most model routing | keeps lane entrypoints simple and keeps the role architecture in the agent layer |
 | Avoid `command.model` unless intentionally overriding a pinned agent | agent pinning should stay the canonical routing mechanism |
 | Keep primaries minimal and put specialization in subagents | reduces UI clutter and keeps the orchestration graph explicit |
 | Put permissions on the agent, not only in the prompt | makes the role contract enforceable |
 
 Model selections are part of the reference implementation and the current preferred routing. They were chosen deliberately for the present balance of quality, cost, and workflow fit. They may evolve later as model economics and capability profiles change, but they are not placeholders.
+
+Model IDs in agent frontmatter are provider-qualified as `<provider>/<model>` (for example `c9/cx/gpt-5.4`). OpenCode is multi-provider, so the qualifier is required — without it the role matrix collapses into the parent model (see Why OpenCode Needs Explicit Agent Pinning). `c9` is the custom OpenCode provider defined in `config/providers/opencode.json` (`baseURL: https://c9.rter.cc/v1`); swap the provider prefix if your gateway differs.
+
+Other harnesses may not need the qualifier: when a harness talks to an OpenAI-compatible endpoint directly (base URL + key, single provider context), the model string is often just the bare name. Only OpenCode's multi-provider routing requires the `<provider>/` prefix. Keep the agent files provider-qualified for OpenCode; adapter targets handle their own model format.
 
 #### OpenCode Workflow Roles
 
@@ -227,67 +235,57 @@ The workflow roles below are the current architecture targets for OpenCode.
 
 | Role | Suggested agent name | Mode | Pinned model | Permission shape | Phase | Purpose |
 |------|----------------------|------|--------------|------------------|-------|---------|
-| Conductor | `conductor` | primary | `cx/gpt-5.4` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop |
-| Safe analysis surface | `plan` | primary | inherited or `cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
-| Thinker | `thinker` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed; question allowed | POC | ideation pass: pressure-test assumptions and produce Brief |
-| Thinker high | `thinker-high` | subagent | `cx/gpt-5.4` | edit denied; bash allowed; question allowed | post-POC | deeper probing |
-| Planner | `planner` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
-| Planner adversarial | `planner-adversarial` | subagent | `cx/gpt-5.4` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
-| Planner high | `planner-high` | subagent | `kiro-claude-opus` | edit denied; bash allowed | post-POC | adversarial at higher capability (`/planx` lane) |
-| Implementer | `typist` | subagent | `minimax-m3` | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
+| Conductor | `conductor` | primary | `c9/cx/gpt-5.4` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop. Idea and think are modes of the conductor, not separate workers. |
+| Safe analysis surface | `plan` | primary | inherited or `c9/cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
+| Planner | `planner` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
+| Planner adversarial | `planner-adversarial` | subagent | `c9/cx/gpt-5.4` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
+| Implementer | `typist` | subagent | `c9/minimax-m3` | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
 | Verifier | `verifier` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
-| Reviewer | `reviewer` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
-| Reviewer adversarial | `reviewer-adversarial` | subagent | `cx/gpt-5.4` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
-| Reviewer high | `reviewer-high` | subagent | `kiro-claude-opus` | edit denied; bash allowed | post-POC | adversarial at higher capability (`/reviewx` lane) |
-| Judge | `judge` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
+| Reviewer | `reviewer` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
+| Reviewer adversarial | `reviewer-adversarial` | subagent | `c9/cx/gpt-5.4` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
+| Judge | `judge` | subagent | `c9/cx/gpt-5.5` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
 
 Notes:
 
-- POC scope: conductor plus the minimal worker set needed to drive think, plan, act, verify, and review. High lanes (`/planx`, `/reviewx`), durability/recovery, and checkpoint machinery are post-POC.
+- POC scope: conductor plus the minimal worker set needed to drive think, plan, act, verify, and review. Durability/recovery and checkpoint machinery are post-POC.
 - The judge is the same agent and prompt across think, plan, and review. Its job is synthesis and conflict resolution between multiple worker outputs — the domain is context, not a prompt fork.
 - The implementer lane is intentionally cheaper than planning and review — its job is bounded execution against a settled plan, not discovery.
-- Verification defaults to `mino-v2.5` for now to keep one evidence surface across code and browser/runtime checks. Revisit only after usage evidence justifies splitting the verifier path.
-- Worker A is the default cheap pass. Worker B is an elevated adversarial pass the conductor adds when the task warrants it. The judge is only needed when multiple worker outputs must be reconciled.
+- Verification defaults to `c9/mino-v2.5` for now to keep one evidence surface across code and browser/runtime checks. Revisit only after usage evidence justifies splitting the verifier path.
 - The architecture borrows CE's control-loop pattern but starts lighter: fewer always-on workers, conductor-owned escalation, and cost-aware elevation suitable for a solo developer budget.
 
 #### OpenCode Idea Stage
 
-`idea` is optional and upstream of `think`.
+`idea` is a conductor mode, not a separate worker or command (see Command Architecture).
 
 Use it when the task is too ambiguous to safely write a Brief. The likely future adoption path is tracked investigation tickets, but full tracker-backed idea-stage workflow is post-POC.
 
 POC rule:
 
-- if the task is clear enough, skip `idea`
-- if the task is still foggy after initial inspection, stop and surface that idea-stage work is needed rather than force a bad Brief
+- if the task is clear enough, skip idea and go straight to `/think` (or handle directly)
+- if the task is foggy, resolve it inline using `interview-me` discipline (one question at a time, hypothesis first, explicit restate and confirmation) until intent is clear
+- if resolving the idea needs codebase discovery or research, dispatch `wayfinder` or a background research job rather than blocking inline — the conductor stays in the loop and reports findings back
+- stop and surface unresolved ambiguity rather than force a bad Brief
 
 #### OpenCode Think Stage
 
-The workflow always starts with thinking, but the amount of rigor is dynamic. For simple tasks the conductor may produce a lightweight Brief directly from the user's request. For ambiguous or high-risk tasks it should dispatch one or more thinker passes, then synthesize `brief.md`.
+Think is a mode of the conductor, not a separate `thinker` worker. There is no `thinker` agent.
 
-When the user returns after context decay, the conductor should first infer whether the real intent is re-orientation rather than fresh thinking. Prompts like "what did we do", "where are we", "catch me up", or similar should trigger a recovery pass over repo state and existing workflow artifacts before the conductor decides whether a new Brief or Plan is needed.
+The workflow always starts with thinking, but the amount of rigor is dynamic. For simple tasks the conductor may produce a lightweight Brief directly from the user's request. For ambiguous or high-risk tasks the conductor applies `interview-me` discipline harder and resolves intent inline before writing the Brief.
+
+When the user returns after context decay, the conductor should first infer whether the real intent is re-orientation rather than fresh thinking. Prompts like "what did we do", "where are we", "catch me up", or similar should trigger a [`recovery-orientation`](.agents/skills/engineering/recovery-orientation/SKILL.md) pass over repo state and existing workflow artifacts before the conductor decides whether a new Brief or Plan is needed.
 
 The Brief is the design-thinking artifact. There is no separate `design.md` in the current model.
 
 Escalation signals for think/brief include ambiguous requirements, broad scope, product-semantics decisions, auth or data risk, irreversible external effects, and unclear acceptance criteria.
 
-Primary think discipline: `interview-me`.
+Primary think discipline: `interview-me`. Research/discovery discipline: `wayfinder`.
 
 Fact-vs-decision rule:
 
 - if a question is about a fact the codebase or docs can answer, look it up first
 - if a question is about intent, priorities, constraints, or tradeoffs, ask the user
 
-Recovery / re-orientation rule:
-
-- if the user's real need is working-context recovery, reconstruct state first instead of asking planning questions too early
-- synthesize from branch, worktree, recent commits, diff, and `.agent-contexts/*` artifacts
-- present the next sensible move, not just a passive status dump
-
-Judge rule for think:
-
-- one thinker or conductor-only thinking: conductor writes `brief.md`
-- two or more thinker outputs: judge synthesizes the final `brief.md`
+Judge rule: see Escalation & Judge.
 
 Suggested `brief.md` template:
 
@@ -324,9 +322,7 @@ Every `/plan` invocation reads `brief.md` and produces `plan.md`. The Brief carr
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
-| Planning | `/plan` | `cx/gpt-5.4` | planner | planner + planner-adversarial + judge | `.agent-contexts/plan.md` |
-
-**Post-POC:** `/planx` with `planner-high` (Kiro Opus) as adversarial worker.
+| Planning | `/plan` | `c9/cx/gpt-5.4` | planner | planner + planner-adversarial + judge | `.agent-contexts/plan.md` |
 
 Worker mandate split:
 
@@ -338,10 +334,7 @@ Worker mandate split:
 
 Escalation signals for design include ambiguous requirements, broad or cross-system touchpoints, auth/security impact, data-model changes, concurrency concerns, and workflow-critical code.
 
-Judge rule for plan:
-
-- one planner: conductor writes `plan.md` from the planner output
-- planner plus one or more additional planning workers: judge synthesizes before the conductor writes `plan.md`
+Judge rule: see Escalation & Judge.
 
 Suggested `plan.md` template:
 
@@ -387,7 +380,7 @@ Verification is a separate stage. It reads the current working tree and plan con
 
 Verifier escalation is operational rather than analytical:
 
-- default to `mino-v2.5`
+- default to `c9/mino-v2.5`
 - prefer one verifier path until evidence supports splitting it
 - allow richer browser/runtime checks when the provider is connected to MCP tooling
 
@@ -399,9 +392,7 @@ Review always exists, but escalation is conditional. The conductor should start 
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
-| Review | `/review` | `cx/gpt-5.4` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (GPT-5.4) + judge | `.agent-contexts/review.md` |
-
-**Post-POC:** `/reviewx` with `reviewer-high` (Kiro Opus) as adversarial worker.
+| Review | `/review` | `c9/cx/gpt-5.4` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (GPT-5.4) + judge | `.agent-contexts/review.md` |
 
 Worker mandate split:
 
@@ -424,14 +415,11 @@ Review findings must cite `file:line` and use P0-P3 severity.
 
 Escalation signals for review include auth or permission logic, billing or irreversible external effects, migrations or data integrity risk, concurrency or async coordination, workflow-orchestrator changes, unusually large diffs, and missing or weak verification evidence.
 
-Judge rule for review:
-
-- one reviewer: conductor writes `review.md` directly
-- two or more reviewer outputs: judge synthesizes before the conductor writes `review.md`
+Judge rule: see Escalation & Judge.
 
 #### OpenCode Command Architecture
 
-Commands expose workflow lanes, not model choices. All commands target `agent: conductor`. The conductor prompt owns orchestration logic; command templates declare the lane and artifact.
+Commands are optional explicit lane entrypoints, not the only way in. All commands target `agent: conductor` and declare a lane + artifact; the conductor prompt owns the orchestration logic. But the conductor is the everyday surface — when the user just talks to it, it runs the same lanes inline (idea/think/plan/act/verify/review) and handles most work directly without a command. Reach for a command only when you want to force a specific lane.
 
 **POC commands:**
 
@@ -443,31 +431,19 @@ Commands expose workflow lanes, not model choices. All commands target `agent: c
 | `/verify` | `conductor` | dispatch verifier: typecheck, lint, tests → `.agent-contexts/verify.md` |
 | `/review` | `conductor` | read brief, plan, code, and verifier evidence if present. Choose review rigor; default to reviewer, escalate to reviewer + reviewer-adversarial + judge when warranted |
 
-**Post-POC:** `/thinkx`, `/planx`, `/reviewx`.
+Escalation is decided by the conductor at runtime from task risk and ambiguity, not by a separate high-lane command. Shared skills carry the escalation rubric.
 
 #### OpenCode Permission Architecture
 
-The role matrix should be enforced through permissions where the boundary matters, but the escalation policy itself should remain fluid during POC.
+Permissions are intentionally light for POC: the conductor and implementer get `edit`; all other subagents are `edit: deny` with `bash: allow`. No granular allowlists — prompt prose ("do not edit any files", "return output to the conductor") is the primary control surface, consistent with CE's zero-permission review pipeline.
 
-| Agent type | Minimum permission stance | Phase |
-|-----------|---------------------------|-------|
+| Agent type | Permission stance | Phase |
+|-----------|-------------------|-------|
 | Conductor | edit + bash + task | POC |
-| Planning agents | edit denied; bash allowed | POC |
-| Review agents | edit denied; bash allowed | POC |
-| Judge | edit denied; bash allowed | POC |
-| Implementer | edit allowed; bash allowed | POC |
-| Verifier | edit denied; bash allowed | POC |
+| Implementer | edit + bash | POC |
+| All other subagents | edit denied; bash allowed | POC |
 
-Permissions are intentionally lighter for POC than the final system. Preserve the editor vs non-editor boundary first. Do not grow command-specific allowlists before the loop is proven end-to-end.
-
-POC permission rule:
-
-- default to broad shared permissions for subagents
-- keep `edit: deny` on non-implementer agents
-- keep `edit: allow` on the implementer and conductor
-- avoid per-agent `read`, `grep`, `glob`, or Git allowlists unless a real boundary requires them
-
-This is deliberately closer to CE's low-friction posture. Prove the loop first, then tighten only the boundaries that matter.
+Revisit tighter permissions only after the loop shape stabilizes.
 
 #### OpenCode Architectural Question To Keep Visible
 
@@ -511,7 +487,6 @@ When reading from disk, the orchestrator must validate that a checkpoint is comp
   review.md               # /review output
   runs/
     <run-id>/
-      thinker.md
       planner.md
       planner-adversarial.md
       judge-synthesis.md
@@ -542,7 +517,7 @@ Project is resolved from `git remote get-url origin`, slugified. Overridable via
 
 | Stage | Artifacts on disk | What survives |
 |-------|-------------------|---------------|
-| Think | `brief.md`, `runs/<run-id>/` — thinker.md, judge-synthesis.md | Brief plus any think-worker outputs |
+| Think | `brief.md` | Brief produced by the conductor (think is a conductor mode, not a worker) |
 | Plan | `plan.md`, `runs/<run-id>/` — planner.md, planner-adversarial.md, judge-synthesis.md | Execution plan plus planning worker outputs |
 | Act | `runs/<run-id>/` — typist diff, verifier output | each attempt's diff and pass/fail |
 | Verify | `verify.md` | latest verification evidence |
@@ -583,7 +558,6 @@ Target direction across providers:
 
 - thin provider agents as the shell for model pinning and permissions
 - shared skills as the reusable behavior layer
-- commands as lane entrypoints
 
 That pattern should be portable to Claude, Codex, and Kiro even when each adapter has different native constraints.
 
@@ -644,31 +618,9 @@ Supporting docs should do narrower jobs:
 
 OpenCode only. POC proves the conductor can drive think, brief, plan, act, verify, and review end-to-end while choosing escalation based on task risk and ambiguity.
 
-### Files to create (14)
+### Files created
 
-**Agents** (`config/providers/opencode/agents/`):
-
-| File | Mode | Model | Permission | Purpose |
-|------|------|-------|------------|---------|
-| `conductor.md` | primary | `cx/gpt-5.4` | edit + bash + task | owns fan-out, judge handoff, artifact writes, act retry loop |
-| `thinker.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | ideation and Brief generation |
-| `planner.md` | subagent | `deepseek-v4-pro-fusion` | edit denied; bash allowed | constructive: architecture, touchpoints, order |
-| `planner-adversarial.md` | subagent | `cx/gpt-5.4` | edit denied; bash allowed | adversarial: what breaks, what's missed |
-| `typist.md` | subagent | `minimax-m3` | edit + bash | implement execution plan |
-| `verifier.md` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | typecheck, lint, tests, runtime/browser evidence |
-| `reviewer.json` | custom agent | `claude-sonnet-5` | read + shell | constructive: correctness, regressions |
-| `reviewer-adversarial.json` | custom agent | `claude-sonnet-5` | read + shell | adversarial: invariants, auth, concurrency |
-| `judge.md` | subagent | `cx/gpt-5.5` | edit denied; bash allowed | synthesis, disagreement resolution, confidence |
-
-**Commands** (`config/providers/opencode/commands/`):
-
-| File | Agent | Behavior |
-|------|-------|----------|
-| `think.md` | conductor | no args → ask. Args → choose think rigor, write `.agent-contexts/brief.md` |
-| `plan.md` | conductor | read `.agent-contexts/brief.md`, choose planning rigor, then write `.agent-contexts/plan.md` |
-| `act.md` | conductor | dispatch typist → verifier → if fail (max 3), stop and surface |
-| `verify.md` | conductor | dispatch verifier → `.agent-contexts/verify.md` |
-| `review.md` | conductor | read plan, code, and verifier evidence. Choose review rigor, escalate when warranted, then write `.agent-contexts/review.md` |
+Agents and commands live under `config/providers/opencode/` and are installed globally by `apm`. The authoritative agent roster (names, models, permissions, mandates) is the [OpenCode Workflow Roles](#opencode-workflow-roles) matrix; the command surface is the [OpenCode Command Architecture](#opencode-command-architecture) table. See those sections for the current file list.
 
 ### Install scope
 
@@ -688,7 +640,6 @@ After POC validates the loop:
 
 | Deliverable | Phase |
 |------------|-------|
-| `/reviewx`, `/planx`, `/thinkx` high-lanes | MVP |
 | Durability & recovery (sessions, checkpoints, QED) | MVP |
 | Permission hardening | MVP |
 | Claude adapter (reviewer agent) | MVP |
@@ -705,6 +656,7 @@ After POC validates the loop:
 
 - 2026-07-08: Added POC implementation plan. Renamed orchestrator to conductor. Marked think, high-lanes, and durability as post-POC. Collapsed review/plan matrices to POC-only lanes. Simplified permission table for POC lax mode.
 - 2026-07-08: Revised the workflow shape to `think -> brief -> plan -> act -> verify -> review`, dropped `design.md` and `plan-writer`, made the Brief the design-thinking artifact, and documented CE-inspired but lighter escalation for solo-dev cost constraints.
+- 2026-07-09: Folded `thinker` into the conductor (think is a mode, not a worker); dropped all `-x` high-lane variants and high-role rows; conductor now chooses escalation at runtime with shared skills carrying the rubric. Reframed commands as optional lane shortcuts (conductor is the everyday surface). Added Superpowers as related-work reference and the third-path positioning. De-duplicated the doc (single Escalation & Judge section; file tables are now pointers to the role matrix).
 
 ## References
 
@@ -716,3 +668,12 @@ After POC validates the loop:
 - [Kiro CLI v3 agent config](https://kiro.dev/docs/cli/v3/agent-config/)
 - [Kiro CLI v3 permissions](https://kiro.dev/docs/cli/v3/permissions/)
 - OpenCode agent, command, permission, and formatter documentation
+
+## Upstream Inspirations
+
+The workflow borrows selectively from three external efforts. The architecture-learnings assessment (`docs/assessments/2026-07-08-poc-workflow-architecture-learnings.md`) records exactly what was taken from each.
+
+- [Compound Engineering plugin](https://github.com/EveryInc/compound-engineering-plugin) — conditional escalation, diff-driven persona selection, prompt-prose permission posture
+- [firstmate](https://github.com/kunchenguid/firstmate) — convergent validation of the single-front-door conductor pattern; not a heavy borrow
+- [Matt Pocock's skills](https://github.com/mattpocock) — wayfinder ambiguity resolution, tracer-bullet planning, two-axis Standards/Spec review, fact-vs-decision rule
+- [Superpowers](https://github.com/obra/superpowers) — related-work reference (portable skills library + fixed methodology); we chart a more dynamic third path between it and the Compound Engineering plugin

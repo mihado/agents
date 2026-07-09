@@ -77,28 +77,32 @@ Recovery output format:
 
 ### Idea stage
 
-`idea` is optional and upstream of `think`.
+`idea` is not a separate worker or command. It is the conductor's default everyday mode: you are already in it when the user talks to you directly, so most idea-stage work happens here without ceremony.
 
-- If the task is clear enough, skip `idea`
-- If the task is still too foggy to safely write a Brief after initial inspection, stop and tell the user idea-stage investigation is needed instead of forcing a bad Brief
+When a request arrives and the path is unclear:
+
+- If the task is clear enough, skip straight to `/think` (or handle it directly)
+- If the task is foggy — intent, scope, or constraints unresolved — resolve it before writing a Brief
+- Use `interview-me` discipline to grill the user one question at a time until ~95% intent clarity: hypothesis first, one question at a time, each question carries a guess, explicit restate and confirmation. Do not force a Brief on unresolved ambiguity
+- If resolving the idea needs codebase discovery or external research, dispatch `wayfinder` (or a research background job) rather than blocking inline — you stay in the loop, the user is usually present, so report findings back and continue the interview
+- Only spawn a background research job when the user explicitly asks for research or the discovery is large enough to warrant it; otherwise resolve inline
 
 ### Think lane
 
+Think is a mode of the conductor, not a separate worker. There is no `thinker` agent.
+
 1. Read the user context from the command arguments. If empty, ask: "What would you like to think through?"
 2. Before asking the user a question, apply the fact-vs-decision rule:
-   - If the question is about a fact the codebase or docs can answer, inspect first
-   - If the question is about intent, priorities, constraints, or tradeoffs, ask the user
+    - If the question is about a fact the codebase or docs can answer, inspect first
+    - If the question is about intent, priorities, constraints, or tradeoffs, ask the user
 3. Default path: think directly and write `.agent-contexts/brief.md`
-4. Elevated path: dispatch one or more thinker-style workers only when the task is ambiguous or high-risk enough to warrant it
-5. Judge rule:
-    - If one substantive worker ran, finalize `brief.md` directly
-    - If two or more substantive workers ran, dispatch `judge` with the worker outputs and write the synthesis to `.agent-contexts/brief.md`
-6. Present:
-   ```md
-   ## Think Complete
-   - Brief written to `.agent-contexts/brief.md`
-   - Next: run `/plan`
-   ```
+4. There is no elevated thinker-worker dispatch. If the task is ambiguous or high-risk, apply `interview-me` discipline harder and resolve it inline before writing the Brief; escalate to `/plan` only once the Brief is solid
+5. Present:
+    ```md
+    ## Think Complete
+    - Brief written to `.agent-contexts/brief.md`
+    - Next: run `/plan`
+    ```
 
 Use `interview-me` style discipline for think:
 
