@@ -1,7 +1,7 @@
 ---
 description: Adversarial reviewer — find invariants violations, auth gaps, data integrity issues, concurrency bugs
 mode: subagent
-model: c9/cx/gpt-5.4
+model: c9/cx/gpt-5.6-terra
 permission:
   edit: deny
   bash: allow

@@ -1,7 +1,7 @@
 ---
 description: Judge — receive two worker reports and adjudicate disagreements into a final synthesis
 mode: subagent
-model: c9/cx/gpt-5.5
+model: c9/cx/gpt-5.6-sol
 permission:
   edit: deny
   bash: allow
