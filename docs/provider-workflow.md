@@ -223,7 +223,12 @@ That means the workflow is not fully specified unless the agent-role matrix is a
 | Keep primaries minimal and put specialization in subagents | reduces UI clutter and keeps the orchestration graph explicit |
 | Put permissions on the agent, not only in the prompt | makes the role contract enforceable |
 
-Model selections are part of the reference implementation and the current preferred routing. They were chosen deliberately for the present balance of quality, cost, and workflow fit. They may evolve later as model economics and capability profiles change, but they are not placeholders.
+Model selections are part of the reference implementation and the current preferred routing. They were chosen deliberately for two purposes, not one:
+
+- **Efficiency** — route each role to the cheapest model adequate for the job (cheap typist, mid-tier planner/reviewer, stronger adversarial/judge), keeping the solo-dev token budget sane.
+- **Heterogeneity (diversity)** — deliberately spread roles across different model families so that no single model's blind spots propagate end-to-end. The implementer (`minimax-m3`) differs from the reviewer (`DeepSeek V4 Pro`) and the adversarial workers (`GPT-5.4`); the judge (`c9/cx/gpt-5.6-sol`) is yet another. This independence is what lets the adversarial planning, review, and (where used) test-authoring surfaces catch gaps the implementer would otherwise miss — it is a designed property of the routing, not a side effect of cost.
+
+They may evolve later as model economics and capability profiles change, but they are not placeholders.
 
 Model IDs in agent frontmatter are provider-qualified as `<provider>/<model>` (for example `c9/cx/gpt-5.4`). OpenCode is multi-provider, so the qualifier is required — without it the role matrix collapses into the parent model (see Why OpenCode Needs Explicit Agent Pinning). `c9` is the custom OpenCode provider defined in `config/providers/opencode.json` (`baseURL: https://c9.rter.cc/v1`); swap the provider prefix if your gateway differs.
 
@@ -235,7 +240,7 @@ The workflow roles below are the current architecture targets for OpenCode.
 
 | Role | Suggested agent name | Mode | Pinned model | Permission shape | Phase | Purpose |
 |------|----------------------|------|--------------|------------------|-------|---------|
-| Conductor | `conductor` | primary | `c9/cx/gpt-5.4` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop. Idea and think are modes of the conductor, not separate workers. |
+| Conductor | `conductor` | primary | `c9/cx/gpt-5.6-terra` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop. Idea and think are modes of the conductor, not separate workers. |
 | Safe analysis surface | `plan` | primary | inherited or `c9/cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
 | Planner | `planner` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
 | Planner adversarial | `planner-adversarial` | subagent | `c9/cx/gpt-5.4` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
@@ -243,7 +248,7 @@ The workflow roles below are the current architecture targets for OpenCode.
 | Verifier | `verifier` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
 | Reviewer | `reviewer` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
 | Reviewer adversarial | `reviewer-adversarial` | subagent | `c9/cx/gpt-5.4` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
-| Judge | `judge` | subagent | `c9/cx/gpt-5.5` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
+| Judge | `judge` | subagent | `c9/cx/gpt-5.6-sol` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
 
 Notes:
 
@@ -322,7 +327,7 @@ Every `/plan` invocation reads `brief.md` and produces `plan.md`. The Brief carr
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
-| Planning | `/plan` | `c9/cx/gpt-5.4` | planner | planner + planner-adversarial + judge | `.agent-contexts/plan.md` |
+| Planning | `/plan` | `c9/cx/gpt-5.6-terra` | planner | planner + planner-adversarial + judge | `.agent-contexts/plan.md` |
 
 Worker mandate split:
 
@@ -392,7 +397,7 @@ Review always exists, but escalation is conditional. The conductor should start 
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
-| Review | `/review` | `c9/cx/gpt-5.4` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (GPT-5.4) + judge | `.agent-contexts/review.md` |
+| Review | `/review` | `c9/cx/gpt-5.6-terra` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (c9/cx/gpt-5.4) + judge | `.agent-contexts/review.md` |
 
 Worker mandate split:
 
@@ -677,3 +682,5 @@ The workflow borrows selectively from three external efforts. The architecture-l
 - [firstmate](https://github.com/kunchenguid/firstmate) — convergent validation of the single-front-door conductor pattern; not a heavy borrow
 - [Matt Pocock's skills](https://github.com/mattpocock) — wayfinder ambiguity resolution, tracer-bullet planning, two-axis Standards/Spec review, fact-vs-decision rule
 - [Superpowers](https://github.com/obra/superpowers) — related-work reference (portable skills library + fixed methodology); we chart a more dynamic third path between it and the Compound Engineering plugin
+- [SmallHarness](https://github.com/GetSmallAI/SmallHarness) — dynamic per-task model tiering, rubric-scored critic loop, overnight auto-run with context-reset; routing/evaluation reference
+- [Oh My Pi](https://github.com/can1357/oh-my-pi) — richer execution surface, role-based routing with fallback chains, real-time advisor model, typed subagent yields; post-POC eval reference; borrow its tool-design lessons now (hash-anchored edits, summarized reads)

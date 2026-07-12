@@ -77,7 +77,7 @@ These are our own decisions, not borrowed:
 
 - **Typist self-check.** Before the implementer declares done, it reads brief.md + plan.md and checks its own diff against acceptance criteria. Catches spec mismatches before burning a verifier cycle. Neither CE nor Matt prescribe this explicitly — inferred from their general discipline of checking work against the spec.
 
-- **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap typist on minimax-m3, constructive planner/reviewer on DeepSeek V4 Pro, adversarial planner/reviewer on GPT-5.4, judge on GPT-5.5) requires agent frontmatter. The lesson is not to drop agents but to keep prompts lean and move reusable behavior toward skills over time.
+- **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap typist on minimax-m3, constructive planner/reviewer on DeepSeek V4 Pro, adversarial planner/reviewer on GPT-5.4, judge on gpt-5.6-sol) requires agent frontmatter. The lesson is not to drop agents but to keep prompts lean and move reusable behavior toward skills over time.
 
 - **Persona over provider.** The meaningful unit is the agent persona and its mandate, not whether it ran in OpenCode, Kiro, Claude, or another harness. A durable record should preserve which persona thought what, what evidence it used, and what conclusion it reached. Provider/runtime is secondary metadata.
 
@@ -128,6 +128,8 @@ The POC architecture borrows selectively from external efforts. See the "What we
 - firstmate (convergent validation of the single-front-door conductor pattern; not a heavy borrow): https://github.com/kunchenguid/firstmate
 - Matt Pocock's skills (wayfinder ambiguity resolution, tracer-bullet tickets, two-axis Standards/Spec review, fact-vs-decision rule): https://github.com/mattpocock
 - Superpowers (portable skills library + fixed methodology; brainstorming → plans → subagent-driven-dev with two-stage review; related-work reference, not a borrow): https://github.com/obra/superpowers
+- SmallHarness (dynamic per-task model tiering, rubric-scored critic loop, overnight auto-run with context-reset; routing/evaluation reference, not a borrow): https://github.com/GetSmallAI/SmallHarness
+- Oh My Pi (richer execution surface — role-based routing, real-time advisor model, typed subagent yields, hash-anchored edits, fallback chains; post-POC eval reference; borrowing its tool-design lessons now): https://github.com/can1357/oh-my-pi
 
 ## Where we sit
 
@@ -137,7 +139,29 @@ The workflow is a third path between two extremes:
 - **Superpowers** — max structure, min dynamism: a fixed, auto-triggered pipeline over a curated, harness-portable skill library, always two-stage review.
 - **Us** — the middle: explicit roles with provider-pinned model routing (more structure than CE), but conductor-chosen rigor instead of a fixed stage (more dynamism than Superpowers). Not 13-way, not always-two-stage — a cheap default pass, escalating to adversarial + judge only when the task warrants it. The conductor is the everyday surface and does most of the orchestration directly; specialized subagents are dispatched only when the task benefits from the extra rigor.
 
+## Integrations & Infrastructure
+
+Distinct from the methodology inspirations in Upstream Sources (which shaped the workflow design, not the tooling).
+
+### Adopting now: open-code-review (Alibaba `ocr` CLI) — review engine
+
+- **Why:** deterministic file selection/bundling (no corner-cutting on large diffs), built-in fine-tuned ruleset (NPE, thread-safety, XSS, SQL injection), ~1/9 the tokens of a general-purpose agent at higher precision, structured JSON (`category` + `severity`), resumable sessions, custom `rule.json`. Configured to use `c9` as the API provider (custom OpenAI/Anthropic gateway).
+- **How it slots in:** powers the `reviewer` / `reviewer-adversarial` workers inside OpenCode via a bash call (`ocr review --format json --audience agent --background-file .agent-contexts/plan.md`). Feeds the Brief/Plan context for Spec conformance; maps `critical/high/medium/low` → `P0–P3`. Conductor parses JSON findings and routes them to typist via the act retry loop. Addresses the LLM-subagent failure modes (coverage/position drift, unstable quality) our skills alone don't fully solve.
+- **The remaining gap:** reviewer *prompt strength and feedback-loop maturity* — the engine gives structured input; the conductor→typist filtering + failure-mode-aware prompt design on top of ocr is the next iteration surface. Adopt the engine now, strengthen the loop on top.
+
+### Deferred: Omnigent (meta-harness) — cross-vendor review substrate
+
+- **Why it's interesting:** stateful policies enforced at the meta-harness layer (cost budget, `approve_shell`), cross-vendor review (Polly routes diffs to a reviewer from a *different vendor* than the writer), and its host model for registering machines as execution targets.
+- **Why deferred:** Kiro is dropped for now (not supported by ocr, native-wrapping uncertain, ACP later); without a second harness to route to, Omnigent's cross-vendor value is unused. The mesh Omnigent + ocr is technically clean (ocr runs as a tool inside an Omnigent-wrapped OpenCode session), but adopting both now adds alpha risk (v0.4.0) and a second config surface for benefits you can't yet use. Revisit when multi-harness need returns.
+
+### Infrastructure: Multica — cross-machine agent command centre
+
+- **What it is:** an open-source (self-hostable) platform that turns coding agents into managed teammates — a unified runtime dashboard across machines, task lifecycle management (enqueue → claim → execute → complete/fail), an evolving skill library, and auto-detection of 14 supported coding tools including OpenCode and Kiro CLI.
+- **Why it fits the personal setup** (main laptop + client VMs with data-sovereignty requirements): *"Code never passes through Multica servers"* — the server coordinates task state, agent execution stays local on each machine. Self-host on the main laptop, connect daemons on each client VM, get one agent/runtime overview across all machines. Pairs with VS Code Remote SSH per-VM for the IDE pane. Solves the "high overview of where things are / one command centre" requirement without violating client-VM data isolation.
+- **How it relates to the workflow:** not a workflow integration — a separate control plane for *managing* agent sessions across machines. The OpenCode conductor + skills workflow runs inside the sessions Multica tracks. The cross-machine file tree concern is de-emphasised (at that operating level, strong loops and reports are what you deal with).
+
 ## Revision Notes
 
 - 2026-07-08: Written after POC iteration, condensing fragmentation signals and learnings from the Compound Engineering plugin and Matt Pocock's skills into a single reference.
 - 2026-07-09: Added upstream source URLs; framed firstmate as convergent validation; added Superpowers as related-work reference and the third-path positioning statement.
+- 2026-07-09: Added Integrations & Infrastructure assessment — open-code-review (`ocr`) as adopting-now review engine on `c9`; Omnigent deferred until multi-harness need returns; Multica noted as cross-machine agent command centre (self-hostable, respects data sovereignty).
