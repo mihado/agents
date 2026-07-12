@@ -227,6 +227,13 @@
       "commit": "0877403d1e867fd9d574117e9b34ade404f36d2a",
       "sha256": "9c70797062c1017367293905782a5a3a6b8f3ea85148abc172996a8de3f60071"
     },
+    "wayfinder": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/wayfinder",
+      "path": "skills/engineering/wayfinder",
+      "commit": "391a2701dd948f94f56a39f7533f8eea9a859c87",
+      "sha256": "b21256d42f6810e0a8e452dd7f2c273a32869823ce0ec68bda95d6378bfe7cd1"
+    },
     "handoff": {
       "source": "mattpocock/skills",
       "srcPath": "skills/productivity/handoff",

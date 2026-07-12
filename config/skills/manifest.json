@@ -107,6 +107,11 @@
       "srcPath": "skills/engineering/codebase-design",
       "path": "skills/engineering/codebase-design"
     },
+    "wayfinder": {
+      "source": "mattpocock/skills",
+      "srcPath": "skills/engineering/wayfinder",
+      "path": "skills/engineering/wayfinder"
+    },
     "context-engineering": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/context-engineering",
