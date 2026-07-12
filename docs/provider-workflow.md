@@ -120,7 +120,7 @@ This is the topological contract across providers, even if the concrete provider
 |------|---------|--------|
 | Idea | optional upstream ambiguity-resolution stage when the task is still too foggy to safely brief | enough clarity to enter Think; no fixed POC artifact yet |
 | Think | refine the problem, surface blind spots, validate constraints, and produce the Brief | `brief.md`: problem statement, constraints, assumptions, acceptance criteria, risks |
-| Plan | turn the Brief into an ordered execution handoff | Execution plan: ordered implementation units, dependencies, verification intent |
+| Plan | turn the Brief into an ordered execution handoff, or resolve a bounded evidence question before execution planning | Execution plan, or research artifacts for the research-plan variant |
 | Act | implement and verify in a loop until green | diff, verification evidence |
 | Verify | run explicit checks on the current working tree or runtime path | verification report |
 | Review | critique the change and its evidence | findings, residual risks, confidence |
@@ -226,11 +226,11 @@ That means the workflow is not fully specified unless the agent-role matrix is a
 Model selections are part of the reference implementation and the current preferred routing. They were chosen deliberately for two purposes, not one:
 
 - **Efficiency** — route each role to the cheapest model adequate for the job (cheap typist, mid-tier planner/reviewer, stronger adversarial/judge), keeping the solo-dev token budget sane.
-- **Heterogeneity (diversity)** — deliberately spread roles across different model families so that no single model's blind spots propagate end-to-end. The implementer (`minimax-m3`) differs from the reviewer (`DeepSeek V4 Pro`) and the adversarial workers (`GPT-5.4`); the judge (`c9/cx/gpt-5.6-sol`) is yet another. This independence is what lets the adversarial planning, review, and (where used) test-authoring surfaces catch gaps the implementer would otherwise miss — it is a designed property of the routing, not a side effect of cost.
+- **Heterogeneity (diversity)** — deliberately spread roles across different model families so that no single model's blind spots propagate end-to-end. The implementer (`minimax-m3`) differs from the reviewer (`DeepSeek V4 Pro`) and the adversarial workers (`GPT-5.6 Terra`); the judge (`c9/cx/gpt-5.6-sol`) is yet another. This independence is what lets the adversarial planning, review, and (where used) test-authoring surfaces catch gaps the implementer would otherwise miss — it is a designed property of the routing, not a side effect of cost.
 
 They may evolve later as model economics and capability profiles change, but they are not placeholders.
 
-Model IDs in agent frontmatter are provider-qualified as `<provider>/<model>` (for example `c9/cx/gpt-5.4`). OpenCode is multi-provider, so the qualifier is required — without it the role matrix collapses into the parent model (see Why OpenCode Needs Explicit Agent Pinning). `c9` is the custom OpenCode provider defined in `config/providers/opencode.json` (`baseURL: https://c9.rter.cc/v1`); swap the provider prefix if your gateway differs.
+Model IDs in agent frontmatter are provider-qualified as `<provider>/<model>` (for example `c9/cx/gpt-5.6-terra`). OpenCode is multi-provider, so the qualifier is required — without it the role matrix collapses into the parent model (see Why OpenCode Needs Explicit Agent Pinning). `c9` is the custom OpenCode provider defined in `config/providers/opencode.json` (`baseURL: https://c9.rter.cc/v1`); swap the provider prefix if your gateway differs.
 
 Other harnesses may not need the qualifier: when a harness talks to an OpenAI-compatible endpoint directly (base URL + key, single provider context), the model string is often just the bare name. Only OpenCode's multi-provider routing requires the `<provider>/` prefix. Keep the agent files provider-qualified for OpenCode; adapter targets handle their own model format.
 
@@ -243,11 +243,11 @@ The workflow roles below are the current architecture targets for OpenCode.
 | Conductor | `conductor` | primary | `c9/cx/gpt-5.6-terra` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop. Idea and think are modes of the conductor, not separate workers. |
 | Safe analysis surface | `plan` | primary | inherited or `c9/cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
 | Planner | `planner` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
-| Planner adversarial | `planner-adversarial` | subagent | `c9/cx/gpt-5.4` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
+| Planner adversarial | `planner-adversarial` | subagent | `c9/cx/gpt-5.6-terra` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
 | Implementer | `typist` | subagent | `c9/minimax-m3` | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
 | Verifier | `verifier` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
 | Reviewer | `reviewer` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
-| Reviewer adversarial | `reviewer-adversarial` | subagent | `c9/cx/gpt-5.4` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
+| Reviewer adversarial | `reviewer-adversarial` | subagent | `c9/cx/gpt-5.6-terra` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
 | Judge | `judge` | subagent | `c9/cx/gpt-5.6-sol` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
 
 Notes:
@@ -323,11 +323,14 @@ The Brief should stay on the problem and decision surface. Do not turn it into a
 
 Every `/plan` invocation reads `brief.md` and produces `plan.md`. The Brief carries the design thinking; the Plan is the execution handoff.
 
+The exception is **research-plan mode**: when a Brief asks a bounded evidence-gathering or comparison question rather than for implementation, the conductor runs planner and planner-adversarial in research mode, judges their reports, and writes research artifacts. It never writes `plan.md`; an execution plan follows only after the research decision is settled.
+
 **POC lanes:**
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
 | Planning | `/plan` | `c9/cx/gpt-5.6-terra` | planner | planner + planner-adversarial + judge | `.agent-contexts/plan.md` |
+| Research planning | `/plan research` or `/plan mode:research` | `c9/cx/gpt-5.6-terra` | not available | planner + planner-adversarial + judge | `.agent-contexts/research/` |
 
 Worker mandate split:
 
@@ -340,6 +343,33 @@ Worker mandate split:
 Escalation signals for design include ambiguous requirements, broad or cross-system touchpoints, auth/security impact, data-model changes, concurrency concerns, and workflow-critical code.
 
 Judge rule: see Escalation & Judge.
+
+#### Research Artifact Contract
+
+Research is a planning capability, not a permanent role, command, or additional workflow stage. It applies only after Think has framed a bounded decision question. If the destination, scope, or decision dependencies remain foggy, use Idea-stage interview discipline or Wayfinder instead.
+
+The conductor explicitly marks planner dispatches `[RESEARCH MODE]` and judge dispatches `[RESEARCH SYNTHESIS]`. The only accepted command arguments that select this mode are `research` and `mode:research`; execution planning is the default. An unclear request requires clarification rather than implicit mode selection.
+
+Research reports are stable latest artifacts:
+
+```text
+.agent-contexts/research/
+  planner.md                 # constructive independent report
+  planner-adversarial.md     # adversarial independent report
+  synthesis.md               # judge decision record
+```
+
+Subagents return analysis only; the conductor writes every artifact. Research artifacts never overwrite `plan.md`, which remains exclusively an implementation handoff. Recovery reads the latest research synthesis as context only; it must mark it stale if its Brief no longer matches the current decision.
+
+Every substantive research claim is labeled `[fact]`, `[interpretation]`, `[recommendation]`, or `[unknown]`. Reports use a primary → secondary → speculative source hierarchy, preserve locators (`file:line`, command output, or URL plus ref), state confidence on interpretations and recommendations, and distinguish discoverable gaps from unsettled human decisions. The shared source of truth is `.agents/skills/engineering/research-and-planning/SKILL.md`.
+
+#### MVP Boundary and Next Validation Step
+
+The MVP establishes usable Brief, execution-plan, research, verification, and review handoffs with the conductor as the sole artifact writer. It does not yet include resumable per-worker checkpoints, autonomous operation, a separate researcher persona, or tracker-backed Wayfinder.
+
+The CE / SmallHarness / Oh My Pi comparison is a provisional integration proof of the upstream research contract. The next operational proof after it is a real target-repository task through `act → verify → review`, including a recovery check from the saved artifacts and Git state.
+
+Each dogfood run begins with a pinned target revision and records the verbatim request, paths to its Brief/Plan/Verify/Review artifacts, commands and results, final diff or revision, review disposition, human verdict, and observed harness friction. The first record is provisional: promote a failure into a fixture or static contract check only after it recurs. This borrows SmallHarness’s evidence-first fixture discipline without adopting its full scorecard or autonomous runtime.
 
 Suggested `plan.md` template:
 
@@ -383,6 +413,8 @@ Tracer-bullet rule:
 
 Verification is a separate stage. It reads the current working tree and plan context, runs configured checks, and writes `verify.md`. It may also use browser/runtime tooling when the task demands user-facing verification.
 
+When a Brief exists, verification also reports every acceptance criterion as `MET`, `UNMET`, or `UNVERIFIED`, with diff, command, or runtime evidence. `UNMET` fails verification; `UNVERIFIED` remains explicit missing evidence for review and human disposition. This is a lightweight adaptation of plan-validation discipline, not a new evaluator role.
+
 Verifier escalation is operational rather than analytical:
 
 - default to `c9/mino-v2.5`
@@ -397,7 +429,7 @@ Review always exists, but escalation is conditional. The conductor should start 
 
 | Lane | Entry command | Conductor | Default path | Elevated path | Output |
 |------|---------------|-----------|--------------|---------------|--------|
-| Review | `/review` | `c9/cx/gpt-5.6-terra` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (c9/cx/gpt-5.4) + judge | `.agent-contexts/review.md` |
+| Review | `/review` | `c9/cx/gpt-5.6-terra` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (c9/cx/gpt-5.6-terra) + judge | `.agent-contexts/review.md` |
 
 Worker mandate split:
 

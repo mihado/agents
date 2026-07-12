@@ -50,6 +50,35 @@ You do NOT receive raw code, diffs, or feature descriptions. Judge only from the
 - ...
 ```
 
+## Research synthesis
+
+When the conductor marks the input `[RESEARCH SYNTHESIS]`, use this format instead:
+
+```
+## Decision
+<the decision supported by the worker reports, or the exact evidence gap preventing one>
+
+## Evidence Quality: <strong | adequate | thin>
+<one sentence based on source tier, citation coverage, and worker independence>
+
+## Agreements
+- <point both workers support>
+
+## Disagreements
+- <topic>: Worker A says <X>, Worker B says <Y>. Adjudication: <judgment based only on the reports>
+
+## Recommendations
+- <adopt | defer | reject>: <action> — <confidence and tradeoff>
+
+## Residual Unknowns
+- <unknown> — <resolution path or decision owner>
+
+## Next Move
+<one bounded next Brief, execution plan, or evidence-gathering action>
+```
+
+Preserve worker citations where they support the decision. Do not repair missing evidence by re-analyzing the original problem. If either report is empty, trivial, or lacks source-backed claims, state the asymmetry and reduce evidence quality.
+
 ## Constraints
 
 - Do not edit any files

@@ -47,7 +47,7 @@ Treat prompts like "where are we", "catch me up", "what did we do", "what's in f
 For recovery-style prompts:
 
 1. Inspect the current branch, `git status`, recent commits, and current diff
-2. Read `.agent-contexts/brief.md`, `.agent-contexts/plan.md`, `.agent-contexts/verify.md`, and `.agent-contexts/review.md` if they exist
+2. Read `.agent-contexts/brief.md`, `.agent-contexts/plan.md`, `.agent-contexts/research/synthesis.md`, `.agent-contexts/verify.md`, and `.agent-contexts/review.md` if they exist. When a research synthesis exists, compare its decision question with the active Brief; mark it stale and do not treat it as current work if they do not match.
 3. Synthesize the working context directly unless the repo state is broad or contradictory enough to warrant helper analysis
 4. Present a compact operational summary covering:
    - what we were trying to do
@@ -117,9 +117,12 @@ Use `interview-me` style discipline for think:
 
 1. Read `.agent-contexts/brief.md`. If it does not exist, tell the user to run `/think` first
 2. Read any additional planning context passed in the command arguments
-3. Default path: dispatch `planner`
-4. Elevated path: dispatch `planner` and `planner-adversarial` in parallel when the task warrants extra rigor
-5. Judge rule:
+3. Select an explicit mode before dispatch:
+   - `[EXECUTION-PLANNING MODE]` is the default and produces `plan.md`.
+   - `[RESEARCH MODE]` applies only when the Brief asks a bounded evidence-gathering or comparison question rather than for implementation. It can also be requested with the standalone argument `research` or `mode:research`. If the mode is unclear, ask the user rather than guessing. No other syntax changes the mode.
+4. Default execution path: dispatch `planner` with `[EXECUTION-PLANNING MODE]`
+5. Elevated execution path: dispatch `planner` and `planner-adversarial` in parallel with `[EXECUTION-PLANNING MODE]` when the task warrants extra rigor
+6. Judge rule:
    - If one substantive worker ran, finalize `plan.md` directly from that output
    - If two or more substantive workers ran, dispatch `judge` with this format:
    ```
@@ -128,8 +131,8 @@ Use `interview-me` style discipline for think:
    === Worker B (elevated planning pass) ===
    <planner-adversarial output>
    ```
-6. Write `.agent-contexts/plan.md`
-7. Present:
+7. Write `.agent-contexts/plan.md`
+8. Present:
    ```md
    ## Plan Complete
    - Plan written to `.agent-contexts/plan.md`
@@ -137,6 +140,22 @@ Use `interview-me` style discipline for think:
    ```
 
 Escalate planning when the task has broad or cross-system touchpoints, auth/security impact, data-model changes, concurrency/orchestration risk, or an unclear verification path.
+
+### Research-plan variant
+
+Research-plan is a Plan-lane variant, not a new command or workflow stage. It is appropriate only after Idea/Think have framed a sharp decision question. Use `wayfinder` or interview discipline for unresolved upstream fog.
+
+1. Read `.agent-contexts/brief.md` and confirm it asks a bounded research question.
+2. Ensure `.agent-contexts/research/` exists.
+3. Dispatch `planner` and `planner-adversarial` in parallel, each marked `[RESEARCH MODE]`. Require independent source inspection and the shared research report format.
+4. Dispatch `judge` with only the two reports, marked `[RESEARCH SYNTHESIS]`.
+5. Write the returned reports to:
+   - `.agent-contexts/research/planner.md`
+   - `.agent-contexts/research/planner-adversarial.md`
+   - `.agent-contexts/research/synthesis.md`
+6. Never write or overwrite `.agent-contexts/plan.md` in research-plan mode.
+7. On recovery, read the latest research synthesis when `.agent-contexts/research/` exists. Treat it as stale when its Brief no longer matches the active decision; state that explicitly and do not treat it as an execution plan.
+8. Present a compact decision, evidence-quality verdict, residual unknowns, and one next move.
 
 ### Review lane
 
@@ -229,5 +248,6 @@ All review findings must cite `file:line`.
 - Before writing any artifact, ensure `.agent-contexts/` exists: run `mkdir -p .agent-contexts`
 - `review` writes both the stable latest artifact and a timestamped snapshot: `.agent-contexts/review.md` and `.agent-contexts/review-<timestamp>.md`
 - Other lanes write stable latest artifacts to `.agent-contexts/<name>.md`
+- Research-plan writes its stable reports under `.agent-contexts/research/` and never writes `plan.md`
 - Subagents are read-only — they return analysis, you write artifacts
 - Judge receives only worker outputs, never raw code or diff
