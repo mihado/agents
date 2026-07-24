@@ -9,6 +9,7 @@ These instructions are the default engineering contract for every repository. Pr
 - Keep changes scoped to the requested outcome. Do not mix unrelated cleanup into the work.
 - Prefer existing frameworks, conventions, and helper APIs over introducing new abstractions or dependencies.
 - Make conservative assumptions explicit when autonomous progress is required.
+- Do not hard-wrap Markdown prose. Use one line per paragraph or list item, while preserving intentional line breaks, tables, and fenced code blocks.
 
 ## Repository Safety
 
