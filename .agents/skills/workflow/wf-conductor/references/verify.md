@@ -1,6 +1,6 @@
 # Verify Branch
 
-Dispatch `verifier` with `Required skill: wf-verification`, write `.agent-contexts/verify.md`, and return:
+Dispatch the configured `verifier` with `Required skill: wf-verification`, write `.agent-contexts/verify.md`, and return:
 
 ```md
 ## Verify Complete

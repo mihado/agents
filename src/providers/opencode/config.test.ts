@@ -158,6 +158,8 @@ describe("integration: apm providers", () => {
       "planner-adversarial.md": ["Required skill:", "[EXECUTION-PLANNING MODE]`: `wf-planning` with `Mode: adversarial`", "[RESEARCH MODE]`: `wf-research` with `Mode: adversarial`"],
       "operator.md": ["Required skill:", "`wf-execution`"],
       "verifier.md": ["Required skill:", "`wf-verification`"],
+      "reviewer.md": ["wf-review", "standards-spec"],
+      "reviewer-adversarial.md": ["wf-review", "adversarial-risk"],
       "judge.md": ["Required skill:", "`wf-judge`"],
     };
 
@@ -166,7 +168,7 @@ describe("integration: apm providers", () => {
       for (const marker of requiredMarkers) expect(content).toContain(marker);
     }
 
-    for (const skill of ["wf-conductor", "wf-planning", "wf-research", "wf-execution", "wf-verification", "wf-judge"]) {
+    for (const skill of ["wf-conductor", "wf-planning", "wf-research", "wf-execution", "wf-verification", "wf-review", "wf-judge"]) {
       const content = fs.readFileSync(path.join(skillDir, skill, "SKILL.md"), "utf8");
       expect(content).toContain(`name: ${skill}`);
     }
@@ -176,6 +178,25 @@ describe("integration: apm providers", () => {
 
     for (const reference of ["recovery.md", "think.md", "plan.md", "act.md", "verify.md", "review.md"]) {
       expect(fs.existsSync(path.join(skillDir, "wf-conductor", "references", reference))).toBe(true);
+    }
+
+    const planReference = fs.readFileSync(path.join(skillDir, "wf-conductor", "references", "plan.md"), "utf8");
+    expect(planReference).toContain("configured `planner`");
+    expect(planReference).toContain("configured `planner-adversarial`");
+    expect(planReference).toContain("Do not substitute a generic worker");
+    expect(planReference).toContain("Research is complete only when both named-worker reports and the judge synthesis are persisted.");
+    const conductorReferences: Array<[string, string[]]> = [
+      ["act.md", ["configured `operator`", "configured `verifier`"]],
+      ["verify.md", ["configured `verifier`"]],
+      ["review.md", ["configured `reviewer` and `reviewer-adversarial`", "configured `judge`"]],
+    ];
+    for (const [reference, markers] of conductorReferences) {
+      const content = fs.readFileSync(path.join(skillDir, "wf-conductor", "references", reference), "utf8");
+      for (const marker of markers) expect(content).toContain(marker);
+    }
+    expect(fs.readFileSync(path.join(skillDir, "wf-conductor", "SKILL.md"), "utf8")).toContain("Do not substitute a generic worker");
+    for (const agent of ["planner.md", "planner-adversarial.md", "operator.md", "verifier.md", "reviewer.md", "reviewer-adversarial.md", "judge.md"]) {
+      expect(fs.existsSync(path.join(agentDir, agent))).toBe(true);
     }
   });
 

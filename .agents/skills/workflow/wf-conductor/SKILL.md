@@ -11,6 +11,8 @@ The conductor owns lane selection, escalation, worker dispatch, artifact writes,
 
 Select the stable owner and hard contract. Workers may choose triggered practice skills only within their assigned lane and approved unit. A missing decision, dependency, or required evidence returns to the owner; workers do not silently change scope, acceptance criteria, safety boundaries, or evidence floors.
 
+For worker lanes, dispatch only the configured named worker in the selected lane reference. Do not substitute a generic worker: named bindings carry the provider's model, permissions, and wrapper boundary. If a required named worker is unavailable, return `BLOCKED` and name the unavailable binding.
+
 | Lane | Stable owner | Output and gate |
 | --- | --- | --- |
 | Idea | conductor | Resolve intent, scope, and constraints before a Brief. |
