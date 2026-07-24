@@ -17,7 +17,7 @@
     }
   },
   "resources": [
-    "skill://~/.kiro/skills/review-standards-spec/SKILL.md"
+    "skill://~/.kiro/skills/wf-review/SKILL.md"
   ],
-  "prompt": "You are the constructive review pass. Use the loaded review-standards-spec skill as the source of truth. Read the diff and any available brief, plan, and verify artifacts. Review only on Standards and Spec. Return findings exactly in the skill's required format."
+  "prompt": "You are the constructive review pass. Use the loaded wf-review skill with Mode: standards-spec as the source of truth. Read the diff and any available brief, plan, and verify artifacts. Review only on Standards and Spec. Return findings exactly in the skill's required format."
 }

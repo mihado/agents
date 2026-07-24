@@ -1,718 +1,201 @@
 # Provider Workflow
 
-Date: 2026-07-07
+Date: 2026-07-13
 
-This repository manages user-global agent tooling and workflow primitives that should be reproducible across machines and VMs.
+This repository is the source of truth for a user-global agent workflow: shared skills, provider bindings, and the `apm` install/check path that makes them reproducible across machines. It does not contain project-scoped agents.
 
-OpenCode is the primary reference harness for this architecture. It exposes the control surfaces needed to define the workflow cleanly: agent roles, model pinning, command routing, permissions, and orchestration shape. Other providers such as Claude and Codex are secondary adapter targets. They may approximate the workflow with varying fidelity depending on their native constraints.
+OpenCode is the reference harness because it exposes explicit agent roles, model pins, permissions, commands, and subagent dispatch. Claude, Codex, and Kiro are adapters: they preserve workflow semantics where their harnesses allow them, but do not redefine the contract.
 
-The canonical source of truth for provider configuration lives under `config/providers/`. Runtime files in `~/.claude/`, `~/.config/opencode/`, `~/.codex/`, and similar homes are installation targets, not source directories.
+## Workflow at a Glance
 
-## Goal
+The workflow is a thin dispatcher over focused skills, not a fixed agent topology or universal skill bundle.
 
-Keep one repo as the canonical source for:
-
-- shared workflow primitives
-- shared skills
-- provider-specific global configuration
-- `apm install` / `apm check` logic that links or syncs provider state into the correct runtime location
-
-This repository is not the place for project-specific agents.
-
-The workflow is the product. Provider support is the adapter layer that installs or approximates that workflow in each harness.
-
-## Core Rule
-
-No project-scoped agent definitions belong in this repo.
-
-If a provider needs custom agents, commands, or related workflow files, they should be committed under `config/providers/<provider>/...` and installed into that provider's user-global home by `apm`.
-
-## Reference Harness
-
-OpenCode is the canonical reference implementation for the workflow architecture in this repository.
-
-That means:
-
-- the shared workflow contract is defined first where it can be expressed most faithfully
-- provider-specific constraints should not flatten the architecture prematurely
-- Claude, Codex, and other harnesses are adapted from the OpenCode-defined contract rather than treated as equal inputs into the core abstraction
-
-This is intentional. OpenCode currently offers the most direct path to explicit agent-role design with the least workaround burden. More opinionated harnesses may only support partial bindings. That is acceptable as long as the semantic contract remains clear.
-
-## Provider Targets
-
-| Provider | Canonical source in repo | Intended runtime destination | Role in architecture |
-|---------|---------------------------|------------------------------|----------------------|
-| OpenCode | `config/providers/opencode/` | `~/.config/opencode/` | primary reference implementation |
-| Claude | `config/providers/claude/` | `~/.claude/` | secondary adapter target |
-| Codex | `config/providers/codex/` | `~/.codex/` | secondary adapter target / stub acceptable |
-| Kiro | `config/providers/kiro/` | `~/.kiro/` | secondary adapter target with custom-agent binding |
-
-The provider directories are unique. Shared skills remain shareable across tools, but provider runtime formats should not be conflated.
-
-## Current Code Shape
-
-The repo already has provider modules for:
-
-| Module | Current responsibility |
-|-------|-------------------------|
-| `src/providers/claude.ts` | links `AGENTS.md`, `CLAUDE.md`, and skills into `~/.claude/`; manages Claude MCP |
-| `src/providers/opencode/index.ts` | syncs provider manifest and MCP config into OpenCode config |
-| `src/providers/codex.ts` | links `AGENTS.md` and skills into `~/.codex/`; manages Codex MCP |
-| `src/providers/kiro.ts` | Kiro provider behavior |
-
-What is missing is a first-class convention for provider-managed workflow artifacts such as global agents and related config that should be installed by `apm`.
-
-The desired end state is not symmetric across providers. OpenCode should become the fullest expression of the workflow. Other providers should bind into the same semantics where possible, and degrade gracefully where not.
-
-## Source vs Runtime Boundary
-
-| Kind | Source of truth | Runtime target |
-|-----|------------------|----------------|
-| Shared instructions | repo root `AGENTS.md`, `CLAUDE.md` | linked into provider homes as needed |
-| Shared skills | `.agents/skills/` | linked into provider homes as needed |
-| Provider-specific agents | `config/providers/<provider>/agents/` | linked or synced into provider-specific global locations |
-| Provider-specific config | `config/providers/<provider>/...` | synced into provider-specific runtime config |
-
-This boundary matters because repo-local runtime-named directories like `.claude/` or `.opencode/` imply project scope. That conflicts with the repository's purpose when they are treated as committed source of truth.
-
-## Workflow Layer vs Provider Layer
-
-Keep these distinct.
-
-| Layer | What belongs there |
-|------|---------------------|
-| Workflow layer | conductor (idea + think modes), planner, implementer, verifier, reviewer, judge roles; handoff contracts; escalation rules |
-| Provider layer | Claude/OpenCode/Codex-specific file formats, install targets, permissions, model pinning, commands |
-| Shared skill layer | reusable instructions or rubrics that multiple tools can load |
-
-The workflow can be shared conceptually. The provider bindings should be separate implementations.
-
-Longer term, keep provider agents thin. The agent should primarily carry model pinning, permission posture, and lane-routing instructions, then dispatch into shared skills for reusable behavior. Do not collapse agents away while model routing and permission boundaries still live in the provider layer.
-
-Shared skill source of truth lives under `.agents/skills/`. Provider runtime skill directories such as `.kiro/skills/` are adapter targets, not source directories.
-
-The first shared extraction targets are (these are the behavior "chapters"; this doc is the map):
-
-- [`.agents/skills/engineering/recovery-orientation/SKILL.md`](.agents/skills/engineering/recovery-orientation/SKILL.md) — re-orientation after context decay
-- [`.agents/skills/engineering/review-standards-spec/SKILL.md`](.agents/skills/engineering/review-standards-spec/SKILL.md) — default review pass (Standards + Spec)
-- [`.agents/skills/engineering/review-adversarial-risk/SKILL.md`](.agents/skills/engineering/review-adversarial-risk/SKILL.md) — adversarial review pass (invariants, auth, data, concurrency)
-
-OpenCode is the place where that workflow is specified most fully. Other provider bindings should preserve the contract as far as their harness allows, rather than forcing the contract downward to the lowest common denominator.
-
-## Shared Workflow Primitive
-
-The current canonical workflow primitive is:
+```text
+user request
+  -> conductor chooses a lane and rigor
+  -> stable lane owner + applicable supporting practices
+  -> explicit artifact or evidence result
+```
 
 ```text
 idea -> think -> plan -> act -> verify -> review
 ```
 
-Every task should still pass through the same mental topology even when the rigor is light: resolve ambiguity if needed, think through the task until it is briefable, write a Brief, turn that Brief into an Execution plan, implement, verify, then review. The conductor decides how rigorous each stage must be for the current task.
+The conductor is the everyday front door; commands are optional ways to select a lane. Small clear work may stay lightweight, but follows the same authority and evidence boundaries.
 
-In day-to-day use, the conductor should also work as an everyday direct profile: handle small, clear requests directly, use [`recovery-orientation`](.agents/skills/engineering/recovery-orientation/SKILL.md) behavior for re-orientation requests, and dispatch specialized workers only when the task benefits from the extra rigor.
+[`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) is the authoritative executable contract for routing, escalation, artifact authority, recovery, and retries.
 
-This is the topological contract across providers, even if the concrete provider bindings differ.
+| Lane | Workflow owner | Result |
+| --- | --- | --- |
+| Idea | conductor | Intent, scope, and constraints are settled before a Brief. |
+| Think | conductor | `.agent-contexts/brief.md` |
+| Plan | `wf-planning` or `wf-research` | `plan.md`, or bounded research artifacts. |
+| Act | `wf-execution` | Approved work and an Operator Handoff. |
+| Verify | `wf-verification` | `verify.md` with `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
+| Review | `wf-review` | Standards/Spec findings with `file:line`; never a verification verdict. |
+| Ship | conductor | Explicit release request with rollback and operational proof. |
 
-### Stage Intent
+Lane ownership is fixed. Workers may select applicable practice skills inside their assigned lane and record material use, but return any change to scope, acceptance criteria, safety boundaries, or mandatory evidence to the conductor.
 
-| Stage | Purpose | Output |
-|------|---------|--------|
-| Idea | optional upstream ambiguity-resolution stage when the task is still too foggy to safely brief | enough clarity to enter Think; no fixed POC artifact yet |
-| Think | refine the problem, surface blind spots, validate constraints, and produce the Brief | `brief.md`: problem statement, constraints, assumptions, acceptance criteria, risks |
-| Plan | turn the Brief into an ordered execution handoff, or resolve a bounded evidence question before execution planning | Execution plan, or research artifacts for the research-plan variant |
-| Act | implement and verify in a loop until green | diff, verification evidence |
-| Verify | run explicit checks on the current working tree or runtime path | verification report |
-| Review | critique the change and its evidence | findings, residual risks, confidence |
+## Workflow Kernel and Practices
 
-### Planning and Review Discipline
+The workflow kernel is owned by this repository. It defines lane authority, artifacts, statuses, evidence floors, and escalation. Practice skills are optional methods selected within that boundary: they may strengthen evidence but cannot change the workflow contract. Provider adapters may change model routing, permissions, commands, and agent files, not kernel authority.
 
-The workflow should stay rigorous where leverage is highest, but the rigor should be chosen dynamically rather than hard-coded into every lane:
+### Workflow kernel
 
-- every task still produces a Brief and an Execution plan artifact, even when they are lightweight
-- `idea` is optional; do not force a Brief when the task is still too ambiguous to think through safely
-- think and review may be lightweight or escalated depending on task risk and ambiguity
-- planning and review escalation are selected by the conductor based on risk, ambiguity, and changed surface
-- concurrency and adversarial passes are tools to apply when needed, not mandatory shape for every task
-- implementation consumes a bounded handoff contract
-- verification is explicit in the plan even if phased in operationally later
+| Skill | Lane | Mode / boundary |
+| --- | --- | --- |
+| `wf-conductor` | all | Shared control contract. Owns routing, artifacts, recovery, and bounded retries; no practice catalog. |
+| `wf-planning` | execution Plan | `execution` writes `plan.md`; `adversarial` pressure-tests broad, security-sensitive, data, concurrency, operational, or unclear-verification work. |
+| `wf-research` | research Plan | `research` gathers bounded decision evidence; `adversarial` seeks contrary evidence. Writes research artifacts, never `plan.md`. |
+| `wf-execution` | Act | Applies approved, bounded units and returns an Operator Handoff. |
+| `wf-verification` | Verify | Sole owner of `PASS`, `FAIL`, `INCOMPLETE`, and `BLOCKED`. |
+| `wf-review` | Review | `standards-spec` by default; `adversarial-risk` for auth, data, concurrency, broad, or high-risk diffs. |
+| `wf-judge` | synthesis | Reconciles worker reports only; the conductor owns the resulting lane artifact. |
 
-### Escalation & Judge
+Recovery is a progressive-disclosure branch of `wf-conductor`, not a separate workflow skill.
 
-Rigor is chosen by the conductor per task from risk, ambiguity, and changed surface — not by separate high-lane commands. Default to a single cheap worker (planner, reviewer); add the adversarial worker and judge only when the task warrants it. The shared skills (`review-standards-spec`, `review-adversarial-risk`) carry the escalation rubric.
+### Practice catalog
 
-Judge rule: one substantive worker → conductor finalizes the artifact directly; two or more workers → judge synthesizes the final artifact.
+| Skill | Lane | Trigger / boundary |
+| --- | --- | --- |
+| `interview-me` | Idea / Think | Unresolved user intent, priorities, scope, or constraints. |
+| `idea-refine` | Idea | Stress-test a candidate idea after basic intent is known. |
+| `wayfinder` | Idea | Large or explicitly requested discovery; not routine Think work. |
+| `source-driven-development` | Think / Plan / conditional Act | Ground a current library, SDK, service, or upstream fact; Act escalates if it invalidates the settled route. |
+| `spec-driven-development` | Think | Requirements remain materially incomplete after discovery. |
+| `api-and-interface-design` | Plan / conditional Act | Public API or module contract; Act implements, not redefines, the settled contract. |
+| `domain-modeling` | Plan | Domain vocabulary, ownership, or boundary change. |
+| `security-and-hardening` | Plan / conditional Act | Untrusted input, auth, storage, tenant boundary, or third-party integration. |
+| `deprecation-and-migration` | Plan / conditional Act | System/API removal, user migration, or schema/data migration. |
+| `ci-cd-and-automation` | Plan / conditional Act | Build, deployment, quality-gate, or CI pipeline change. |
+| `hallmark` | execution Plan | Greenfield or full-page visual direction. |
+| `impeccable` | execution Plan | Settled product UI, component craft, or frontend polish. |
+| `frontend-ui-engineering` | execution Plan / Act | Settled UI implementation mechanics. |
+| `test-driven-development` | conditional Act | Focused automated coverage is feasible; strengthens proof. |
+| `incremental-implementation` | conditional Act | Multi-file or high-blast-radius work benefits from small verified slices. |
+| `debugging-and-error-recovery` | conditional Act | Concrete failure or unexpected behavior needs root-cause analysis. |
+| `performance-optimization` | conditional Act | A measured or explicit performance requirement applies. |
+| `browser-testing-with-devtools` | Verify | The Plan requires browser proof and working tooling exists. |
+| `code-review-and-quality` | Review | Extra multi-axis quality review is needed. |
+| `shipping-and-launch` | Ship | Explicit production-launch request. |
+| `observability-and-instrumentation` | Ship | Production visibility is required. |
+| `git-workflow-and-versioning` | Ship | Explicit commit, release, tag, or versioning request. |
 
-## Provider Binding Expectations
+## Decisions, Evidence, and Artifacts
 
-### Claude
+| Artifact or role | Owns | Does not own |
+| --- | --- | --- |
+| Brief | Outcome, scope, acceptance criteria, hard constraints, and non-functional requirements | Detailed implementation route or helper choices |
+| Plan | Route, touchpoints, failure modes, evidence strategy, safeguards, suggested skills, and escalation conditions | An exhaustive implementation recipe or exclusive tool list |
+| Operator | Implementation method and supporting-skill selection within an approved unit | Changing the outcome, route, mandatory evidence, or safety boundaries without escalation |
 
-Claude provider support should manage user-global Claude artifacts, not project-local ones.
+Non-functional requirements are outcome commitments in the Brief; mechanisms belong in the Plan or implementation. Plans recommend supporting skills but do not restrict the operator from adding tests or stricter proof.
 
-Expected source shape:
+Each execution unit declares scope, intent, dependencies, failure modes, evidence strategy, safeguards, suggested skills, and escalation conditions. Use the proof appropriate to the work: focused tests where feasible for behavior-bearing code; runtime, browser, manual, operational, or external proof when the Plan requires it. Plans name the lowest adequate evidence level for behavior-bearing code: unit, integration, browser/runtime, or operational. Static review may identify potential performance impact, but measured performance claims require declared measurement evidence. Missing declared proof is `INCOMPLETE`, never `PASS`.
+
+Elevate planning or review for broad/cross-system work, auth or security impact, data or migration changes, concurrency risk, irreversible operations, or unclear verification. Act retries only a repairable `FAIL` with a concrete repair hypothesis and safe retry state. `INCOMPLETE` and `BLOCKED` stop for human disposition; the operator never declares `PASS`.
+
+The conductor is the only workflow-artifact writer.
 
 ```text
-config/providers/claude/
-  agents/
-    reviewer.json
-    ...
-```
-
-Expected runtime target:
-
-```text
-~/.claude/
-  agents/
-    reviewer.json
-```
-
-Claude-specific agent files should be installed and checked by the Claude provider module. They should not live at repo-root `.claude/` paths.
-
-### OpenCode
-
-OpenCode provider support should manage user-global OpenCode artifacts, not project-local `.opencode/` files in this repo.
-
-This provider is the reference binding. The architecture described here is not incidental OpenCode customization; it is the primary expression of the workflow interface this repository is trying to define.
-
-Expected source shape:
-
-```text
-config/providers/opencode/
-  agents/
+.agent-contexts/
+  brief.md
+  plan.md
+  verify.md
+  review.md
+  review-<timestamp>.md
+  research/
     planner.md
-    reviewer.md
-    judge.md
-    ...
-  commands/
-    ...
-  opencode.json
+    planner-adversarial.md
+    synthesis.md
 ```
 
-Expected runtime targets:
+Research artifacts inform a later execution plan but never substitute for one. A research synthesis is stale when its decision question no longer matches the active Brief.
+
+## OpenCode Reference Binding
+
+OpenCode agent bindings own only provider concerns: model, permissions, and provider-specific return boundary. Workflow skills own reusable behavior.
+
+### Dispatch pattern
+
+The conductor dispatches a named worker and supplies `Required skill: wf-*`. OpenCode resolves the worker name to its binding under `config/providers/opencode/agents/`; the wrapper loads the named workflow skill and follows its contract.
+
+When independent planning, research, or review reports need reconciliation, the conductor dispatches `judge` with `Required skill: wf-judge`. The judge receives only those reports; it does not inspect the original code, diff, or problem.
 
 ```text
-~/.config/opencode/
-  agents/
-  commands/
-  opencode.jsonc
+conductor dispatch: operator + Required skill: wf-execution
+  -> OpenCode resolves config/providers/opencode/agents/operator.md
+  -> operator wrapper loads wf-execution
+  -> wf-execution returns Operator Handoff
+
+conductor dispatch: verifier + Required skill: wf-verification
+  -> OpenCode resolves config/providers/opencode/agents/verifier.md
+  -> verifier wrapper loads wf-verification
+  -> wf-verification returns the verification verdict
 ```
 
-The exact file mix can evolve, but the important rule is that the repo stores the source under `config/providers/opencode/` and `apm` installs it globally.
-
-Other providers should be adapted from this workflow contract. They are not expected to have identical files or identical degrees of control.
-
-#### Why OpenCode Needs Explicit Agent Pinning
-
-OpenCode is the provider where workflow architecture and model routing are most tightly coupled.
-
-The reason is structural:
-
-- OpenCode lets each agent pin its own `model`
-- subagents inherit the parent model unless they are explicitly pinned
-- commands can select an `agent`
-- commands can also override `model`, but that should be the exception rather than the default
-
-That means the workflow is not fully specified unless the agent-role matrix is also specified.
-
-#### OpenCode Pinning Rules
-
-| Rule | Why |
-|------|-----|
-| Pin models on all meaningful workflow agents | otherwise subagents inherit the parent model and the architecture collapses into one model wearing different hats |
-| Avoid `command.model` unless intentionally overriding a pinned agent | agent pinning should stay the canonical routing mechanism |
-| Keep primaries minimal and put specialization in subagents | reduces UI clutter and keeps the orchestration graph explicit |
-| Put permissions on the agent, not only in the prompt | makes the role contract enforceable |
-
-Model selections are part of the reference implementation and the current preferred routing. They were chosen deliberately for two purposes, not one:
-
-- **Efficiency** — route each role to the cheapest model adequate for the job (cheap typist, mid-tier planner/reviewer, stronger adversarial/judge), keeping the solo-dev token budget sane.
-- **Heterogeneity (diversity)** — deliberately spread roles across different model families so that no single model's blind spots propagate end-to-end. The implementer (`minimax-m3`) differs from the reviewer (`DeepSeek V4 Pro`) and the adversarial workers (`GPT-5.6 Terra`); the judge (`c9/cx/gpt-5.6-sol`) is yet another. This independence is what lets the adversarial planning, review, and (where used) test-authoring surfaces catch gaps the implementer would otherwise miss — it is a designed property of the routing, not a side effect of cost.
-
-They may evolve later as model economics and capability profiles change, but they are not placeholders.
-
-Model IDs in agent frontmatter are provider-qualified as `<provider>/<model>` (for example `c9/cx/gpt-5.6-terra`). OpenCode is multi-provider, so the qualifier is required — without it the role matrix collapses into the parent model (see Why OpenCode Needs Explicit Agent Pinning). `c9` is the custom OpenCode provider defined in `config/providers/opencode.json` (`baseURL: https://c9.rter.cc/v1`); swap the provider prefix if your gateway differs.
-
-Other harnesses may not need the qualifier: when a harness talks to an OpenAI-compatible endpoint directly (base URL + key, single provider context), the model string is often just the bare name. Only OpenCode's multi-provider routing requires the `<provider>/` prefix. Keep the agent files provider-qualified for OpenCode; adapter targets handle their own model format.
-
-#### OpenCode Workflow Roles
-
-The workflow roles below are the current architecture targets for OpenCode.
-
-| Role | Suggested agent name | Mode | Pinned model | Permission shape | Phase | Purpose |
-|------|----------------------|------|--------------|------------------|-------|---------|
-| Conductor | `conductor` | primary | `c9/cx/gpt-5.6-terra` | edit + bash + task | POC | owns workflow orchestration: stage selection, escalation, artifact writes, act retry loop. Idea and think are modes of the conductor, not separate workers. |
-| Safe analysis surface | `plan` | primary | inherited or `c9/cx/gpt-5.4` | edit denied, bash restricted | built-in | optional human-facing analysis surface (OpenCode built-in) |
-| Planner | `planner` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | constructive design pass: architecture mapping, touchpoints, execution order |
-| Planner adversarial | `planner-adversarial` | subagent | `c9/cx/gpt-5.6-terra` | edit denied; bash allowed | POC | elevated design pass: find what breaks, what's missed, where it fails |
-| Implementer | `typist` | subagent | `c9/minimax-m3` | edit allowed | POC | routine code production against execution plan; low-risk decisions only |
-| Verifier | `verifier` | subagent | `c9/mino-v2.5` | edit denied; bash allowed | POC | run typecheck, lint, tests, and runtime/browser checks when needed; report pass/fail |
-| Reviewer | `reviewer` | subagent | `c9/deepseek-v4-pro-fusion` | edit denied; bash allowed | POC | default review pass: correctness, regressions, test sufficiency |
-| Reviewer adversarial | `reviewer-adversarial` | subagent | `c9/cx/gpt-5.6-terra` | edit denied; bash allowed | POC | elevated review pass: invariants, auth, data, concurrency — find what breaks |
-| Judge | `judge` | subagent | `c9/cx/gpt-5.6-sol` | edit denied; bash allowed | POC | final synthesis, disagreement resolution, confidence verdict |
-
-Notes:
-
-- POC scope: conductor plus the minimal worker set needed to drive think, plan, act, verify, and review. Durability/recovery and checkpoint machinery are post-POC.
-- The judge is the same agent and prompt across think, plan, and review. Its job is synthesis and conflict resolution between multiple worker outputs — the domain is context, not a prompt fork.
-- The implementer lane is intentionally cheaper than planning and review — its job is bounded execution against a settled plan, not discovery.
-- Verification defaults to `c9/mino-v2.5` for now to keep one evidence surface across code and browser/runtime checks. Revisit only after usage evidence justifies splitting the verifier path.
-- The architecture borrows CE's control-loop pattern but starts lighter: fewer always-on workers, conductor-owned escalation, and cost-aware elevation suitable for a solo developer budget.
-
-#### OpenCode Idea Stage
-
-`idea` is a conductor mode, not a separate worker or command (see Command Architecture).
-
-Use it when the task is too ambiguous to safely write a Brief. The likely future adoption path is tracked investigation tickets, but full tracker-backed idea-stage workflow is post-POC.
-
-POC rule:
-
-- if the task is clear enough, skip idea and go straight to `/think` (or handle directly)
-- if the task is foggy, resolve it inline using `interview-me` discipline (one question at a time, hypothesis first, explicit restate and confirmation) until intent is clear
-- if resolving the idea needs codebase discovery or research, dispatch `wayfinder` or a background research job rather than blocking inline — the conductor stays in the loop and reports findings back
-- stop and surface unresolved ambiguity rather than force a bad Brief
-
-#### OpenCode Think Stage
-
-Think is a mode of the conductor, not a separate `thinker` worker. There is no `thinker` agent.
-
-The workflow always starts with thinking, but the amount of rigor is dynamic. For simple tasks the conductor may produce a lightweight Brief directly from the user's request. For ambiguous or high-risk tasks the conductor applies `interview-me` discipline harder and resolves intent inline before writing the Brief.
-
-When the user returns after context decay, the conductor should first infer whether the real intent is re-orientation rather than fresh thinking. Prompts like "what did we do", "where are we", "catch me up", or similar should trigger a [`recovery-orientation`](.agents/skills/engineering/recovery-orientation/SKILL.md) pass over repo state and existing workflow artifacts before the conductor decides whether a new Brief or Plan is needed.
-
-The Brief is the design-thinking artifact. There is no separate `design.md` in the current model.
-
-Escalation signals for think/brief include ambiguous requirements, broad scope, product-semantics decisions, auth or data risk, irreversible external effects, and unclear acceptance criteria.
-
-Primary think discipline: `interview-me`. Research/discovery discipline: `wayfinder`.
-
-Fact-vs-decision rule:
-
-- if a question is about a fact the codebase or docs can answer, look it up first
-- if a question is about intent, priorities, constraints, or tradeoffs, ask the user
-
-Judge rule: see Escalation & Judge.
-
-Suggested `brief.md` template:
-
-```md
-# Brief: <task name>
-
-## Problem
-<What problem are we solving? Why now?>
-
-## Constraints
-- <constraint>
-- <constraint>
-
-## Assumptions
-- <assumption to validate>
-- <assumption to validate>
-
-## Acceptance Criteria
-- [ ] <observable outcome>
-- [ ] <observable outcome>
-
-## Risks / Open Questions
-- <risk or unresolved question>
-- <risk or unresolved question>
-```
-
-The Brief should stay on the problem and decision surface. Do not turn it into an implementation plan.
-
-#### OpenCode Planning Matrix
-
-Every `/plan` invocation reads `brief.md` and produces `plan.md`. The Brief carries the design thinking; the Plan is the execution handoff.
-
-The exception is **research-plan mode**: when a Brief asks a bounded evidence-gathering or comparison question rather than for implementation, the conductor runs planner and planner-adversarial in research mode, judges their reports, and writes research artifacts. It never writes `plan.md`; an execution plan follows only after the research decision is settled.
-
-**POC lanes:**
-
-| Lane | Entry command | Conductor | Default path | Elevated path | Output |
-|------|---------------|-----------|--------------|---------------|--------|
-| Planning | `/plan` | `c9/cx/gpt-5.6-terra` | planner | planner + planner-adversarial + judge | `.agent-contexts/plan.md` |
-| Research planning | `/plan research` or `/plan mode:research` | `c9/cx/gpt-5.6-terra` | not available | planner + planner-adversarial + judge | `.agent-contexts/research/` |
-
-Worker mandate split:
-
-| Worker | Default mandate |
-|--------|-----------------|
-| `planner` | default design pass: architecture, codebase touchpoints, execution order |
-| `planner-adversarial` | elevated design pass: failure modes, tradeoffs, hidden risk — what breaks, what's missed |
-| `judge` | adjudicate worker outputs and return a final plan synthesis |
-
-Escalation signals for design include ambiguous requirements, broad or cross-system touchpoints, auth/security impact, data-model changes, concurrency concerns, and workflow-critical code.
-
-Judge rule: see Escalation & Judge.
-
-#### Research Artifact Contract
-
-Research is a planning capability, not a permanent role, command, or additional workflow stage. It applies only after Think has framed a bounded decision question. If the destination, scope, or decision dependencies remain foggy, use Idea-stage interview discipline or Wayfinder instead.
-
-The conductor explicitly marks planner dispatches `[RESEARCH MODE]` and judge dispatches `[RESEARCH SYNTHESIS]`. The only accepted command arguments that select this mode are `research` and `mode:research`; execution planning is the default. An unclear request requires clarification rather than implicit mode selection.
-
-Research reports are stable latest artifacts:
-
-```text
-.agent-contexts/research/
-  planner.md                 # constructive independent report
-  planner-adversarial.md     # adversarial independent report
-  synthesis.md               # judge decision record
-```
-
-Subagents return analysis only; the conductor writes every artifact. Research artifacts never overwrite `plan.md`, which remains exclusively an implementation handoff. Recovery reads the latest research synthesis as context only; it must mark it stale if its Brief no longer matches the current decision.
-
-Every substantive research claim is labeled `[fact]`, `[interpretation]`, `[recommendation]`, or `[unknown]`. Reports use a primary → secondary → speculative source hierarchy, preserve locators (`file:line`, command output, or URL plus ref), state confidence on interpretations and recommendations, and distinguish discoverable gaps from unsettled human decisions. The shared source of truth is `.agents/skills/engineering/research-and-planning/SKILL.md`.
-
-#### MVP Boundary and Next Validation Step
-
-The MVP establishes usable Brief, execution-plan, research, verification, and review handoffs with the conductor as the sole artifact writer. It does not yet include resumable per-worker checkpoints, autonomous operation, a separate researcher persona, or tracker-backed Wayfinder.
-
-The CE / SmallHarness / Oh My Pi comparison is a provisional integration proof of the upstream research contract. The next operational proof after it is a real target-repository task through `act → verify → review`, including a recovery check from the saved artifacts and Git state.
-
-Each dogfood run begins with a pinned target revision and records the verbatim request, paths to its Brief/Plan/Verify/Review artifacts, commands and results, final diff or revision, review disposition, human verdict, and observed harness friction. The first record is provisional: promote a failure into a fixture or static contract check only after it recurs. This borrows SmallHarness’s evidence-first fixture discipline without adopting its full scorecard or autonomous runtime.
-
-Suggested `plan.md` template:
-
-```md
-# Plan: <task name>
-
-## Goal
-<One-paragraph restatement of what this plan will accomplish>
-
-## Implementation Units
-
-### U1: <unit name>
-**Files:** <paths>
-**Depends on:** <none or prior units>
-**What to build:** <concrete scope>
-**Verification:** <how this unit will be checked>
-
-### U2: <unit name>
-**Files:** <paths>
-**Depends on:** U1
-**What to build:** <concrete scope>
-**Verification:** <how this unit will be checked>
-
-## Verification Checklist
-- [ ] <typecheck/lint/test/runtime check>
-- [ ] <typecheck/lint/test/runtime check>
-
-## Escalation Notes
-- <why extra implementation or review rigor may be needed>
-```
-
-The Plan should stay on execution. It should not repeat the Brief's problem framing except where needed to keep implementation units intelligible.
-
-Tracer-bullet rule:
-
-- each implementation unit is a narrow but complete vertical slice through the relevant layers
-- each unit is demoable or verifiable on its own
-- do not split work into horizontal buckets like backend-first, frontend-later, tests-last
-
-#### OpenCode Verify Matrix
-
-Verification is a separate stage. It reads the current working tree and plan context, runs configured checks, and writes `verify.md`. It may also use browser/runtime tooling when the task demands user-facing verification.
-
-When a Brief exists, verification also reports every acceptance criterion as `MET`, `UNMET`, or `UNVERIFIED`, with diff, command, or runtime evidence. `UNMET` fails verification; `UNVERIFIED` remains explicit missing evidence for review and human disposition. This is a lightweight adaptation of plan-validation discipline, not a new evaluator role.
-
-Verifier escalation is operational rather than analytical:
-
-- default to `c9/mino-v2.5`
-- prefer one verifier path until evidence supports splitting it
-- allow richer browser/runtime checks when the provider is connected to MCP tooling
-
-#### OpenCode Review Matrix
-
-Review always exists, but escalation is conditional. The conductor should start with the cheapest pass that matches the diff, then add adversarial review when the changed surface or risk profile warrants it.
-
-**POC lanes:**
-
-| Lane | Entry command | Conductor | Default path | Elevated path | Output |
-|------|---------------|-----------|--------------|---------------|--------|
-| Review | `/review` | `c9/cx/gpt-5.6-terra` | reviewer (DS V4 Pro) | reviewer + reviewer-adversarial (c9/cx/gpt-5.6-terra) + judge | `.agent-contexts/review.md` |
-
-Worker mandate split:
-
-| Worker | Default mandate |
-|--------|-----------------|
-| `reviewer` | default review pass: Standards + Spec |
-| `reviewer-adversarial` | elevated review pass: invariants, auth, data, concurrency — applied across Standards and Spec when warranted |
-| `judge` | adjudicate worker reports and return final synthesis with confidence |
-
-Review reads the Brief, the Plan, the code or diff, and the verifier report if present.
-
-Primary review axes:
-
-- **Standards** — repo conventions plus a Fowler smell baseline when repo standards are silent
-- **Spec** — does the change conform to the Brief and Plan
-
-Fowler baseline belongs in review, not the act loop. It is a heuristic backstop when repo standards are weak, not a reason for the implementer to widen scope during execution.
-
-Review findings must cite `file:line` and use P0-P3 severity.
-
-Escalation signals for review include auth or permission logic, billing or irreversible external effects, migrations or data integrity risk, concurrency or async coordination, workflow-orchestrator changes, unusually large diffs, and missing or weak verification evidence.
-
-Judge rule: see Escalation & Judge.
-
-#### OpenCode Command Architecture
-
-Commands are optional explicit lane entrypoints, not the only way in. All commands target `agent: conductor` and declare a lane + artifact; the conductor prompt owns the orchestration logic. But the conductor is the everyday surface — when the user just talks to it, it runs the same lanes inline (idea/think/plan/act/verify/review) and handles most work directly without a command. Reach for a command only when you want to force a specific lane.
-
-**POC commands:**
-
-| Command | Agent | Expected behavior |
-|---------|-------|-------------------|
-| `/think` | `conductor` | think through the task, choose think rigor, and write `.agent-contexts/brief.md` |
-| `/plan` | `conductor` | read `.agent-contexts/brief.md`, choose planning rigor, and write `.agent-contexts/plan.md` |
-| `/act` | `conductor` | dispatch typist → dispatch verifier → if fail, typist fixes → repeat. Stop after 3 consecutive verify failures and surface blocker |
-| `/verify` | `conductor` | dispatch verifier: typecheck, lint, tests → `.agent-contexts/verify.md` |
-| `/review` | `conductor` | read brief, plan, code, and verifier evidence if present. Choose review rigor; default to reviewer, escalate to reviewer + reviewer-adversarial + judge when warranted |
-
-Escalation is decided by the conductor at runtime from task risk and ambiguity, not by a separate high-lane command. Shared skills carry the escalation rubric.
-
-#### OpenCode Permission Architecture
-
-Permissions are intentionally light for POC: the conductor and implementer get `edit`; all other subagents are `edit: deny` with `bash: allow`. No granular allowlists — prompt prose ("do not edit any files", "return output to the conductor") is the primary control surface, consistent with CE's zero-permission review pipeline.
-
-| Agent type | Permission stance | Phase |
-|-----------|-------------------|-------|
-| Conductor | edit + bash + task | POC |
-| Implementer | edit + bash | POC |
-| All other subagents | edit denied; bash allowed | POC |
-
-Revisit tighter permissions only after the loop shape stabilizes.
-
-#### OpenCode Architectural Question To Keep Visible
-
-The OpenCode architecture is not only "which models do we like?" It is also:
-
-- which roles are primaries vs subagents
-- which roles are always pinned
-- which lanes are exposed as commands
-- which stages are concurrent versus sequential
-- where final synthesis lives
-
-The matrices above are the current reasoning surface for that architecture.
-
-#### OpenCode Durability & Recovery
-
-> Post-POC. Not in the initial build.
-
-Every stage writes durable checkpoints to `.agent-contexts/sessions/`. No subagent-to-subagent communication — the conductor is always the bridge, and all intermediate outputs persist to disk.
-
-The durable-session contract is architectural. The exact file layout, checkpoint marker, and resume mechanics are implementation choices that can evolve as long as the same guarantees hold: recoverability, inspectability, and orchestrator-mediated handoff.
-
-##### Dual Read Protocol
-
-Subagents write their own checkpoint to a known path. The orchestrator reads from two sources in parallel:
-
-**Fast path (default):** orchestrator reads the subagent's in-memory text response. This is what the subagent returns on completion. No disk I/O, lowest latency.
-
-**Recovery path:** orchestrator polls the checkpoint file when:
-- The orchestrator session crashed and is resuming
-- The subagent has been running longer than a timeout threshold without returning
-
-When reading from disk, the orchestrator must validate that a checkpoint is complete before consuming it. The completion marker and exact corruption-handling mechanism are implementation details; the important rule is that partial outputs are never mistaken for committed outputs.
-
-##### Directory Structure
-
-```text
-.agent-contexts/sessions/<project>-<date>-<topic>/
-  session.md              # frontmatter: stage, state, timestamps; body: human-readable summary
-  brief.md                # /think output (Brief)
-  plan.md                 # /plan output (Execution plan)
-  review.md               # /review output
-  runs/
-    <run-id>/
-      planner.md
-      planner-adversarial.md
-      judge-synthesis.md
-```
-
-`session.md` uses markdown with YAML frontmatter so it is both machine-parseable and human-readable:
-
-```yaml
----
-stage: plan
-state: judging
-project: agents
-topic: refactor-auth
-created: 2026-07-07T14:30:00Z
-updated: 2026-07-07T14:32:15Z
-command: /plan write
----
-
-## Plan: Refactor auth module
-Design doc written, workers dispatched, waiting on judge synthesis.
-```
-
-States: `thinking | briefing | planning | acting | verifying | reviewing | complete | abandoned`.
-
-Project is resolved from `git remote get-url origin`, slugified. Overridable via `APM_CONTEXT_DIR` env — point to a shared folder for cross-repo orchestration. The project prefix keeps sessions isolated when multiple repos share a context directory.
-
-##### Checkpoint Contract
-
-| Stage | Artifacts on disk | What survives |
-|-------|-------------------|---------------|
-| Think | `brief.md` | Brief produced by the conductor (think is a conductor mode, not a worker) |
-| Plan | `plan.md`, `runs/<run-id>/` — planner.md, planner-adversarial.md, judge-synthesis.md | Execution plan plus planning worker outputs |
-| Act | `runs/<run-id>/` — typist diff, verifier output | each attempt's diff and pass/fail |
-| Verify | `verify.md` | latest verification evidence |
-| Review | `review.md`, `runs/<run-id>/` — reviewer.md, reviewer-adversarial.md, judge-synthesis.md | all worker outputs + final findings |
-
-##### Recovery Protocol
-
-On any command invocation, the orchestrator checks for an existing `session.md` with matching project/topic and state != `complete` or `abandoned`. If found:
-
-1. Read `session.md` frontmatter to determine current stage and state
-2. Read the latest run artifacts to understand exactly where the pipeline stopped
-3. Surface a summary to the user: what was in progress, what completed, what's pending
-4. Wait for user choice: resume, restart from current stage, or abandon
-
-The user can always ask "where are we" and the orchestrator reads `session.md` to self-calibrate.
-
-### Codex
-
-Codex can start as a stub.
-
-Expected source shape:
-
-```text
-config/providers/codex/
-```
-
-Even if it remains mostly empty at first, the directory establishes the same contract: provider-owned global config belongs under `config/providers/codex/`, not in project-scoped runtime-named directories. Codex is a downstream adapter target, not the source of the workflow abstraction.
-
-## OpenCode and Other Providers Should Not Be Conflated
-
-Even when workflow roles share names, provider files remain distinct.
-
-The workflow contract (roles, mandates, lane routing) is shared. The provider bindings (agent file format, model pinning, permissions, command structure) are separate implementations.
-
-OpenCode defines the richest binding. Other providers should preserve the semantics where possible, but they are allowed to be lossy adapters.
-
-Target direction across providers:
-
-- thin provider agents as the shell for model pinning and permissions
-- shared skills as the reusable behavior layer
-
-That pattern should be portable to Claude, Codex, and Kiro even when each adapter has different native constraints.
-
-Kiro should follow the same adapter rule: keep provider mechanics under `config/providers/kiro/`, keep reusable behavior in `.agents/skills/`, and use Kiro custom-agent config only as the thin binding layer that loads those shared skills.
-
-Target Kiro CLI v3 specifically. The Kiro binding should follow v3 agent-config, permissions, hooks, and spec conventions rather than older CLI patterns.
-
-## `apm` Responsibilities
-
-`apm providers install` and `apm providers check` should become the single managed path for provider-global workflow files.
-
-`apm` is not only a file sync tool. It is the binding layer that installs the shared workflow contract into each provider's runtime shape.
-
-### Install
-
-| Action | Meaning |
-|-------|---------|
-| Link shared instructions | link root instruction files into provider homes where appropriate |
-| Link shared skills | link skills into provider homes where appropriate |
-| Link provider agents | link or sync `config/providers/<provider>/agents/` into provider runtime homes |
-| Sync provider config | write provider manifests/config files into provider runtime config locations |
-| Install MCP entries | manage provider MCP configuration |
-
-### Check
-
-| Action | Meaning |
-|-------|---------|
-| Verify shared instruction links | runtime points back to repo source |
-| Verify shared skill links | runtime points back to repo source |
-| Verify provider agent links | installed global agent files match repo source |
-| Verify provider config | runtime config matches manifest source |
-| Verify MCP configuration | runtime MCP state matches manifest source |
-
-## What To Avoid
-
-| Avoid | Why |
-|------|-----|
-| Repo-root `.claude/agents/` or `.opencode/agents/` as committed source | implies project scope; conflicts with the repo's global purpose |
-| Reusing one provider's runtime file as another's source artifact | couples incompatible formats and discovery models |
-| Making this repo host project-specific overrides | breaks the global managed-config boundary |
-
-## Documentation Structure
-
-This document is the canonical description of provider-global workflow and configuration boundaries.
-
-Supporting docs should do narrower jobs:
-
-| Doc | Purpose |
-|----|---------|
-| `docs/skill-lifecycle.md` | canonical skill supply chain |
-| `docs/provider-workflow.md` | canonical provider-global workflow/config boundary |
-| `docs/assessments/...` | evaluations and external references |
-| `docs/plans/...` | temporary implementation notes, not canonical long-term truth |
-
-## POC Implementation Plan
-
-### Scope
-
-OpenCode only. POC proves the conductor can drive think, brief, plan, act, verify, and review end-to-end while choosing escalation based on task risk and ambiguity.
-
-### Files created
-
-Agents and commands live under `config/providers/opencode/` and are installed globally by `apm`. The authoritative agent roster (names, models, permissions, mandates) is the [OpenCode Workflow Roles](#opencode-workflow-roles) matrix; the command surface is the [OpenCode Command Architecture](#opencode-command-architecture) table. See those sections for the current file list.
-
-### Install scope
-
-Extend `src/providers/opencode/index.ts` to symlink `config/providers/opencode/agents/*.md` → `~/.config/opencode/agents/` and `config/providers/opencode/commands/*.md` → `~/.config/opencode/commands/`. Provider config and MCP merge stay as-is.
-
-### Test order
-
-1. `/think` against a real problem — produce a usable brief
-2. `/plan` from that brief — produce a usable execution plan
-3. `/review` against a real diff — validate review path and escalation
-4. `/verify` — standalone verifier
-5. `/act` — implement + verify loop
-
-### What stays for MVP
-
-After POC validates the loop:
-
-| Deliverable | Phase |
-|------------|-------|
-| Durability & recovery (sessions, checkpoints, QED) | MVP |
-| Permission hardening | MVP |
-| Claude adapter (reviewer agent) | MVP |
-| Codex stub directory | MVP |
-| `apm check` for agents and commands | MVP |
-
-### What stays for later
-
-- Multi-repo orchestration
-- Cross-provider handoff contracts
-- Think pipeline mode (`ce-brainstorm` → `/think` auto-chaining)
-
-## Revision Notes
-
-- 2026-07-08: Added POC implementation plan. Renamed orchestrator to conductor. Marked think, high-lanes, and durability as post-POC. Collapsed review/plan matrices to POC-only lanes. Simplified permission table for POC lax mode.
-- 2026-07-08: Revised the workflow shape to `think -> brief -> plan -> act -> verify -> review`, dropped `design.md` and `plan-writer`, made the Brief the design-thinking artifact, and documented CE-inspired but lighter escalation for solo-dev cost constraints.
-- 2026-07-09: Folded `thinker` into the conductor (think is a mode, not a worker); dropped all `-x` high-lane variants and high-role rows; conductor now chooses escalation at runtime with shared skills carrying the rubric. Reframed commands as optional lane shortcuts (conductor is the everyday surface). Added Superpowers as related-work reference and the third-path positioning. De-duplicated the doc (single Escalation & Judge section; file tables are now pointers to the role matrix).
+The conductor knows stable agent and workflow-skill names, not provider model or permission settings. A provider binding must not restate or replace the workflow contract.
+
+| Role | Agent | Model | Permissions | Responsibility |
+| --- | --- | --- | --- | --- |
+| Conductor | `conductor` | `c9/cx/gpt-5.6-terra` | edit + bash + task | lane selection, artifacts, escalation, retry loop |
+| Planner | `planner` | `c9/deepseek-v4-pro-fusion` | read-only + bash | constructive execution or research planning |
+| Adversarial planner | `planner-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash | independent risk or contrary-evidence pass |
+| Operator | `operator` | `c9/minimax-m3` | edit + bash | bounded approved execution |
+| Verifier | `verifier` | `c9/mino-v2.5` | read-only + bash | independent evidence verdict |
+| Reviewer | `reviewer` | `c9/deepseek-v4-pro-fusion` | read-only + bash | Standards + Spec review |
+| Adversarial reviewer | `reviewer-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash | auth, data, concurrency, and failure-mode review |
+| Judge | `judge` | `c9/cx/gpt-5.6-sol` | read-only + bash | synthesize independent worker reports |
+
+Model IDs are provider-qualified so subagents cannot silently inherit the parent model. The exact models may evolve; lane authority and evidence boundaries do not.
+
+### Commands
+
+| Command | Behavior |
+| --- | --- |
+| `/think` | Produce a Brief. |
+| `/plan` | Produce an execution plan; `research` or `mode:research` produces research artifacts. |
+| `/act` | Operator, verifier, and safe repair loop. |
+| `/verify` | Standalone independent verification. |
+| `/review` | Standards/Spec review with conditional adversarial elevation. |
+
+Recovery requests such as “where are we?” reconstruct the goal, active work, artifact evidence, drift, and one next move from Git state and `.agent-contexts/`.
+
+## Source, Installation, and POC Status
+
+| Kind | Source of truth | Runtime target |
+| --- | --- | --- |
+| Shared instructions | repo root `AGENTS.md`, `CLAUDE.md` | linked into provider homes where needed |
+| Shared skills | `.agents/skills/` | linked into provider homes where needed |
+| Provider agents and commands | `config/providers/<provider>/` | provider-global home |
+| Provider config | `config/providers/<provider>/` | provider-global config |
+
+Provider runtime directories such as repo-root `.opencode/` or `.claude/` are installation targets, not workflow source.
+
+`apm providers install` installs or links shared instructions, skills, agents, commands, configuration, and MCP entries. `apm providers check` verifies the runtime still points to managed source. `apm skills fetch -> review -> accept -> check` is the vendor supply chain. Restart OpenCode after installation or workflow changes because agents and skills load at startup.
+
+The POC proves this routing model on OpenCode: Brief, plan, bounded execution, independent verification, conditional review, and recovery from artifacts. Deferred: validated browser automation, resumable checkpoints or autonomous loops, tracker-backed Wayfinder, complete Claude/Codex/Kiro parity, and production release automation.
+
+Next, dogfood a small bug, multi-file feature, and settled UI task. Record the target revision, request, artifacts, commands, verdict, review disposition, and friction; turn recurring failures into tests or routing-contract checks.
+
+## Supporting Records
+
+| Document | Purpose |
+| --- | --- |
+| [`docs/assessments/2026-07-08-poc-workflow-architecture-learnings.md`](assessments/2026-07-08-poc-workflow-architecture-learnings.md) | Evolution, upstream comparisons, and decisions |
+| [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) | Executable conductor contract |
+| `config/providers/opencode/agents/conductor.md` | OpenCode conductor binding |
+| `.agents/skills/workflow/*` | Workflow-owner contracts |
+| `.agents/skills/engineering/*` | Practice-discipline contracts |
 
 ## References
 
-- [OpenCode Agents](https://opencode.ai/docs/agents/)
-- [OpenCode Commands](https://opencode.ai/docs/commands/)
-- [OpenCode Formatters](https://opencode.ai/docs/formatters/)
-- [OpenCode Permissions](https://opencode.ai/docs/permissions/)
-- [Kiro CLI v3 overview](https://kiro.dev/docs/cli/v3/)
-- [Kiro CLI v3 agent config](https://kiro.dev/docs/cli/v3/agent-config/)
-- [Kiro CLI v3 permissions](https://kiro.dev/docs/cli/v3/permissions/)
-- OpenCode agent, command, permission, and formatter documentation
-
-## Upstream Inspirations
-
-The workflow borrows selectively from three external efforts. The architecture-learnings assessment (`docs/assessments/2026-07-08-poc-workflow-architecture-learnings.md`) records exactly what was taken from each.
-
-- [Compound Engineering plugin](https://github.com/EveryInc/compound-engineering-plugin) — conditional escalation, diff-driven persona selection, prompt-prose permission posture
-- [firstmate](https://github.com/kunchenguid/firstmate) — convergent validation of the single-front-door conductor pattern; not a heavy borrow
-- [Matt Pocock's skills](https://github.com/mattpocock) — wayfinder ambiguity resolution, tracer-bullet planning, two-axis Standards/Spec review, fact-vs-decision rule
-- [Superpowers](https://github.com/obra/superpowers) — related-work reference (portable skills library + fixed methodology); we chart a more dynamic third path between it and the Compound Engineering plugin
-- [SmallHarness](https://github.com/GetSmallAI/SmallHarness) — dynamic per-task model tiering, rubric-scored critic loop, overnight auto-run with context-reset; routing/evaluation reference
-- [Oh My Pi](https://github.com/can1357/oh-my-pi) — richer execution surface, role-based routing with fallback chains, real-time advisor model, typed subagent yields; post-POC eval reference; borrow its tool-design lessons now (hash-anchored edits, summarized reads)
+- [Addy Osmani agent-skills](https://github.com/addyosmani/agent-skills)
+- [Matt Pocock skills](https://github.com/mattpocock/skills)
+- [Compound Engineering plugin](https://github.com/EveryInc/compound-engineering-plugin)
+- [SmallHarness](https://github.com/GetSmallAI/SmallHarness)
+- [Oh My Pi](https://github.com/can1357/oh-my-pi)
+- [OpenCode agents](https://opencode.ai/docs/agents/)
+- [OpenCode commands](https://opencode.ai/docs/commands/)
+- [OpenCode permissions](https://opencode.ai/docs/permissions/)

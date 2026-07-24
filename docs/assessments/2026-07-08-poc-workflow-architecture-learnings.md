@@ -6,6 +6,48 @@ Date: 2026-07-08
 
 The first conductor loop revealed that splitting workflow logic across too many surfaces (command templates, conductor prompt, fixed subagent prompts, per-agent permission frontmatter, model pinning) made iteration expensive. Small shape adjustments required coordinated edits across multiple files, and permission tuning became part of the normal debug loop.
 
+## How the routing model converged
+
+The early instinct was to adapt Compound Engineering directly: use a conductor
+to fan out specialist passes, then synthesize them. That was useful but too
+heavy as a default. CE's value is its dispatcher mindset — select rigor from
+the work's risk and changed surface — not its large fixed reviewer roster.
+
+Matt Pocock's skills clarified the upstream problem. Before planning, the
+workflow needs to distinguish discoverable facts from user decisions, keep
+asking one useful question at a time, and turn settled work into narrow vertical
+slices. This made Idea and Think real conductor modes rather than a premature
+planner dispatch.
+
+The later comparison with Oh My Pi and SmallHarness reinforced two boundaries:
+execution should be role-bounded and explicit about what it yields; evaluation
+needs direct evidence rather than optimistic summaries. We adopted those
+principles without their runtime machinery, fallback infrastructure, autonomous
+loops, or scorecards.
+
+The pleasant result of comparing the upstream catalogs was that Addy's skills
+already cover most of the lifecycle disciplines we needed. The problem was not
+to invent another universal methodology. It was to put a small routing layer on
+top of the catalog: stable lane ownership, an explicit hard contract, and
+evidence requirements that cannot be silently weakened. The earlier idea of a
+short Plan-only skill allowlist was too restrictive: it would turn the planner
+into a shadow implementer and discard Addy's adaptive method selection during
+real work.
+
+The resulting design is a synthesis:
+
+- **Addy supplies the capability catalog** and applicability-bounded practices;
+  workers may adapt method within their assigned contract.
+- **Matt supplies the ideation and ambiguity discipline** before execution.
+- **CE supplies conditional dispatch and adversarial escalation.**
+- **OMP supplies role-aware execution and safety-boundary thinking.**
+- **SmallHarness supplies evidence-first evaluation and dogfood discipline.**
+- **Our conductor supplies deterministic selection, artifacts, and the authority boundary between those pieces.**
+
+This is deliberately less ambitious than a typed multi-agent runtime. The POC
+needs to prove that stable authority plus adaptive methods improves ordinary
+work before adding more orchestration machinery.
+
 ## What settled
 
 The stable product is not a fixed two-worker adversarial topology for every task. The stable product is:
@@ -13,6 +55,12 @@ The stable product is not a fixed two-worker adversarial topology for every task
 - keep the same artifact sequence: idea → think → plan → act → verify → review
 - keep hard authority boundaries where they matter: editor vs non-editor, verifier vs reviewer, judge as synthesis-only
 - let the conductor choose how much rigor to apply based on risk, ambiguity, and changed surface
+
+The next POC direction makes that selection explicit rather than leaving it as
+informal prompt judgment. A local lane registry assigns one stable owner to
+each lane and defines evidence and return gates. The conductor owns the hard
+contract; workers may discover supporting skills in their authorized lane, but
+must escalate rather than silently changing that contract.
 
 Concretely, a cheap default pass handles most tasks. Elevated passes (adversarial review, adversarial planning) are conditional rather than mandatory. The judge runs only when two or more workers produce outputs that must be reconciled.
 
@@ -29,6 +77,53 @@ What we took:
 - **Conditional escalation.** Don't always run the most expensive review. Match rigor to risk. CE selects reviewers based on what the diff actually touches — security when auth changes, data-migration when a schema changes, adversarial when code lines exceed a threshold. Our conductor now owns escalation decisions: default to cheap passes, add adversarial workers when the task warrants it.
 
 - **Permission posture.** CE proved that prompt prose is the effective control surface for read-only analysis agents. Our assessment confirmed the same: granular bash allowlists created friction without meaningfully increasing safety during POC. All subagents now get `bash: allow` with only `edit: deny` as the hard boundary.
+
+### From Addy's skill catalog
+
+Addy's `using-agent-skills` is a phase-routing catalog. It expects a capable
+agent to identify applicable skills as work evolves, and explicitly places
+documentation-grounded implementation, incremental work, UI/API discipline,
+testing, debugging, review, and shipping in different phases. This is more
+adaptive than the first version of our lane registry.
+
+We initially interpreted multi-agent safety as “the Plan names every skill the
+operator may use.” That would make the Plan a fragile, overly detailed shadow
+implementation: the planner would need to anticipate every documentation lookup,
+debugging tactic, test approach, or local implementation method. It also blocks
+the useful part of Addy's model: selecting a better supporting discipline when
+the code reveals what is actually needed.
+
+What we took:
+
+- **Stable lane owners.** `wf-planning` owns implementation plans,
+  `wf-research` owns bounded evidence decisions,
+  `wf-execution` owns approved execution, and `wf-verification`
+  owns independent evidence verdicts.
+- **Stable authority plus adaptive method.** The Brief owns outcome and
+  non-functional commitments. The Plan owns the happy path, failure modes,
+  evidence floor, suggested skills, and escalation conditions. The operator
+  owns detailed method and may select relevant supporting skills inside that
+  contract.
+- **Evidence is not interchangeable.** Static checks do not prove a UI flow;
+  a missing required browser/runtime, manual, operational, or external proof is
+  `INCOMPLETE`, not `PASS`.
+
+What we explicitly did not take:
+
+- **Unrestricted worker-selected contract changes.** Workers may select
+  supporting skills, but cannot use that freedom to change scope, acceptance
+  criteria, product or architecture decisions, security/data/operational
+  boundaries, or mandatory evidence. They return the decision to the conductor
+  with a rationale.
+- Browser/runtime verification as a POC requirement before browser tooling is
+  installed and validated. It remains a Plan-declared gate; lack of the tool is
+  an explicit incomplete-evidence result.
+
+The distinction is important: we rejected unbounded authority, not Addy's
+adaptive skill discovery. The acceptance rationale is that it keeps the plan
+small enough to be a useful route rather than a pseudo-implementation. The
+rejection rationale is that unrestricted discoveries could silently invalidate
+the business contract or lower the proof required to claim completion.
 
 ### From firstmate
 
@@ -75,9 +170,18 @@ These are our own decisions, not borrowed:
 
 - **Separate verify lane.** Mechanical checks (typecheck, lint, tests) stay as their own stage rather than being folded into act. Matt embeds verification inside implement; CE has no separate verify. We keep it as QA — distinct from implementation and review.
 
-- **Typist self-check.** Before the implementer declares done, it reads brief.md + plan.md and checks its own diff against acceptance criteria. Catches spec mismatches before burning a verifier cycle. Neither CE nor Matt prescribe this explicitly — inferred from their general discipline of checking work against the spec.
+- **Operator self-check.** Before the operator declares its handoff complete, it rereads `brief.md` and `plan.md` and checks the final state against the unit contracts. This catches spec mismatches before burning a verifier cycle, but remains non-authoritative: only the verifier can return `PASS`.
 
-- **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap typist on minimax-m3, constructive planner/reviewer on DeepSeek V4 Pro, adversarial planner/reviewer on GPT-5.4, judge on gpt-5.6-sol) requires agent frontmatter. The lesson is not to drop agents but to keep prompts lean and move reusable behavior toward skills over time.
+- **Artifact boundary.** The Brief records the desired business outcome,
+  acceptance criteria, and non-functional requirements. The Plan records the
+  intended happy path, failure modes, proof strategy, suggested skills, and
+  escalation conditions. The operator chooses detailed implementation method.
+  This is accepted because it keeps planning useful without forcing the planner
+  to anticipate every implementation detail; we reject exhaustive Plan recipes
+  because they duplicate implementation work without the feedback available in
+  the codebase.
+
+- **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap operator on minimax-m3, constructive planner/reviewer on DeepSeek V4 Pro, adversarial planner/reviewer on GPT-5.6 Terra, judge on gpt-5.6-sol) requires agent frontmatter. The lesson is not to drop agents but to keep wrappers lean and put reusable behavior in shared skills.
 
 - **Persona over provider.** The meaningful unit is the agent persona and its mandate, not whether it ran in OpenCode, Kiro, Claude, or another harness. A durable record should preserve which persona thought what, what evidence it used, and what conclusion it reached. Provider/runtime is secondary metadata.
 
@@ -86,7 +190,7 @@ These are our own decisions, not borrowed:
 Permissions are intentionally light:
 
 - `conductor`: edit + bash + task
-- `typist`: edit + bash
+- `operator`: edit + bash
 - all other subagents: `edit: deny`, `bash: allow`
 
 No granular allowlists. Prompt constraints ("Do not edit any files," "Return output to the conductor") are the primary control surface. Revisit tighter permissions only after the loop shape stabilizes. This stance is directly informed by CE's architecture — a richer review pipeline with zero permission rules — and confirmed by our own friction with allowlist debugging during early POC.
@@ -146,8 +250,8 @@ Distinct from the methodology inspirations in Upstream Sources (which shaped the
 ### Adopting now: open-code-review (Alibaba `ocr` CLI) — review engine
 
 - **Why:** deterministic file selection/bundling (no corner-cutting on large diffs), built-in fine-tuned ruleset (NPE, thread-safety, XSS, SQL injection), ~1/9 the tokens of a general-purpose agent at higher precision, structured JSON (`category` + `severity`), resumable sessions, custom `rule.json`. Configured to use `c9` as the API provider (custom OpenAI/Anthropic gateway).
-- **How it slots in:** powers the `reviewer` / `reviewer-adversarial` workers inside OpenCode via a bash call (`ocr review --format json --audience agent --background-file .agent-contexts/plan.md`). Feeds the Brief/Plan context for Spec conformance; maps `critical/high/medium/low` → `P0–P3`. Conductor parses JSON findings and routes them to typist via the act retry loop. Addresses the LLM-subagent failure modes (coverage/position drift, unstable quality) our skills alone don't fully solve.
-- **The remaining gap:** reviewer *prompt strength and feedback-loop maturity* — the engine gives structured input; the conductor→typist filtering + failure-mode-aware prompt design on top of ocr is the next iteration surface. Adopt the engine now, strengthen the loop on top.
+- **How it slots in:** powers the `reviewer` / `reviewer-adversarial` workers inside OpenCode via a bash call (`ocr review --format json --audience agent --background-file .agent-contexts/plan.md`). Feeds the Brief/Plan context for Spec conformance; maps `critical/high/medium/low` → `P0–P3`. Conductor parses JSON findings and routes them to the operator via the act retry loop. Addresses the LLM-subagent failure modes (coverage/position drift, unstable quality) our skills alone don't fully solve.
+- **The remaining gap:** reviewer *prompt strength and feedback-loop maturity* — the engine gives structured input; the conductor→operator filtering + failure-mode-aware prompt design on top of ocr is the next iteration surface. Adopt the engine now, strengthen the loop on top.
 
 ### Deferred: Omnigent (meta-harness) — cross-vendor review substrate
 
@@ -165,3 +269,5 @@ Distinct from the methodology inspirations in Upstream Sources (which shaped the
 - 2026-07-08: Written after POC iteration, condensing fragmentation signals and learnings from the Compound Engineering plugin and Matt Pocock's skills into a single reference.
 - 2026-07-09: Added upstream source URLs; framed firstmate as convergent validation; added Superpowers as related-work reference and the third-path positioning statement.
 - 2026-07-09: Added Integrations & Infrastructure assessment — open-code-review (`ocr`) as adopting-now review engine on `c9`; Omnigent deferred until multi-harness need returns; Multica noted as cross-machine agent command centre (self-hostable, respects data sovereignty).
+- 2026-07-13: Added the lane-routing direction: stable workflow owners, Plan-declared conditional disciplines, explicit evidence gates, and `INCOMPLETE` for unavailable required browser/runtime proof. Renamed the bounded execution role from typist to operator.
+- 2026-07-13: Corrected the first lane-routing interpretation of Addy's catalog. The hard contract remains conductor/Brief/Plan-owned, but supporting skill discovery is worker-adaptive inside that contract. Added the Brief/Plan/operator boundary and explicit acceptance/rejection rationales.

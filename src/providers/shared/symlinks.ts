@@ -44,7 +44,7 @@ export function linkTarget(source: string, target: string, label: string): void 
   console.log(`linked  ${label}`);
 }
 
-export function pruneStaleSkills(home: string, root: string, labelPrefix: string): void {
+export function pruneStaleSkills(home: string, root: string, labelPrefix: string, expectedNames: Set<string>): void {
   const skillsDir = path.join(home, "skills");
   if (!fs.existsSync(skillsDir)) return;
 
@@ -52,11 +52,10 @@ export function pruneStaleSkills(home: string, root: string, labelPrefix: string
     if (!entry.isSymbolicLink()) continue;
     const linkPath = path.join(skillsDir, entry.name);
     const target = fs.readlinkSync(linkPath);
-    if (target.startsWith(path.join(root, ".agents/skills/"))) {
-      if (!fs.existsSync(target)) {
-        fs.unlinkSync(linkPath);
-        console.log(`pruned  ${labelPrefix} skill ${entry.name} (target gone)`);
-      }
+    if (target.startsWith(path.join(root, ".agents/skills/")) && (!fs.existsSync(target) || !expectedNames.has(entry.name))) {
+      fs.unlinkSync(linkPath);
+      const reason = !fs.existsSync(target) ? "target gone" : "no longer managed";
+      console.log(`pruned  ${labelPrefix} skill ${entry.name} (${reason})`);
     }
   }
 }
@@ -107,7 +106,7 @@ export function checkLink(
 }
 
 export function installSkills(home: string, root: string, labelPrefix: string, skills: { name: string; absPath: string }[]): void {
-  pruneStaleSkills(home, root, labelPrefix);
+  pruneStaleSkills(home, root, labelPrefix, new Set(skills.map((skill) => skill.name)));
 
   for (const skill of skills) {
     const target = path.join(home, "skills", skill.name);

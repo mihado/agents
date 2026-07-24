@@ -79,6 +79,15 @@ function checkProviderFiles(root: string): boolean {
     }
   }
 
+  const agentsHome = path.join(home, "agents");
+  const legacyTypist = path.join(agentsHome, "typist.md");
+  const legacyTypistExists = fs.existsSync(legacyTypist)
+    || (fs.existsSync(agentsHome) && fs.readdirSync(agentsHome).includes("typist.md"));
+  if (legacyTypistExists) {
+    console.error(`FAIL  obsolete OpenCode agent typist.md remains: ${legacyTypist}`);
+    ok = false;
+  }
+
   if (fs.existsSync(cmdSrc)) {
     for (const entry of fs.readdirSync(cmdSrc, { withFileTypes: true })) {
       if (!entry.isFile() || !entry.name.endsWith(".md")) continue;

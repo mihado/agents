@@ -6,8 +6,11 @@ export function installProviders(root: string): void {
   }
 }
 
-export function checkProviders(root: string): void {
+export function checkProviders(root: string): boolean {
+  let ok = true;
   for (const provider of registry) {
-    provider.check(root);
+    if (!provider.check(root)) ok = false;
   }
+  if (!ok) process.exitCode = 1;
+  return ok;
 }
