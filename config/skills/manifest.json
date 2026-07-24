@@ -92,6 +92,11 @@
       "srcPath": "skills/browser-testing-with-devtools",
       "path": "skills/engineering/browser-testing-with-devtools"
     },
+    "ci-cd-and-automation": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/ci-cd-and-automation",
+      "path": "skills/engineering/ci-cd-and-automation"
+    },
     "code-review-and-quality": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-review-and-quality",
@@ -142,6 +147,11 @@
       "srcPath": "skills/debugging-and-error-recovery",
       "path": "skills/engineering/debugging-and-error-recovery"
     },
+    "deprecation-and-migration": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/deprecation-and-migration",
+      "path": "skills/engineering/deprecation-and-migration"
+    },
     "documentation-and-adrs": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/documentation-and-adrs",
@@ -151,6 +161,11 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/frontend-ui-engineering",
       "path": "skills/engineering/frontend-ui-engineering"
+    },
+    "git-workflow-and-versioning": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/git-workflow-and-versioning",
+      "path": "skills/engineering/git-workflow-and-versioning"
     },
     "handoff": {
       "source": "mattpocock/skills",

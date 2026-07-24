@@ -73,6 +73,13 @@
       "commit": "aba7c4e9695c363e65cb59effe926c7f1d1abe3d",
       "sha256": "73640726c8afa212289ca2fb1dfaa2f73eec968d717b1f78448a4fd74d717272"
     },
+    "ci-cd-and-automation": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/ci-cd-and-automation",
+      "path": "skills/engineering/ci-cd-and-automation",
+      "commit": "98967c45a42b88d6b8fb3a88b7ff6273920763d6",
+      "sha256": "706d42c02e056cfd0509172fa294ecbdec8509aac9dc25862310800892709d9d"
+    },
     "code-review-and-quality": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-review-and-quality",
@@ -101,6 +108,13 @@
       "commit": "aba7c4e9695c363e65cb59effe926c7f1d1abe3d",
       "sha256": "6629c6617563b5a3e0f44e9c29af7b428e40e21edc3fae1ad13dc6a3574c20c4"
     },
+    "deprecation-and-migration": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/deprecation-and-migration",
+      "path": "skills/engineering/deprecation-and-migration",
+      "commit": "98967c45a42b88d6b8fb3a88b7ff6273920763d6",
+      "sha256": "e965a8acab9e6004749f0e70374cc9a5f7c1b3953d9e78e6e8aef8bdd3743f73"
+    },
     "documentation-and-adrs": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/documentation-and-adrs",
@@ -121,6 +135,13 @@
       "path": "skills/engineering/frontend-ui-engineering",
       "commit": "aba7c4e9695c363e65cb59effe926c7f1d1abe3d",
       "sha256": "58542bff1be0b719134d022ec0ec6f304808ef5e8c900ac426886716e80d3b76"
+    },
+    "git-workflow-and-versioning": {
+      "source": "addyosmani/agent-skills",
+      "srcPath": "skills/git-workflow-and-versioning",
+      "path": "skills/engineering/git-workflow-and-versioning",
+      "commit": "98967c45a42b88d6b8fb3a88b7ff6273920763d6",
+      "sha256": "584a72ac5669e474e5b1552a0ec704b95a03c4056965f80d8cf74aa22668af63"
     },
     "idea-refine": {
       "source": "addyosmani/agent-skills",
