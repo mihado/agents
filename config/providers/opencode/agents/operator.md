@@ -14,4 +14,4 @@ Load `wf-execution` from the conductor's `Required skill:` field. Within the app
 Provider-specific role:
 
 - retain bounded write authority only for the approved plan scope
-- return only the Operator Handoff to the conductor
+- return only the Operator Result to the conductor

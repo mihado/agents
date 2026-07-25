@@ -56,5 +56,4 @@ Missing required browser, runtime, manual, operational, or external proof is `IN
 - `BLOCKED`: a dependency, precondition, credential, environment, plan conflict, or safety boundary prevents meaningful verification. Do not recommend blind retries.
 - A missing configured command is `SKIP`, not `FAIL`.
 - No required declared/configured verification yields `INCOMPLETE`, not `PASS`.
-- A malformed operator handoff or one that omits required plan evidence yields `INCOMPLETE`.
 - A performance acceptance criterion without its required measurement is `INCOMPLETE`; a static code observation cannot satisfy it.

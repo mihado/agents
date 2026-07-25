@@ -263,6 +263,52 @@ describe("integration: apm providers", () => {
     }
   });
 
+  it("keeps durable workflow artifacts scoped to one active human-selected work", () => {
+    const conductor = fs.readFileSync(path.join(root, ".agents", "skills", "workflow", "wf-conductor", "SKILL.md"), "utf8");
+    for (const marker of ["human-selected coherent objective", "user alone selects a new work", "must not split, switch, or abandon work automatically", "wf-artifact/v1", "STALE"]) {
+      expect(conductor).toContain(marker);
+    }
+
+    const referencesDir = path.join(root, ".agents", "skills", "workflow", "wf-conductor", "references");
+    const expectedReferenceMarkers: Array<[string, string]> = [
+      ["think.md", ".agent-contexts/work/<work-id>/brief.md"],
+      ["plan.md", ".agent-contexts/work/<work-id>/plans/plan-<n>.md"],
+      ["act.md", ".agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md"],
+      ["verify.md", ".agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md"],
+      ["review.md", ".agent-contexts/work/<work-id>/execution/attempt-<n>/review.md"],
+      ["recovery.md", ".agent-contexts/active.md"],
+    ];
+    for (const [reference, marker] of expectedReferenceMarkers) {
+      expect(fs.readFileSync(path.join(referencesDir, reference), "utf8")).toContain(marker);
+    }
+
+    const workflow = fs.readFileSync(path.join(root, "docs", "provider-workflow.md"), "utf8");
+    for (const marker of [".agent-contexts/active.md", "<work-id>/", "research-<n>/", "plan-<n>.md", "attempt-<n>/", "wf-artifact/v1", "user alone starts, selects, completes, or abandons work", "must not split, switch, or abandon work automatically", "Operator → Verify → Review", "repair-in-scope"]) {
+      expect(workflow).toContain(marker);
+    }
+
+    const execution = fs.readFileSync(path.join(root, ".agents", "skills", "workflow", "wf-execution", "SKILL.md"), "utf8");
+    expect(execution).toContain("## Operator Result");
+    expect(execution).toContain("Do not create a default handoff artifact");
+    expect(execution).not.toContain("## Operator Handoff");
+
+    const operator = fs.readFileSync(path.join(root, "config", "providers", "opencode", "agents", "operator.md"), "utf8");
+    expect(operator).toContain("Operator Result");
+    expect(operator).not.toContain("Operator Handoff");
+
+    const verification = fs.readFileSync(path.join(root, ".agents", "skills", "workflow", "wf-verification", "SKILL.md"), "utf8");
+    expect(verification).not.toContain("operator handoff");
+
+    const review = fs.readFileSync(path.join(root, ".agents", "skills", "workflow", "wf-review", "SKILL.md"), "utf8");
+    for (const disposition of ["no-actionable-findings", "repair-in-scope", "replan-required", "human-decision-required"]) {
+      expect(review).toContain(disposition);
+    }
+
+    const judge = fs.readFileSync(path.join(root, ".agents", "skills", "workflow", "wf-judge", "SKILL.md"), "utf8");
+    expect(judge).toContain("[REVIEW SYNTHESIS]");
+    expect(judge).toContain("Choose the most conservative disposition");
+  });
+
   it("apm providers install then check passes", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);

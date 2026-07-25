@@ -1,5 +1,5 @@
 ---
-description: Execute the plan with operator evidence handoff and repairable verification retries
+description: Execute the plan through bounded Operator, Verify, and Review repair cycles
 agent: conductor
 ---
 

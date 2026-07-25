@@ -1,32 +1,34 @@
 # Act Branch
 
-1. Read `plan.md` and available Brief; if no plan exists, return the user to Plan.
-2. Dispatch the configured `operator` with `Required skill: wf-execution`, the settled plan, Brief, and prior verifier evidence.
-3. Dispatch the configured `verifier` with `Required skill: wf-verification`, plan evidence profile, and Operator Handoff.
-4. Write verifier output to `.agent-contexts/verify.md`.
-5. On `PASS`, return completion. On `FAIL`, retry only with a concrete repair hypothesis and safe retry handoff. Never retry unchanged diffs, repeated signatures, partial/non-idempotent operations, plan defects, or environment failures.
-6. Escalate model after two safe retries without evidence progress. Stop after three consecutive repairable failures.
-7. On `INCOMPLETE` or `BLOCKED`, stop and name the missing human disposition or boundary.
+1. Resolve `active.md`, then read its current Plan and available Brief. If no implementation-ready Plan exists, return the user to Plan. Start `execution/attempt-<n>/` for each operator, Verify, and Review cycle; never overwrite a prior attempt.
+2. Dispatch the configured `operator` with `Required skill: wf-execution`, the settled Plan, Brief, and the concrete prior verifier or review finding when repairing. The operator returns a concise session result to the conductor; do not write `handoff.md` by default.
+3. Dispatch the configured `verifier` with `Required skill: wf-verification`, the Brief, Plan, current workspace, and Plan evidence profile. Write its independent result to `.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md` with metadata binding it to the Brief, Plan, attempt, observed target, and evidence scope.
+4. On verifier `PASS`, dispatch Review against the same attempt. On verifier `FAIL`, return a repair only with a concrete repair hypothesis, safe retry state, and evidence progress. Never retry unchanged diffs, repeated signatures, partial/non-idempotent operations, Plan defects, or environment failures.
+5. On review `no-actionable-findings`, complete. On `repair-in-scope`, return the bounded finding to Operator, then Verify again and Review again when the reviewed scope changed. On `replan-required` or `human-decision-required`, stop for the stated disposition.
+6. Count verifier and review repairs in one shared budget. Escalate to the user after two repairs without evidence progress. Stop after three safe repair cycles. `INCOMPLETE`, `BLOCKED`, repeated signatures, unsafe retries, or material scope drift stop for human disposition.
 
 Return one of:
 
 ```md
-## Act Complete
+## Act and Review Complete
 - Operator applied the execution plan
 - Verification: PASS
-- Evidence saved to `.agent-contexts/verify.md`
+- Review: no actionable findings
+- Evidence saved to `.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md`
+- Review saved to `.agent-contexts/work/<work-id>/execution/attempt-<n>/review.md`
 ```
 
 ```md
 ## Act Blocked
-- Verification: <FAIL | BLOCKED>
-- Evidence saved to `.agent-contexts/verify.md`
+- Gate: <Verify | Review>
+- Status: <FAIL | BLOCKED | replan-required | human-decision-required>
+- Evidence saved to `.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md`
 - Blocker: <short reason>
 ```
 
 ```md
 ## Act Incomplete
 - Verification: INCOMPLETE
-- Evidence saved to `.agent-contexts/verify.md`
+- Evidence saved to `.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md`
 - Required disposition: <missing evidence and human owner>
 ```

@@ -66,3 +66,17 @@ When the conductor marks input `[RESEARCH SYNTHESIS]`, return:
 ```
 
 If either report is empty, trivial, or lacks source-backed claims, state the asymmetry and reduce evidence quality.
+
+## Review synthesis
+
+When the conductor marks input `[REVIEW SYNTHESIS]`, return:
+
+```md
+## Findings
+- <deduplicated finding with severity and file:line, or `No review issues found.`>
+
+## Disposition: <no-actionable-findings | repair-in-scope | replan-required | human-decision-required>
+<one sentence naming the reason and applicable findings>
+```
+
+Choose the most conservative disposition supported by the supplied reports. Do not inspect the diff, code, Plan, Brief, or original task to resolve disagreements.

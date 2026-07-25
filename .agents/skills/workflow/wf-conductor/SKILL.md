@@ -16,10 +16,10 @@ For worker lanes, dispatch only the configured named worker in the selected lane
 | Lane | Stable owner | Output and gate |
 | --- | --- | --- |
 | Idea | conductor | Resolve intent, scope, and constraints before a Brief. |
-| Think | conductor | Write `brief.md` after repository facts are inspected and user decisions are settled. |
+| Think | conductor | Write a Brief after repository facts are inspected and user decisions are settled. |
 | Plan | `wf-planning` or `wf-research` | Write an execution plan or bounded research artifacts. |
-| Act | `wf-execution` | Apply approved units and return a bounded handoff. |
-| Verify | `wf-verification` | Write `verify.md` with `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
+| Act | `wf-execution` | Apply approved units and return a bounded execution result. |
+| Verify | `wf-verification` | Write a verification artifact with `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
 | Review | `wf-review` | `standards-spec` by default; `adversarial-risk` when elevated. |
 | Ship | conductor | Release only on explicit user request, with rollback and operational proof. |
 
@@ -41,4 +41,14 @@ For worker lanes, dispatch only the configured named worker in the selected lane
 - `/verify`: load [references/verify.md](references/verify.md).
 - `/review`: load [references/review.md](references/review.md).
 
-Before writing an artifact, ensure `.agent-contexts/` exists. Subagents return analysis only; the conductor writes workflow artifacts. Judge receives worker outputs only, never raw code or diffs.
+Before writing the first durable workflow artifact, ensure `.agent-contexts/work/<work-id>/` exists and write `.agent-contexts/active.md`. A work is a human-selected coherent objective; it may be a feature, bug, investigation, migration, review-only change, or operational task. Think is one route to this boundary, not a prerequisite: a clear `/plan`, bounded research request, or escalated `/act` may create work.
+
+`active.md` selects the one active work. The conductor uses it for Plan, Act, Verify, Review, and recovery. The user alone selects a new work or marks work completed or abandoned. The conductor defaults to the active work for research follow-ups, replanning, and execution attempts; it may flag material mismatch but must not split, switch, or abandon work automatically.
+
+Completed artifacts are immutable evidence. Use `brief.md`, `research/research-<n>/`, `plans/plan-<n>.md`, and `execution/attempt-<n>/` inside the active work. The current Plan may receive small dated amendments. Create a replacement Plan only when amendments obscure the current route; link it to the replaced Plan. Every artifact begins with `wf-artifact/v1` YAML frontmatter containing `work_id`, `artifact_role`, `artifact_id`, `upstream_artifacts`, `observed_target`, and `created_at`; Plans additionally declare `brief_id` and `readiness`.
+
+At every consuming gate, compare the artifact's declared work, inputs, scope, and observed target with the work being performed. A material mismatch is `STALE` for that gate. Preserve the original artifact unchanged and record the mismatch in the downstream artifact or recovery report. Do not mark an artifact stale merely because time passed or `HEAD` changed.
+
+The default execution loop is `Operator → Verify → Review`. The operator returns a concise result to the conductor; it is not default durable evidence. The verifier independently inspects the workspace and runs the Plan's required proof. A verifier `FAIL` with a concrete safe repair hypothesis, or a review `repair-in-scope` disposition, may return bounded work to the operator. Every repair is verified again; review runs again when its reviewed scope changed. The conductor counts Verify- and Review-driven repairs in one shared budget, escalates to the user after two repairs without evidence progress, and stops after three safe repair cycles. `INCOMPLETE`, `BLOCKED`, repeated failure signatures, unsafe retries, `replan-required`, `human-decision-required`, or material scope drift stop for human disposition.
+
+Subagents return analysis only; the conductor writes workflow artifacts. Judge receives worker outputs only, never raw code or diffs.

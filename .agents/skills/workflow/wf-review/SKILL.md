@@ -22,6 +22,22 @@ P3 — Low-impact, narrow scope, minor improvement. User's discretion.
 
 Use `code-review-and-quality` only when the conductor requests an additional multi-axis quality pass. It cannot alter review authority, severity, or evidence boundaries.
 
+## Conductor disposition
+
+End every report with exactly one disposition. It routes work but does not grant mutation authority:
+
+```md
+## Disposition: <no-actionable-findings | repair-in-scope | replan-required | human-decision-required>
+<one sentence naming the reason and applicable findings>
+```
+
+- `no-actionable-findings`: no reported finding requires a change before this work can proceed.
+- `repair-in-scope`: concrete reported findings can be fixed within the current Brief and Plan.
+- `replan-required`: the required correction changes the current Plan route, scope, safeguards, or required evidence.
+- `human-decision-required`: the correction changes the Brief outcome, acceptance criteria, hard constraints, or another user-owned decision.
+
+The reviewer remains read-only and report-only. The conductor alone decides whether a disposition returns bounded work to Operator.
+
 ## Mode selection
 
 - **standards-spec:** constructive review for correctness, regressions, conventions, and Brief/Plan conformance.
@@ -74,7 +90,7 @@ For each finding:
 <what is wrong and why>
 ```
 
-If no findings exist, return `No review issues found.`
+If no findings exist, return `No review issues found.` followed by `## Disposition: no-actionable-findings`.
 
 ## Adversarial-risk mode
 
@@ -111,4 +127,6 @@ If no findings exist, return:
 
 ```md
 No adversarial concerns found. The invariants appear to hold, and the change introduces no new auth, data, or concurrency risks.
+
+## Disposition: no-actionable-findings
 ```

@@ -28,10 +28,10 @@ The conductor is the everyday front door; commands are optional ways to select a
 | Lane | Workflow owner | Result |
 | --- | --- | --- |
 | Idea | conductor | Intent, scope, and constraints are settled before a Brief. |
-| Think | conductor | `.agent-contexts/brief.md` |
-| Plan | `wf-planning` or `wf-research` | `plan.md`, or bounded research artifacts. |
-| Act | `wf-execution` | Approved work and an Operator Handoff. |
-| Verify | `wf-verification` | `verify.md` with `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
+| Think | conductor | Work-local Brief. |
+| Plan | `wf-planning` or `wf-research` | Work-local Plan, or bounded research artifacts. |
+| Act | `wf-execution` | Approved work and a concise Operator Result. |
+| Verify | `wf-verification` | Work-local verification artifact with `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
 | Review | `wf-review` | Standards/Spec findings with `file:line`; never a verification verdict. |
 | Ship | conductor | Explicit release request with rollback and operational proof. |
 
@@ -46,9 +46,9 @@ The workflow kernel is owned by this repository. It defines lane authority, arti
 | Skill | Lane | Mode / boundary |
 | --- | --- | --- |
 | `wf-conductor` | all | Shared control contract. Owns routing, artifacts, recovery, and bounded retries; no practice catalog. |
-| `wf-planning` | execution Plan | `execution` writes `plan.md`; `adversarial` pressure-tests broad, security-sensitive, data, concurrency, operational, or unclear-verification work. |
-| `wf-research` | research Plan | `research` gathers bounded decision evidence; `adversarial` seeks contrary evidence. Writes research artifacts, never `plan.md`. |
-| `wf-execution` | Act | Applies approved, bounded units and returns an Operator Handoff. |
+| `wf-planning` | execution Plan | `execution` writes a work-local Plan; `adversarial` pressure-tests broad, security-sensitive, data, concurrency, operational, or unclear-verification work. |
+| `wf-research` | research Plan | `research` gathers bounded decision evidence; `adversarial` seeks contrary evidence. Writes work-local research artifacts, never a Plan. |
+| `wf-execution` | Act | Applies approved, bounded units and returns a concise execution result. |
 | `wf-verification` | Verify | Sole owner of `PASS`, `FAIL`, `INCOMPLETE`, and `BLOCKED`. |
 | `wf-review` | Review | `standards-spec` by default; `adversarial-risk` for auth, data, concurrency, broad, or high-risk diffs. |
 | `wf-judge` | synthesis | Reconciles worker reports only; the conductor owns the resulting lane artifact. |
@@ -96,22 +96,40 @@ Each execution unit declares scope, intent, dependencies, failure modes, evidenc
 
 Elevate planning or review for broad/cross-system work, auth or security impact, data or migration changes, concurrency risk, irreversible operations, or unclear verification. Act retries only a repairable `FAIL` with a concrete repair hypothesis and safe retry state. `INCOMPLETE` and `BLOCKED` stop for human disposition; the operator never declares `PASS`.
 
-The conductor is the only workflow-artifact writer.
+The conductor is the only workflow-artifact writer. A work is one coherent, human-selected objective. It can be a feature, bug, investigation, migration, review-only change, or operational task.
+
+The conductor creates work immediately before the first durable artifact. `/think` is one route to that boundary, not a prerequisite: a clear `/plan`, bounded research request, or escalated `/act` may create work. Small clear direct work remains artifact-free until it needs durable planning, research, independent verification, review, execution context, or recovery.
+
+One work is active at a time. `.agent-contexts/active.md` is mutable navigation state that selects it; it is not evidence. The user alone starts, selects, completes, or abandons work. The conductor defaults research follow-ups, replanning, and execution attempts to the active work. It may report material mismatch but must not split, switch, or abandon work automatically.
 
 ```text
 .agent-contexts/
-  brief.md
-  plan.md
-  verify.md
-  review.md
-  review-<timestamp>.md
-  research/
-    planner.md
-    planner-adversarial.md
-    synthesis.md
+  active.md
+  work/
+    <work-id>/
+      brief.md
+      research/
+        research-<n>/
+          planner.md
+          planner-adversarial.md
+          synthesis.md
+      plans/
+        plan-<n>.md
+      execution/
+        attempt-<n>/
+          verify.md
+          review.md
 ```
 
-Research artifacts inform a later execution plan but never substitute for one. A research synthesis is stale when its decision question no longer matches the active Brief.
+`<work-id>` is a readable lowercase kebab-case slug. On collision, the conductor appends the smallest available numeric suffix and never overwrites another work. Artifacts use `wf-artifact/v1` YAML frontmatter with `work_id`, `artifact_role`, `artifact_id`, `upstream_artifacts`, `observed_target`, and `created_at`. Plans also declare `brief_id` and `readiness`; Act accepts only `implementation-ready` Plans.
+
+Completed artifacts are immutable evidence. Small Plan changes are appended as dated amendments to the current Plan. A replacement Plan is written only when amendments obscure the current route; it links to the predecessor with `supersedes` and `supersession_reason`. Research rounds and execution attempts are separate directories. Research informs a later execution Plan but never substitutes for one.
+
+At each consuming gate, the conductor compares the artifact's declared work, upstream inputs, scope, and observed target with the work now being performed. A material mismatch makes it `STALE` for that gate. The historical artifact remains unchanged; the mismatch is recorded in the downstream artifact or recovery report. Time passing or `HEAD` changing alone does not make evidence stale.
+
+The default main-workspace loop is `Operator → Verify → Review`. Operator returns a concise result to the conductor, but no default handoff artifact: Verify independently inspects the workspace and runs the Plan's required lint, typecheck, build, test, browser, runtime, operational, or manual proof. A repairable Verify `FAIL` or Review `repair-in-scope` disposition returns bounded work to Operator. Every repair is verified again and reviewed again when its reviewed scope changed. The conductor counts both sources of repair in one shared budget, escalates after two repairs without evidence progress, and stops after three safe repair cycles.
+
+Review remains read-only and report-only. It ends with one conductor-facing disposition: `no-actionable-findings`, `repair-in-scope`, `replan-required`, or `human-decision-required`. `INCOMPLETE`, `BLOCKED`, repeated signatures, unsafe retries, material scope drift, `replan-required`, and `human-decision-required` stop for human disposition.
 
 ## OpenCode Reference Binding
 
@@ -127,7 +145,7 @@ When independent planning, research, or review reports need reconciliation, the 
 conductor dispatch: operator + Required skill: wf-execution
   -> OpenCode resolves config/providers/opencode/agents/operator.md
   -> operator wrapper loads wf-execution
-  -> wf-execution returns Operator Handoff
+  -> wf-execution returns Operator Result
 
 conductor dispatch: verifier + Required skill: wf-verification
   -> OpenCode resolves config/providers/opencode/agents/verifier.md
