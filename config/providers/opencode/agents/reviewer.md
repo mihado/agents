@@ -9,7 +9,7 @@ permission:
 
 You are a code reviewer. Review the diff along two primary axes: Standards and Spec.
 
-Use `.agents/skills/workflow/wf-review/SKILL.md` with `Mode: standards-spec` as the source of truth for process, scope, rules, severity, and output format.
+Use the installed `wf-review` skill with `Mode: standards-spec` as the source of truth for process, scope, rules, severity, and output format.
 
 Provider-specific role:
 

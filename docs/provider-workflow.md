@@ -185,11 +185,11 @@ Recovery requests such as “where are we?” reconstruct the goal, active work,
 | Kind | Source of truth | Runtime target |
 | --- | --- | --- |
 | Shared instructions | repo root `AGENTS.md`, `CLAUDE.md` | linked into provider homes where needed |
-| Shared skills | `.agents/skills/` | linked into provider homes where needed |
+| Shared skills | `.agents/skills/` | flat per-skill links: `~/.agents/skills/<skill-name>/` for OpenCode, plus provider homes where needed |
 | Provider agents and commands | `config/providers/<provider>/` | provider-global home |
 | Provider config | `config/providers/<provider>/` | provider-global config |
 
-Provider runtime directories such as repo-root `.opencode/` or `.claude/` are installation targets, not workflow source.
+Provider runtime directories such as repo-root `.opencode/` or `.claude/` are installation targets, not workflow source. The repository groups source skills by domain, but each installed home exposes a flat skill namespace: for example, source `.agents/skills/workflow/wf-conductor/` installs at `~/.agents/skills/wf-conductor/`.
 
 `apm providers install` installs or links shared instructions, skills, agents, commands, configuration, and MCP entries. `apm providers check` verifies the runtime still points to managed source. `apm skills fetch -> review -> accept -> check` is the vendor supply chain. Restart OpenCode after installation or workflow changes because agents and skills load at startup.
 
@@ -204,8 +204,8 @@ Next, dogfood a small bug, multi-file feature, and settled UI task. Record the t
 | [`docs/assessments/2026-07-08-poc-workflow-architecture-learnings.md`](assessments/2026-07-08-poc-workflow-architecture-learnings.md) | Evolution, upstream comparisons, and decisions |
 | [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) | Executable conductor contract |
 | `config/providers/opencode/agents/conductor.md` | OpenCode conductor binding |
-| `.agents/skills/workflow/*` | Workflow-owner contracts |
-| `.agents/skills/engineering/*` | Practice-discipline contracts |
+| `.agents/skills/workflow/*` | Repository-source workflow-owner contracts; installed as flat skill directories |
+| `.agents/skills/engineering/*` | Repository-source practice-discipline contracts; installed as flat skill directories |
 
 ## References
 

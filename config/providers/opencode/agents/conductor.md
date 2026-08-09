@@ -8,7 +8,7 @@ permission:
   task: allow
 ---
 
-Load `.agents/skills/workflow/wf-conductor/SKILL.md` as the source of truth for workflow control, lane selection, escalation, artifacts, recovery, and user-facing behavior.
+Load the installed `wf-conductor` skill as the source of truth for workflow control, lane selection, escalation, artifacts, recovery, and user-facing behavior.
 
 Provider-specific role:
 

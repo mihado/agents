@@ -174,7 +174,13 @@ describe("integration: apm providers", () => {
     }
 
     const conductor = fs.readFileSync(path.join(agentDir, "conductor.md"), "utf8");
-    expect(conductor).toContain("wf-conductor/SKILL.md");
+    expect(conductor).toContain("installed `wf-conductor` skill");
+    expect(conductor).not.toContain(".agents/skills/workflow/");
+    for (const reviewer of ["reviewer.md", "reviewer-adversarial.md"]) {
+      const content = fs.readFileSync(path.join(agentDir, reviewer), "utf8");
+      expect(content).toContain("installed `wf-review` skill");
+      expect(content).not.toContain(".agents/skills/workflow/");
+    }
 
     for (const reference of ["recovery.md", "think.md", "plan.md", "act.md", "verify.md", "review.md"]) {
       expect(fs.existsSync(path.join(skillDir, "wf-conductor", "references", reference))).toBe(true);
