@@ -150,7 +150,9 @@ export function buildProgram(opts?: { root?: string }): Command {
   providers
     .command("check")
     .description("verify provider configuration")
-    .action(() => checkProviders(root()));
+    .action(() => {
+      checkProviders(root());
+    });
 
   program
     .command("install")

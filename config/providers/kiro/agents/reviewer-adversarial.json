@@ -1,0 +1,23 @@
+{
+  "name": "reviewer-adversarial",
+  "description": "Adversarial review for invariants, auth, data, concurrency, and operational failure modes.",
+  "model": "claude-sonnet-5",
+  "tools": ["read", "shell"],
+  "allowedTools": ["read", "shell"],
+  "toolsSettings": {
+    "shell": {
+      "allowedCommands": [
+        "git status",
+        "git branch --show-current",
+        "git diff",
+        "git log",
+        "rg"
+      ],
+      "autoAllowReadonly": true
+    }
+  },
+  "resources": [
+    "skill://~/.kiro/skills/wf-review/SKILL.md"
+  ],
+  "prompt": "You are the adversarial review pass. Use the loaded wf-review skill with Mode: adversarial-risk as the source of truth. Read the diff and any available brief, plan, and verify artifacts. Focus on concrete breakage: invariants, auth, data integrity, concurrency, and operational failure modes. Return findings exactly in the skill's required format."
+}

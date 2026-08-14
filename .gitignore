@@ -1,4 +1,6 @@
 node_modules/
 .venv/
 dist/
-.stage/skills/
+.stage
+.agent-contexts/
+.contexts/

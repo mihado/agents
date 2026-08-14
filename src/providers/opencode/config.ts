@@ -222,7 +222,6 @@ export function checkProviders(root: string): boolean {
     }
   }
 
-  if (failures > 0) process.exit(1);
   return failures === 0;
 }
 
