@@ -226,7 +226,7 @@
     font-size: 11pt; font-weight: 500;
     color: var(--near-black);
   }
-  .tl-body { font-size: 9pt; color: var(--olive); line-height: 1.40; letter-spacing: 0.3pt; }
+  .tl-body { font-size: 9pt; color: var(--olive); line-height: 1.4; letter-spacing: 0.3pt; }
 
   /* PROJECTS */
   .project {
@@ -258,7 +258,7 @@
   }
   .proj-text {
     display: table-cell; font-size: 9pt;
-    color: var(--near-black); line-height: 1.40; letter-spacing: 0.3pt;
+    color: var(--near-black); line-height: 1.4; letter-spacing: 0.3pt;
     padding: 0 0 0.4mm 0.5mm;
   }
   .proj-text .hl { color: var(--brand); }
@@ -267,7 +267,7 @@
     margin-top: 2mm; padding: 1.5mm 2.5mm;
     background: var(--brand-tint);
     border-radius: 2pt;
-    font-size: 9pt; color: var(--olive); line-height: 1.40;
+    font-size: 9pt; color: var(--olive); line-height: 1.4;
     break-inside: avoid;
   }
   .team-culture .hl { color: var(--brand); }
@@ -277,7 +277,7 @@
 
   /* OPEN SOURCE */
   .os-intro {
-    font-size: 9.2pt; line-height: 1.40; letter-spacing: 0.3pt;
+    font-size: 9.2pt; line-height: 1.4; letter-spacing: 0.3pt;
     color: var(--near-black);
     padding: 0; margin: 1.2mm 0 2mm 0;
     background: transparent;
@@ -305,7 +305,7 @@
     flex-shrink: 0; min-width: 14mm;
   }
   .os-name a { color: var(--brand); }
-  .os-desc { font-size: 9pt; color: var(--olive); line-height: 1.40; flex: 1; }
+  .os-desc { font-size: 9pt; color: var(--olive); line-height: 1.4; flex: 1; }
   .os-star {
     font-size: 9pt; color: var(--dark-warm);
     font-weight: 500; white-space: nowrap; flex-shrink: 0; min-width: 7.5mm; text-align: right;
@@ -317,7 +317,7 @@
     padding: 1.8mm 2.8mm;
     background: var(--brand-tint);
     border-radius: 2pt;
-    font-size: 9pt; line-height: 1.40;
+    font-size: 9pt; line-height: 1.4;
     color: var(--near-black);
     letter-spacing: 0.3pt;
     break-inside: avoid;
@@ -358,7 +358,7 @@
   }
   .conv-body, .ai-card-body {
     font-size: 9pt; color: var(--olive);
-    line-height: 1.40; letter-spacing: 0.3pt;
+    line-height: 1.4; letter-spacing: 0.3pt;
   }
   .conv-body .hl, .ai-card-body .hl { color: var(--brand); }
   .conv-body .em-brand, .ai-card-body .em-brand { color: var(--brand); }
@@ -376,7 +376,7 @@
     flex-shrink: 0;
   }
   .handle-strip .follower { font-size: 9pt; color: var(--stone); flex-shrink: 0; }
-  .handle-strip .desc { font-size: 9pt; color: var(--olive); line-height: 1.40; letter-spacing: 0.3pt; flex: 1; }
+  .handle-strip .desc { font-size: 9pt; color: var(--olive); line-height: 1.4; letter-spacing: 0.3pt; flex: 1; }
 
   .impact-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 5.5mm; }
   .inf-block-title {
@@ -411,12 +411,12 @@
   }
   .art-title, .talk-title {
     font-size: 9pt; color: var(--near-black);
-    font-weight: 500; line-height: 1.40;
+    font-weight: 500; line-height: 1.4;
     flex: 1 1 auto; min-width: 0;
   }
   .art-stats, .talk-venue {
     font-size: 9pt; color: var(--stone);
-    line-height: 1.40; margin-top: 0.5mm; padding-left: 0; letter-spacing: 0.3pt;
+    line-height: 1.4; margin-top: 0.5mm; padding-left: 0; letter-spacing: 0.3pt;
     white-space: nowrap;
   }
   .art-stats .em-brand {
@@ -446,7 +446,7 @@
     width: 22mm; flex-shrink: 0;
     line-height: 1.36;
   }
-  .skill-body { font-size: 9pt; color: var(--near-black); line-height: 1.40; letter-spacing: 0.3pt; flex: 1; }
+  .skill-body { font-size: 9pt; color: var(--near-black); line-height: 1.4; letter-spacing: 0.3pt; flex: 1; }
   .skill-body .em-brand { color: var(--brand); }
 
   .no-break { break-inside: avoid; }
@@ -601,20 +601,20 @@
     <div class="proj-head">
       <span class="proj-name serif">{{프로젝트명}}</span>
       <span class="proj-kind">· {{프로젝트 유형}}</span>
-      <span class="proj-role">{{역할}}</span>
+      <span class="proj-role">{{역할, 예: "방향 주도"}}</span>
     </div>
     <div class="proj-lines">
       <div class="proj-row">
         <div class="proj-label">역할</div>
-        <div class="proj-text">{{~60자}}</div>
+        <div class="proj-text">{{~60자: 프로젝트 개요 + 배경 + 본인 역할}}</div>
       </div>
       <div class="proj-row">
         <div class="proj-label">행동</div>
-        <div class="proj-text">{{~80자}}</div>
+        <div class="proj-text">{{~80자: 기술 방안 / 핵심 의사결정 / 실행 경로}}</div>
       </div>
       <div class="proj-row">
         <div class="proj-label">결과</div>
-        <div class="proj-text">{{~100자, <span class="hl">핵심 수치</span> 포함}}</div>
+        <div class="proj-text">{{~100자: 수치 중심. <span class="hl">핵심 수치</span> 1-2곳 하이라이트.}}</div>
       </div>
     </div>
   </div>
@@ -623,20 +623,20 @@
     <div class="proj-head">
       <span class="proj-name serif">{{프로젝트명}}</span>
       <span class="proj-kind">· {{프로젝트 유형}}</span>
-      <span class="proj-role">{{역할}}</span>
+      <span class="proj-role">{{역할, 예: "방향 주도"}}</span>
     </div>
     <div class="proj-lines">
       <div class="proj-row">
         <div class="proj-label">역할</div>
-        <div class="proj-text">{{프로젝트 배경과 포지션}}</div>
+        <div class="proj-text">{{~60자: 프로젝트 개요 + 배경 + 본인 역할}}</div>
       </div>
       <div class="proj-row">
         <div class="proj-label">행동</div>
-        <div class="proj-text">{{실행 경로}}</div>
+        <div class="proj-text">{{~80자: 기술 방안 / 핵심 의사결정 / 실행 경로}}</div>
       </div>
       <div class="proj-row">
         <div class="proj-label">결과</div>
-        <div class="proj-text">{{정량적 결과, <span class="hl">핵심 수치</span> 포함}}</div>
+        <div class="proj-text">{{~100자: 수치 중심. <span class="hl">핵심 수치</span> 1-2곳 하이라이트.}}</div>
       </div>
     </div>
   </div>
@@ -660,27 +660,27 @@
     </div>
     <div class="os-item">
       <span class="os-name serif"><a href="{{URL}}">{{프로젝트명}}</a></span>
-      <span class="os-desc">{{설명}}</span>
+      <span class="os-desc">{{언어 + 핵심 정의 + 플랫폼}}</span>
       <span class="os-star big">★ {{STARS}}</span>
     </div>
     <div class="os-item">
       <span class="os-name serif"><a href="{{URL}}">{{프로젝트명}}</a></span>
-      <span class="os-desc">{{설명}}</span>
+      <span class="os-desc">{{언어 + 핵심 정의 + 플랫폼}}</span>
       <span class="os-star">★ {{STARS}}</span>
     </div>
     <div class="os-item">
       <span class="os-name serif"><a href="{{URL}}">{{프로젝트명}}</a></span>
-      <span class="os-desc">{{설명}}</span>
+      <span class="os-desc">{{언어 + 핵심 정의 + 플랫폼}}</span>
       <span class="os-star">★ {{STARS}}</span>
     </div>
     <div class="os-item">
       <span class="os-name serif"><a href="{{URL}}">{{프로젝트명}}</a></span>
-      <span class="os-desc">{{설명}}</span>
+      <span class="os-desc">{{언어 + 핵심 정의 + 플랫폼}}</span>
       <span class="os-star">★ {{STARS}}</span>
     </div>
     <div class="os-item">
       <span class="os-name serif"><a href="{{URL}}">{{프로젝트명}}</a></span>
-      <span class="os-desc">{{설명}}</span>
+      <span class="os-desc">{{언어 + 핵심 정의 + 플랫폼}}</span>
       <span class="os-star">★ {{STARS}}</span>
     </div>
   </div>
@@ -702,13 +702,13 @@
     <div class="conv-card">
       <div class="conv-head"><span class="year">{{시기}}</span>{{사건 제목}}</div>
       <div class="conv-body">
-        {{구체적으로 어떤 판단이나 행동을 했는지}}
+        {{구체적으로 어떤 판단이나 행동을 했는지, 왜 그것이 판단력을 증명하는지}}
       </div>
     </div>
     <div class="conv-card">
       <div class="conv-head"><span class="year">{{시기}}</span>{{사건 제목}}</div>
       <div class="conv-body">
-        {{구체적으로 어떤 판단이나 행동을 했는지}}
+        {{구체적으로 어떤 판단이나 행동을 했는지, 왜 그것이 판단력을 증명하는지}}
       </div>
     </div>
   </div>
@@ -738,7 +738,7 @@
           <a class="art-title" href="{{URL}}">《{{글 제목}}》</a>
           <span class="art-date">{{날짜}}</span>
         </div>
-        <div class="art-stats">{{조회수 / 좋아요}}</div>
+        <div class="art-stats">{{조회수 / 좋아요 / 영향력 지표}}</div>
       </div>
     </div>
 

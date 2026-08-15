@@ -278,12 +278,13 @@
   }
 
   /* ========== Callout / highlight block ========== */
-  /* Modeled on resume.html .team-culture: transparent ground + a single left brand bar.
-     No container, no radius; feels like a marginal note rather than a card. */
+  /* Same shape as the long-doc / equity-report .callout: ivory fill plus a single
+     left brand bar. One form across templates; padding tightens per density. */
   .callout {
-    background: transparent;
-    border-left: 1.8pt solid var(--brand);
-    padding: 4pt 0 4pt 14pt;
+    background: var(--ivory);
+    border-left: 2pt solid var(--brand);
+    border-radius: 3pt;
+    padding: 8pt 12pt;
     margin: 10pt 0;
     font-size: 10pt;
     line-height: 1.5;
@@ -396,17 +397,17 @@
     <ul class="dash">
       <li>{{짧은 bullet: 데이터 / 관찰 / 판단}}</li>
       <li>{{짧은 bullet: <span class="hl">핵심 수치</span>를 포함한 근거}}</li>
-      <li>{{짧은 bullet}}</li>
+      <li>{{짧은 bullet: 한 줄에 한 논점}}</li>
     </ul>
   </section>
 
   <section>
     <h2>{{섹션 제목 2}}</h2>
-    <p>{{1~2문장 단락.}}</p>
+    <p>{{여기에 1~2문장의 단락을 작성해 주장을 전개.}}</p>
     <ul class="dash">
-      <li>{{짧은 bullet}}</li>
-      <li>{{짧은 bullet}}</li>
-      <li>{{짧은 bullet}}</li>
+      <li>{{짧은 bullet: 데이터 / 관찰 / 판단}}</li>
+      <li>{{짧은 bullet: <span class="hl">핵심 수치</span>를 포함한 근거}}</li>
+      <li>{{짧은 bullet: 한 줄에 한 논점}}</li>
     </ul>
   </section>
 </div>

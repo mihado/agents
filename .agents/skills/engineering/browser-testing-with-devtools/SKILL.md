@@ -25,6 +25,8 @@ Use Chrome DevTools MCP to give your agent eyes into the browser. This bridges t
 
 ### Installation
 
+> **MANUAL ONLY — do not execute.** The user configures MCP servers themselves. If the chrome-devtools MCP server is not available, report it and stop.
+
 Add the following to your project's `.mcp.json` or Claude Code settings:
 
 ```json
