@@ -8,31 +8,19 @@ The first conductor loop revealed that splitting workflow logic across too many 
 
 ## How the routing model converged
 
-The early instinct was to adapt Compound Engineering directly: use a conductor
-to fan out specialist passes, then synthesize them. That was useful but too
-heavy as a default. CE's value is its dispatcher mindset — select rigor from
-the work's risk and changed surface — not its large fixed reviewer roster.
+The early instinct was to adapt Compound Engineering directly: use a conductor to fan out specialist passes, then synthesize them. That was useful but too
+heavy as a default. CE's value is its dispatcher mindset — select rigor from the work's risk and changed surface — not its large fixed reviewer roster.
 
-Matt Pocock's skills clarified the upstream problem. Before planning, the
-workflow needs to distinguish discoverable facts from user decisions, keep
-asking one useful question at a time, and turn settled work into narrow vertical
-slices. This made Idea and Think real conductor modes rather than a premature
-planner dispatch.
+Matt Pocock's skills clarified the upstream problem. Before planning, the workflow needs to distinguish discoverable facts from user decisions, keep
+asking one useful question at a time, and turn settled work into narrow vertical slices. This made intent settlement a real conductor concern rather than a premature planner dispatch.
 
-The later comparison with Oh My Pi and SmallHarness reinforced two boundaries:
-execution should be role-bounded and explicit about what it yields; evaluation
-needs direct evidence rather than optimistic summaries. We adopted those
-principles without their runtime machinery, fallback infrastructure, autonomous
-loops, or scorecards.
+The later comparison with Oh My Pi and SmallHarness reinforced two boundaries: execution should be role-bounded and explicit about what it yields; evaluation
+needs direct evidence rather than optimistic summaries. We adopted those principles without their runtime machinery, fallback infrastructure, autonomous loops, or scorecards.
 
-The pleasant result of comparing the upstream catalogs was that Addy's skills
-already cover most of the lifecycle disciplines we needed. The problem was not
-to invent another universal methodology. It was to put a small routing layer on
-top of the catalog: stable lane ownership, an explicit hard contract, and
-evidence requirements that cannot be silently weakened. The earlier idea of a
-short Plan-only skill allowlist was too restrictive: it would turn the planner
-into a shadow implementer and discard Addy's adaptive method selection during
-real work.
+The pleasant result of comparing the upstream catalogs was that Addy's skills already cover most of the lifecycle disciplines we needed. The problem was not
+to invent another universal methodology. It was to put a small routing layer on top of the catalog: stable lane ownership, an explicit hard contract, and
+evidence requirements that cannot be silently weakened. The earlier idea of a short Plan-only skill allowlist was too restrictive: it would turn the planner
+into a shadow implementer and discard Addy's adaptive method selection during real work.
 
 The resulting design is a synthesis:
 
@@ -52,15 +40,12 @@ work before adding more orchestration machinery.
 
 The stable product is not a fixed two-worker adversarial topology for every task. The stable product is:
 
-- keep the same artifact sequence: idea → think → plan → act → verify → review
+- keep the stable artifact sequence: think → plan → act → verify → review
 - keep hard authority boundaries where they matter: editor vs non-editor, verifier vs reviewer, judge as synthesis-only
 - let the conductor choose how much rigor to apply based on risk, ambiguity, and changed surface
 
-The next POC direction makes that selection explicit rather than leaving it as
-informal prompt judgment. A local lane registry assigns one stable owner to
-each lane and defines evidence and return gates. The conductor owns the hard
-contract; workers may discover supporting skills in their authorized lane, but
-must escalate rather than silently changing that contract.
+The next POC direction makes that selection explicit rather than leaving it as informal prompt judgment. A local lane registry assigns one stable owner to
+each lane and defines evidence and return gates. The conductor owns the hard contract; workers may discover supporting skills in their authorized lane, but must escalate rather than silently changing that contract.
 
 Concretely, a cheap default pass handles most tasks. Elevated passes (adversarial review, adversarial planning) are conditional rather than mandatory. The judge runs only when two or more workers produce outputs that must be reconciled.
 
@@ -95,35 +80,16 @@ the code reveals what is actually needed.
 
 What we took:
 
-- **Stable lane owners.** `wf-planning` owns implementation plans,
-  `wf-research` owns bounded evidence decisions,
-  `wf-execution` owns approved execution, and `wf-verification`
-  owns independent evidence verdicts.
-- **Stable authority plus adaptive method.** The Brief owns outcome and
-  non-functional commitments. The Plan owns the happy path, failure modes,
-  evidence floor, suggested skills, and escalation conditions. The operator
-  owns detailed method and may select relevant supporting skills inside that
-  contract.
-- **Evidence is not interchangeable.** Static checks do not prove a UI flow;
-  a missing required browser/runtime, manual, operational, or external proof is
-  `INCOMPLETE`, not `PASS`.
+- **Stable lane owners.** `wf-planning` owns implementation plans, `wf-research` supplies bounded evidence decisions, `wf-execution` owns approved execution, and `wf-verification` owns independent evidence verdicts.
+- **Stable authority plus adaptive method.** The Brief owns outcome and non-functional commitments. The Plan owns the happy path, failure modes, evidence floor, suggested skills, and escalation conditions. The operator owns detailed method and may select relevant supporting skills inside that contract.
+- **Evidence is not interchangeable.** Static checks do not prove a UI flow; a missing required browser/runtime, manual, operational, or external proof is  `INCOMPLETE`, not `PASS`.
 
 What we explicitly did not take:
 
-- **Unrestricted worker-selected contract changes.** Workers may select
-  supporting skills, but cannot use that freedom to change scope, acceptance
-  criteria, product or architecture decisions, security/data/operational
-  boundaries, or mandatory evidence. They return the decision to the conductor
-  with a rationale.
-- Browser/runtime verification as a POC requirement before browser tooling is
-  installed and validated. It remains a Plan-declared gate; lack of the tool is
-  an explicit incomplete-evidence result.
+- **Unrestricted worker-selected contract changes.** Workers may select supporting skills, but cannot use that freedom to change scope, acceptance criteria, product or architecture decisions, security/data/operational boundaries, or mandatory evidence. They return the decision to the conductor with a rationale.
+- Browser/runtime verification as a POC requirement before browser tooling is installed and validated. It remains a Plan-declared gate; lack of the tool is an explicit incomplete-evidence result.
 
-The distinction is important: we rejected unbounded authority, not Addy's
-adaptive skill discovery. The acceptance rationale is that it keeps the plan
-small enough to be a useful route rather than a pseudo-implementation. The
-rejection rationale is that unrestricted discoveries could silently invalidate
-the business contract or lower the proof required to claim completion.
+The distinction is important: we rejected unbounded authority, not Addy's adaptive skill discovery. The acceptance rationale is that it keeps the plan small enough to be a useful route rather than a pseudo-implementation. The rejection rationale is that unrestricted discoveries could silently invalidate the business contract or lower the proof required to claim completion.
 
 ### From firstmate
 
@@ -134,7 +100,7 @@ This is convergent validation more than a borrow: we arrived at the single-front
 What we took:
 
 - **Single front door.** The conductor is the main conversational surface. Workers should stay behind it.
-- **Durable state beats memory.** Artifacts and logs are canonical. Model memory is a cache.
+- **Durable state beats memory.** Accepted artifacts are canonical. Model memory and exploratory traces are caches until their material conclusions are distilled into an accepted artifact, documentation, or ADR.
 - **Recovery is reconciliation.** On return after context decay, reconstruct from state and live evidence before planning new work.
 - **Escalate only actionable state changes.** Surface blocked, failed, needs-decision, completed, and ready-for-review states rather than every internal step.
 - **Outcome-facing communication.** Report what matters to the user, not orchestration mechanics by default.
@@ -161,8 +127,47 @@ What we left for later:
 
 - Issue tracker as wayfinder persistence surface. We use `.agent-contexts/` artifacts. Blocking-edge concept is portable without tracker integration.
 - Shared domain glossary and ADR writing during think. Requires `CONTEXT.md` convention we haven't adopted yet.
-- Prototype and research dispatch as think-stage investigation tools.
 - The full 13-reviewer CE persona roster. Our 2-worker (default + adversarial) setup is the right scale for a solo developer budget.
+
+## What the rolling workflow clarified
+
+The initial artifact sequence was too coarse. A Brief governs the complete objective, while a Plan should authorize only the next bounded vertical slice. This keeps execution, verification, and review focused on work that can be completed and evidenced now.
+
+```text
+Brief
+  → slice Plan → Operator → Verify → Review
+  → next slice Plan while Brief criteria remain
+  → final Brief-wide Verify → Review
+```
+
+This resolves the mismatch between incremental delivery and Plan-wide verification. A slice can pass for the Brief criteria it advances without claiming the objective is complete. Only cumulative accepted evidence for every Brief criterion permits the final gate.
+
+## What durable planning clarified
+
+Planning output has two distinct states. A `plan-draft` is a durable candidate for reading, adversarial review, revision, and recovery. It remains subordinate to the governing Brief or executable Plan and cannot authorize Act or Verify. The conductor persists each candidate before presenting it, so an interrupted session does not lose the planning record. Drafts are not named in `active.md`; concurrent conductors can prepare future slices while the active Plan remains authoritative. A draft ID is one candidate slice, not one revision: multiple candidates coexist and each is revised in place with a compact revision record. A reviewed draft may be `ready`, which makes it eligible for ordinary publication but does not select it. The conductor resolves which draft to publish through intent-based resolution: explicit name in the current request, focused `@` draft, sole unambiguous ready draft, or a clarification prompt.
+
+A published `plan` is a separate execution snapshot of the resolved draft's current revision; publishing never changes the source draft's identity or turns it into a Plan. The conductor re-reads the current revision before snapshotting it, requires `ready` for ordinary publication, and records the Plan ID and publication time on the draft. Human approval resolves through the same order, with the conductor surfacing the resolved draft, revision, and approval record for affirmation; it permits bounded discovery, not silent changes to scope, acceptance, safety, contracts, or evidence. `active.md` points only at the governing execution authority.
+
+The important refinement is that readiness is durable evidence, not a conversational conclusion. Each draft revision clears its readiness record because a gate result applies to a specific proposal, not to a candidate name forever. Several ready drafts can coexist without a race for authority. Intent resolves publication: an explicit current request wins, then a focused draft, then one unambiguous ready candidate; ambiguity returns to the human instead of letting recency or scan order choose the next slice.
+
+Human approval is intentionally not a second, weaker normal gate. It is a co-development mode for a current draft where proceeding is more useful than fully specifying implementation in advance. It requires explicit affirmation, unresolved items, accepted concerns, and an execution escalation boundary. It bypasses ordinary readiness and successor evidence, but does not grant permission to change scope, acceptance, safety, contracts, or proof silently. Discovery past that boundary returns `NEEDS_CONTEXT`.
+
+This clarified the current authority model. The conductor alone persists artifacts and moves `active.md`; the planner produces candidates; the operator changes code under a Plan; the verifier alone issues PASS/FAIL-style evidence verdicts; the reviewer produces findings; and the judge reconciles supplied reports without inspecting the underlying repository. The roles are deliberately asymmetric because independent evidence is more valuable than a larger pool of agents repeating the same judgment.
+
+The remaining operational limitation is concurrency. The model assumes one conductor writes a particular draft at a time. Revision re-reads prevent accidental stale overwrites in the normal flow, but there is no lock or compare-and-swap protocol for simultaneous writers. That is deferred until concurrent conductors are a demonstrated need rather than a theoretical one.
+
+The same iteration separated uncertainty methods from workflow lanes. Think, Plan, Act, Verify, and Review remain stable lanes. The conductor selects a method from the blocker:
+
+- **Interview** resolves unclear intent before Think can write a Brief.
+- **Prototype** resolves behavior or form through a disposable reaction surface; its result is decision evidence, never production acceptance evidence.
+- **Research** answers bounded factual uncertainty inside Think or Plan. The invoking lane resumes; a Plan-time result returns to Think only when it changes Brief authority.
+- **Wayfinding** is suggested when dependent decisions exceed one session; a bounded destination returns to Think.
+
+This avoids treating Research as a Plan mode or turning exploratory methods into lanes. The stable rule is: the workflow context owns the decision and continuation; the selected method resolves the specific uncertainty.
+
+We also learned to keep the conductor's routing language conceptual and state-gated. Commands remain explicit selectors, but ordinary-language requests use the same model. Examples are regression tools, not default routing content: add one only after observing a persistent boundary misroute that a sharper conceptual signal does not fix.
+
+Finally, capability catalog integration must stay incremental. The workflow owns a practice skill's trigger, inputs, consumed output, authority boundary, and transition; the practice skill retains its method. A large catalog is useful as a candidate backlog, not an instruction to make every skill always active.
 
 ## What we kept as local design
 
@@ -170,16 +175,9 @@ These are our own decisions, not borrowed:
 
 - **Separate verify lane.** Mechanical checks (typecheck, lint, tests) stay as their own stage rather than being folded into act. Matt embeds verification inside implement; CE has no separate verify. We keep it as QA — distinct from implementation and review.
 
-- **Operator self-check.** Before the operator declares its handoff complete, it rereads `brief.md` and `plan.md` and checks the final state against the unit contracts. This catches spec mismatches before burning a verifier cycle, but remains non-authoritative: only the verifier can return `PASS`.
+- **Operator self-check.** Before the operator declares its handoff complete, it rereads the active `brief-<n>.md` and executable `plans/plan-<n>.md` under `.agent-contexts/work/<work-id>/` and checks the final state against the unit contracts. This catches spec mismatches before burning a verifier cycle, but remains non-authoritative: only the verifier can return `PASS`.
 
-- **Artifact boundary.** The Brief records the desired business outcome,
-  acceptance criteria, and non-functional requirements. The Plan records the
-  intended happy path, failure modes, proof strategy, suggested skills, and
-  escalation conditions. The operator chooses detailed implementation method.
-  This is accepted because it keeps planning useful without forcing the planner
-  to anticipate every implementation detail; we reject exhaustive Plan recipes
-  because they duplicate implementation work without the feedback available in
-  the codebase.
+- **Artifact boundary.** The Brief records the desired business outcome,  acceptance criteria, and non-functional requirements. The Plan records the intended happy path, failure modes, proof strategy, suggested skills, and escalation conditions. The operator chooses detailed implementation method. This is accepted because it keeps planning useful without forcing the planner to anticipate every implementation detail; we reject exhaustive Plan recipes because they duplicate implementation work without the feedback available in the codebase.
 
 - **Agent pinning.** CE and Matt achieve rich workflows with zero custom agents — just prompt files. We need pinning because OpenCode subagents inherit the parent model unless explicitly declared. Model routing (cheap operator on minimax-m3, constructive planner/reviewer on DeepSeek V4 Pro, adversarial planner/reviewer on GPT-5.6 Terra, judge on gpt-5.6-sol) requires agent frontmatter. The lesson is not to drop agents but to keep wrappers lean and put reusable behavior in shared skills.
 
@@ -199,7 +197,6 @@ No granular allowlists. Prompt constraints ("Do not edit any files," "Return out
 
 - Tracked idea-stage wayfinding with blocking investigation tickets
 - Shared domain glossary and ADR writing during think
-- Prototype and research dispatch as think-stage investigation tools
 - Non-OpenCode provider adapters (Claude, Codex)
 - Durability and recovery (session checkpoints, resume protocol)
 - Persona-scoped durable logs for collaborative thinking across multiple agent personas
@@ -208,6 +205,8 @@ No granular allowlists. Prompt constraints ("Do not edit any files," "Return out
 ## Emerging durability need
 
 The current collaboration pattern is already exposing a missing primitive: durable per-persona thinking records.
+
+Partially addressed: per-attempt `operator.md`, `verify.md`, and `review.md` preserve structured, role-specific execution evidence. The open problem is exploratory thinking in Think and Plan, and cross-work or cross-provider reasoning that does not authorize, prove, or gate work.
 
 The need is not "OpenCode log" versus "Kiro log." The useful distinction is persona-level:
 
@@ -222,7 +221,7 @@ That suggests a future record shape such as:
 - append major conclusions, evidence, reversals, and open questions
 - later add a clerk-style compaction pass that trims stale or superseded entries while preserving durable signal
 
-This would let multiple agent personas think in parallel across providers without losing the thread or overloading the canonical workflow artifacts.
+This would let multiple agent personas think in parallel across providers without losing the thread or overloading canonical workflow artifacts. It remains deferred: raw traces need explicit provenance, retention, retrieval, and distillation rules before they can become useful institutional memory rather than another noisy archive.
 
 ## Upstream Sources
 
@@ -271,3 +270,5 @@ Distinct from the methodology inspirations in Upstream Sources (which shaped the
 - 2026-07-09: Added Integrations & Infrastructure assessment — open-code-review (`ocr`) as adopting-now review engine on `c9`; Omnigent deferred until multi-harness need returns; Multica noted as cross-machine agent command centre (self-hostable, respects data sovereignty).
 - 2026-07-13: Added the lane-routing direction: stable workflow owners, Plan-declared conditional disciplines, explicit evidence gates, and `INCOMPLETE` for unavailable required browser/runtime proof. Renamed the bounded execution role from typist to operator.
 - 2026-07-13: Corrected the first lane-routing interpretation of Addy's catalog. The hard contract remains conductor/Brief/Plan-owned, but supporting skill discovery is worker-adaptive inside that contract. Added the Brief/Plan/operator boundary and explicit acceptance/rejection rationales.
+- 2026-08-15: Folded rolling slices, uncertainty methods, conceptual state-gated routing, and incremental practice-skill integration into this learning record. The former workflow scratchpad was absorbed and removed.
+- 2026-08-18: Recorded the current human-facing workflow design: durable draft candidates, revision-scoped readiness evidence, intent-based publication, narrow human-approved co-development, and role-separated execution evidence.
