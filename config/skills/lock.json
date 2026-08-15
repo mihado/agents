@@ -13,7 +13,7 @@
       "srcPath": "skills/browser-testing-with-devtools",
       "path": "skills/engineering/browser-testing-with-devtools",
       "commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
-      "sha256": "73640726c8afa212289ca2fb1dfaa2f73eec968d717b1f78448a4fd74d717272"
+      "sha256": "95b91f03f16170568d0e049605aa5fdee6f9273cf9238efd8db0ddcb26d1c6a4"
     },
     "ci-cd-and-automation": {
       "source": "addyosmani/agent-skills",
@@ -258,7 +258,7 @@
       "srcPath": "plugins/kami/skills/kami",
       "path": "skills/design/kami",
       "commit": "8bf6f46f74b5b640fa5612736a5cd24c724b7eca",
-      "sha256": "7037bc3e808c79ca00034a4cfcb8fa7be00dba5eb69626d821bb2e9c063ecb81"
+      "sha256": "08aeec14b67c63b7f03f16d9cd999b02147d1320ec17a941b99db362fab213ce"
     },
     "design-everyday-things": {
       "source": "wondelai/skills",
