@@ -217,10 +217,10 @@
       "srcPath": "skills/productivity/teach",
       "path": "skills/productivity/teach"
     },
-    "writing-great-skills": {
+    "writing-for-agents": {
       "source": "mattpocock/skills",
-      "srcPath": "skills/productivity/writing-great-skills",
-      "path": "skills/productivity/writing-great-skills"
+      "srcPath": "skills/productivity/writing-for-agents",
+      "path": "skills/productivity/writing-for-agents"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",

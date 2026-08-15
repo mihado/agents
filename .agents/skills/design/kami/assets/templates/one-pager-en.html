@@ -290,11 +290,13 @@
     font-weight: 500; border-top: 1pt solid var(--brand); border-bottom: none; color: var(--near-black);
   }
 
-  /* CALLOUT - transparent, single brand bar. No filled container. */
+  /* CALLOUT - ivory fill + a single brand bar, the same shape long-doc and
+     equity-report use. Only the padding tightens for the denser page. */
   .callout {
-    background: transparent;
-    border-left: 1.8pt solid var(--brand);
-    padding: 4pt 0 4pt 14pt;
+    background: var(--ivory);
+    border-left: 2pt solid var(--brand);
+    border-radius: 3pt;
+    padding: 8pt 12pt;
     margin: 10pt 0;
     font-size: 10.5pt;
     line-height: 1.55;
@@ -372,17 +374,17 @@
     <ul class="dash">
       <li>{{Short bullet: a data point, observation, or judgment.}}</li>
       <li>{{Short bullet with <span class="hl">key figure</span>.}}</li>
-      <li>{{Short bullet.}}</li>
+      <li>{{Short bullet: one point per line.}}</li>
     </ul>
   </section>
 
   <section>
     <h2>{{Section two}}</h2>
-    <p>{{One or two sentences.}}</p>
+    <p>{{One or two sentences expanding the claim.}}</p>
     <ul class="dash">
-      <li>{{Short bullet.}}</li>
-      <li>{{Short bullet.}}</li>
-      <li>{{Short bullet.}}</li>
+      <li>{{Short bullet: a data point, observation, or judgment.}}</li>
+      <li>{{Short bullet with <span class="hl">key figure</span>.}}</li>
+      <li>{{Short bullet: one point per line.}}</li>
     </ul>
   </section>
 </div>
