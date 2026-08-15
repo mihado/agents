@@ -1,46 +1,84 @@
-# Plan and Research Branch
+# Plan
 
-Resolve `.agent-contexts/active.md`, then read the selected work's current Brief (`brief-<n>.md`). If no active work exists but the request is settled, create one before writing the first artifact. If no Brief exists, write a minimal Brief from the settled request or return the user to Think. Choose one explicit route:
+Execution planning for the next bounded vertical slice.
 
-Apply this precedence order before dispatch:
+## Prerequisites
 
-1. Return to Think when the Brief lacks a settled outcome, acceptance criteria, hard constraints, decision owner, or required safety/non-functional commitments.
-2. Select research when the user explicitly asks for research, or when a bounded evidence question materially changes the approved route, architecture, scope, deployment topology, external integration, data model, security boundary, or acceptance evidence.
-3. Select execution only when the Brief is settled and remaining unknowns are confined to implementation mechanics, such as local API shape, naming, file layout, or test-harness specifics. They must not change the approved route, deployment topology, external integration, or acceptance evidence.
-4. Select elevated execution only after execution is eligible and broad/cross-system touchpoints, auth/security, data-model changes, concurrency/orchestration risk, or unclear verification require independent adversarial planning.
-5. Do not use compatibility tracers, spikes, or later gates inside an execution Plan to defer a route-determining decision. Return that decision to research.
+Resolve `.agent-contexts/active.md` and read the active Brief. If no active work exists but the request is settled, follow the bootstrap procedure in [references/think.md](think.md) (create work directory, write Brief, publish `active.md`) before proceeding. If no Brief exists, return to Think.
 
-After selecting a route under this precedence order, use its matching dispatch below.
+## Eligibility
 
-- **execution:** dispatch `planner` with `Required skill: wf-planning`, `Mode: execution`.
-- **elevated execution:** dispatch `planner` and `planner-adversarial` in parallel with `wf-planning` in `execution` and `adversarial` modes.
-- **research:** only for a bounded decision question. Dispatch the configured `planner` with `Required skill: wf-research`, `Mode: research`, and the configured `planner-adversarial` with `Required skill: wf-research`, `Mode: adversarial`; require independent source inspection.
+Execution planning is eligible when:
+- The Brief has a settled outcome, acceptance criteria, hard constraints, decision owner, and required safety/non-functional commitments.
+- Remaining unknowns are confined to implementation mechanics (local API shape, naming, file layout, test-harness specifics) that cannot change the approved route, deployment topology, external integration, or acceptance evidence.
 
-Do not substitute a generic worker for a named lane worker. Named workers enforce the provider's selected model, permissions, and wrapper boundary. If a required named worker or `judge` is unavailable, stop the lane as `BLOCKED` and name the unavailable binding.
+If a bounded factual question blocks route selection, invoke `wf-research`. Persist evidence under the active work. Resume Plan when the evidence remains within Brief authority; return to Think when it changes outcome, ACs, hard constraints, or settled decisions.
 
-One substantive worker lets the conductor write the result directly. Two or more workers require `judge` with `Required skill: wf-judge`. Write execution output to `.agent-contexts/work/<work-id>/plans/plan-<n>.md`. For research, write the constructive and adversarial reports to `.agent-contexts/work/<work-id>/research/research-<n>/planner.md` and `planner-adversarial.md`, dispatch `judge` with both reports marked `[RESEARCH SYNTHESIS]`, then write the synthesis to `synthesis.md`.
+## Rigor selection
 
-All artifacts include `wf-artifact/v1` metadata. A persisted execution Plan must include the active Brief identity, upstream research identities, observed target, `artifact_role: plan`, and exactly `readiness: implementation-ready`. A non-ready route is a Think outcome or research synthesis, never a Plan. Append small revisions as dated Plan amendments. When a replacement is necessary, write the next Plan number with `supersedes` and `supersession_reason`; never overwrite the prior Plan. Update `active.md` frontmatter `current_artifact_path` and `current_artifact_id` to a Plan only after the complete Plan passes this readiness gate. The path must be canonical and relative to `.agent-contexts/` (e.g. `work/<work-id>/plans/plan-01.md` or `work/<work-id>/research/research-02/synthesis.md`). Update the body Markdown link to match. Never use an artifact ID alone as the pointer.
+Apply elevation before standard:
 
-Research is complete only when both named-worker reports and the judge synthesis are persisted. Reports returned only in session are incomplete research, not a decision record.
+1. **Elevated execution** when an elevation predicate applies: broad/cross-system touchpoints, auth/security, data-model changes, concurrency/orchestration risk, or unclear verification.
+2. **Standard execution** when no elevation predicate applies.
 
-After persisting research, keep the synthesis as the active artifact and present its recommendation, unresolved human decisions, and the decision it unlocks. Present alternatives or material tradeoffs only when the synthesis reports them. Request an explicit user disposition: `adopt`, `reject`, or `adopt with changes`. Do not dispatch `wf-planning`, write an execution Plan, or revise the Brief in the same response. After a later explicit disposition, return to Think and write a superseding `brief-<n>.md` that records the adopted decision and research artifact IDs before entering execution planning.
+## Dispatch
 
-Execution completion:
+### Standard execution (single planner)
+
+Dispatch `planner` with `Required skill: wf-planning`, `Mode: execution`. Write the result directly as the Plan.
+
+### Elevated execution (revision loop)
+
+1. Dispatch `planner` with `Required skill: wf-planning`, `Mode: execution`. The planner returns a draft Plan.
+2. Dispatch `planner-adversarial` with `Required skill: wf-planning`, `Mode: adversarial`, supplying the draft Plan.
+3. Dispatch `judge` with `Required skill: wf-judge`, supplying the draft Plan and adversarial critique marked `[PLAN ADJUDICATION]`.
+4. **Route on disposition:**
+   - `replan-required`: stop. Return the adjudicated findings to Think or Research.
+   - `no-actionable-findings`: proceed to final check (step 5) with the original Plan.
+   - `revise-plan`: dispatch `planner` again with the original Brief, draft Plan, and adjudicated findings. Proceed to final check (step 5) with the revised Plan.
+5. **Final adversarial check:** dispatch `planner-adversarial` with the candidate Plan marked `[FINAL GATE]`. Persist only on `no-actionable-concerns`. On `actionable-concerns`, escalate to the user.
+
+One revision round maximum. The final adversarial check is a binary acceptance gate.
+
+Use only configured named workers. If a required named worker or `judge` is unavailable, stop as `BLOCKED` and name the unavailable binding.
+
+## Persistence (slice Plan)
+
+Each Plan is the implementation-ready contract for one bounded vertical slice, not the complete objective. Write to `.agent-contexts/work/<work-id>/plans/plan-<n>.md`. Must include the active Brief identity, upstream artifacts, observed target, `artifact_role: plan`, and exactly `readiness: implementation-ready`.
+
+**Successor lineage gate:** For `plan-02` onward as a *new slice* (not a replacement), `upstream_artifacts` must include:
+- The prior slice Plan ID (e.g. `plan-01`)
+- The prior slice's accepted Verify artifact ID (with `PASS` verdict)
+- The prior slice's accepted Review artifact ID (with `no-actionable-findings` disposition)
+
+The conductor validates this lineage before publishing. A successor Plan without accepted predecessor evidence is `BLOCKED — lineage gate`.
+
+**Superseding replacement gate:** When an existing Plan needs semantic correction (defective, stale, failed, or invalidated by new evidence), write a replacement Plan with:
+- `supersedes: plan-<prev>`
+- `supersession_reason: <what changed>`
+- `upstream_artifacts` includes the replaced Plan ID and the evidence or mismatch that motivated replacement
+
+A superseding Plan does *not* require accepted predecessor PASS/Review. It resets the execution contract.
+
+**Publishing:** Update `active.md` only after the Plan passes its applicable gate. Reset `latest_attempt` to `null` on any new Plan.
+
+Successive slice Plans are sequential contracts. Use `supersedes` only to replace a defective or obsolete Plan.
+
+All artifacts include `wf-artifact/v1` metadata.
+
+## Post-slice routing
+
+After a successful slice (accepted Operator → Verify → Review), the conductor compares slice evidence with the Brief:
+
+- **Work remains:** plan the next slice from the current repository state and accepted evidence. Return to Plan dispatch.
+- **Route, acceptance, or safety boundary changed:** return to Research or Think.
+- **All Brief AC IDs covered:** run final Brief-wide Verify and Review (see [references/act.md](act.md)).
+
+## Completion format
 
 ```md
 ## Plan Complete
 - Plan written to `.agent-contexts/work/<work-id>/plans/plan-<n>.md`
+- `active.md` updated
 - Next: run `/act` or inspect the plan
-```
-
-Research completion:
-
-```md
-## Research Complete
-- Constructive report: `.agent-contexts/work/<work-id>/research/research-<n>/planner.md`
-- Adversarial report: `.agent-contexts/work/<work-id>/research/research-<n>/planner-adversarial.md`
-- Synthesis: `.agent-contexts/work/<work-id>/research/research-<n>/synthesis.md`
-- Decision required: `adopt`, `reject`, or `adopt with changes`
-- Next: <one bounded decision or execution Brief>
 ```
