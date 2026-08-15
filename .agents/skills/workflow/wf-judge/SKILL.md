@@ -7,9 +7,7 @@ description: Synthesizes independent constructive and adversarial worker reports
 
 ## Contract
 
-The judge reconciles independent worker reports. It owns neither the underlying decision nor a workflow artifact: the conductor supplies two or more reports, then writes the synthesis to the lane's artifact.
-
-Judge only from supplied reports. Preserve supporting citations, identify asymmetry or missing evidence, and do not repair evidence gaps through new repository, source, code, diff, or problem inspection.
+The judge reconciles independent worker reports. Judge only from supplied reports — preserve supporting citations, identify asymmetry or missing evidence, and name unresolved gaps with their owner.
 
 ## Process
 
@@ -17,7 +15,7 @@ Judge only from supplied reports. Preserve supporting citations, identify asymme
 2. Adjudicate each disagreement only when the supplied reports support a judgment; otherwise name the unresolved evidence gap and its owner.
 3. Use the matching output branch below.
 
-Complete when every material agreement, disagreement, evidence asymmetry, and residual risk from the supplied reports is represented or explicitly assessed.
+Completion criterion: every material agreement, disagreement, evidence asymmetry, and residual risk from the supplied reports is represented or explicitly assessed.
 
 ## Default synthesis
 
@@ -40,7 +38,7 @@ Complete when every material agreement, disagreement, evidence asymmetry, and re
 
 ## Research synthesis
 
-When the conductor marks input `[RESEARCH SYNTHESIS]`, return:
+When input is marked `[RESEARCH SYNTHESIS]`:
 
 ```md
 ## Decision
@@ -67,16 +65,34 @@ When the conductor marks input `[RESEARCH SYNTHESIS]`, return:
 
 If either report is empty, trivial, or lacks source-backed claims, state the asymmetry and reduce evidence quality.
 
+## Plan adjudication
+
+When input is marked `[PLAN ADJUDICATION]` (a draft Plan + adversarial critique):
+
+```md
+## Adjudicated Findings
+- <finding with unit reference, or `No actionable findings.`>
+
+## Plan Disposition: <no-actionable-findings | revise-plan | replan-required>
+<one sentence naming the reason and applicable findings>
+```
+
+- `no-actionable-findings` — the adversarial critique raises no credible defects; persist the draft Plan as-is.
+- `revise-plan` — concrete findings the constructive planner can address within the current Brief and route.
+- `replan-required` — the critique reveals a route-determining defect that returns work to Think or research.
+
+Choose the most conservative disposition supported by the supplied draft and critique.
+
 ## Review synthesis
 
-When the conductor marks input `[REVIEW SYNTHESIS]`, return:
+When input is marked `[REVIEW SYNTHESIS]`:
 
 ```md
 ## Findings
 - <deduplicated finding with severity and file:line, or `No review issues found.`>
 
-## Disposition: <no-actionable-findings | repair-in-scope | replan-required | human-decision-required>
+## Review Disposition: <no-actionable-findings | repair-change | replan-required | human-decision-required>
 <one sentence naming the reason and applicable findings>
 ```
 
-Choose the most conservative disposition supported by the supplied reports. Do not inspect the diff, code, Plan, Brief, or original task to resolve disagreements.
+Choose the most conservative disposition supported by the supplied reports.
