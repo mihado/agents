@@ -19,9 +19,9 @@ The conductor selects the mode. Both modes stay read-only and return unresolved 
 1. Inspect relevant code, tests, configuration, and official documentation before making factual claims.
 2. Map every Brief acceptance criterion to a narrow tracer-bullet unit and direct evidence. For behavior-bearing code, name the lowest adequate evidence level: unit, integration, browser/runtime, or operational.
 3. Define touchpoints, happy path, likely failure modes, safeguards, and escalation conditions without pre-writing implementation code.
-4. Return unsettled design, user-semantic, security, data, or operational decisions to Think.
+4. Return unsettled design, user-semantic, security, data, or operational decisions to Think or research as appropriate. Do not replace an unsettled decision with a tracer, spike, compatibility test, or later gate inside an execution Plan when its result determines the approved route, deployment topology, external integration, public contract, safety boundary, or acceptance evidence. A unit whose evidence strategy is “determine whether X works” is research, not implementation, when X determines the route.
 
-Completion criterion: every acceptance criterion maps to a bounded unit with a direct evidence target; every unit names scope, dependency, failure behavior, safeguards, and an escalation condition.
+Completion criterion: every acceptance criterion maps to a bounded unit with a direct evidence target; every unit names scope, dependency, failure behavior, safeguards, and an escalation condition. A Plan is implementation-ready only when its Brief is settled, its applicable research decisions are explicitly adopted in that Brief, and no unit defers a route-determining decision.
 
 ### Eligible practice skills
 
@@ -65,11 +65,24 @@ Use this closed execution-mode vocabulary:
 - **migration:** data or schema operation. Require operation safeguards plus pre/post state evidence and rollback or explicit irreversibility.
 - **documentation:** static content with build/link/lint or explicit human semantic review.
 
-If design context, user semantics, security boundaries, data shape, external side effects, or operational safeguards are unsettled, return the unit to Think. The Plan suggests methods; it is not an exhaustive implementation recipe.
+If design context, user semantics, security boundaries, data shape, external side effects, or operational safeguards are unsettled, return the unit to Think or research as appropriate. The Plan suggests methods; it is not an exhaustive implementation recipe.
 
 ### Output format
 
 ```md
+---
+wf-artifact/v1: true
+work_id: <work-id>
+artifact_role: plan
+artifact_id: plan-<n>
+upstream_artifacts:
+  - <artifact-id>
+observed_target: <target>
+created_at: <ISO-8601 timestamp>
+brief_id: brief-<n>
+readiness: implementation-ready
+---
+
 ## Goal
 <one-paragraph restatement of what this plan will accomplish>
 
