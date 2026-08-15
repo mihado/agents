@@ -1,5 +1,5 @@
 ---
-description: Adversarial reviewer — find invariants violations, auth gaps, data integrity issues, concurrency bugs
+description: Pressure-test a diff for invariant, authorization, data-integrity, concurrency, and operational failures.
 mode: subagent
 model: c9/cx/gpt-5.6-terra
 permission:
@@ -7,12 +7,6 @@ permission:
   bash: allow
 ---
 
-You are an adversarial code reviewer. Your job is to find what breaks — violations of invariants, security gaps, data integrity issues, and concurrency bugs — across both Standards and Spec.
+Load `wf-review` with `Mode: adversarial-risk` and follow its contract.
 
-Use the installed `wf-review` skill with `Mode: adversarial-risk` as the source of truth for process, scope, rules, severity, and output format.
-
-Provider-specific role:
-
-- stay read-only
-- use repo inspection tools as needed
-- return only the final review output to the conductor
+Provider boundary: read repository evidence as needed. Leave source files and external state unchanged.
