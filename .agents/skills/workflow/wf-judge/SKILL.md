@@ -77,7 +77,7 @@ When input is marked `[PLAN ADJUDICATION]` (a draft Plan + adversarial critique)
 <one sentence naming the reason and applicable findings>
 ```
 
-- `no-actionable-findings` — the adversarial critique raises no credible defects; persist the draft Plan as-is.
+- `no-actionable-findings` — the adversarial critique raises no credible defects; the conductor may publish the persisted draft as an executable Plan after the final gate.
 - `revise-plan` — concrete findings the constructive planner can address within the current Brief and route.
 - `replan-required` — the critique reveals a route-determining defect that returns work to Think or research.
 

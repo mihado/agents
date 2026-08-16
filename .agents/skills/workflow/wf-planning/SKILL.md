@@ -7,7 +7,7 @@ description: Owns execution-plan production and adversarial plan pressure-testin
 
 ## Mode selection
 
-- **execution:** turn a settled Brief into an evidence-grounded execution plan.
+- **execution:** turn a settled Brief into an evidence-grounded draft execution plan.
 - **adversarial:** independently pressure-test a proposed route, unit shape, safeguards, and evidence. Return a report only.
 
 The conductor selects the mode.
@@ -23,7 +23,7 @@ The conductor selects the mode.
 5. Define touchpoints, happy path, failure modes, safeguards, and escalation conditions.
 6. Return unsettled route-determining decisions to Think or research. A unit whose evidence strategy is "determine whether X works" is research when X determines the route, deployment topology, external integration, public contract, safety boundary, or acceptance evidence. If package manager, framework, runtime, or test tooling is unsettled, that is not an implementation detail — return to Think or research.
 
-Completion criterion: the slice delivers one observable bounded behavior; every unit names scope, dependency, failure behavior, safeguards, and an escalation condition; the Brief Coverage section declares which AC IDs are advanced and what evidence proves them. Implementation-ready requires a settled Brief, adopted research decisions, and no unit deferring a route-determining decision.
+Completion criterion: the slice delivers one observable bounded behavior; every unit names scope, dependency, failure behavior, safeguards, and an escalation condition; the Brief Coverage section declares which AC IDs are advanced and what evidence proves them. A draft is ready for adversarial review when it has a settled Brief, adopted research decisions, and no unit deferring a route-determining decision. Record irreducible implementation uncertainty as an explicit unresolved item and escalation boundary; the human may publish that bounded Plan.
 
 ### Eligible practice skills
 
@@ -44,26 +44,18 @@ For the execution-unit contract template and execution-mode vocabulary, load [re
 ---
 wf-artifact/v1: true
 work_id: <work-id>
-artifact_role: plan
-artifact_id: plan-<n>
+artifact_role: plan-draft
+artifact_id: draft-<candidate-key>
 upstream_artifacts:
-  # Successor slice (plan-02+):
-  - <brief-id>
-  - <prior plan-id>
-  - <prior attempt-verify-id with PASS>
-  - <prior attempt-review-id with no-actionable-findings>
-  # OR Superseding replacement:
-  - <brief-id>
-  - <replaced plan-id>
-  - <evidence motivating replacement>
-  # OR First slice (plan-01):
   - <brief-id>
 observed_target: <target>
 created_at: <ISO-8601 timestamp>
 brief_id: brief-<n>
-readiness: implementation-ready
-supersedes: <plan-id, only for replacements>
-supersession_reason: <only for replacements>
+candidate_key: <descriptive-kebab-case>
+readiness: draft
+revision: <integer, starting at 1>
+revised_at: <ISO-8601 timestamp>
+revision_summary: <initial draft, or concise description of the latest revision>
 ---
 
 ## Slice Outcome
@@ -97,6 +89,10 @@ supersession_reason: <only for replacements>
 ```
 
 **Brief Coverage rules:** enumerate every Brief AC exactly once using a closed status (`advanced`, `out-of-slice`, `already-met`, `cumulative-only`). Every AC ID must exist in the governing Brief.
+
+**Draft authority:** return a `plan-draft` only. It is reviewable and recoverable, but does not authorize implementation or verification. Use a descriptive `candidate_key` (e.g. `agent-chat-foundation`) rather than a sequence number. The conductor persists it, applies the planning gate, and sets `readiness: ready` when it passes. The conductor resolves which draft to publish through intent-based resolution and writes a separate `plan-<n>` artifact.
+
+**Draft revisions:** revisions update the same `candidate_key` in place and increment `revision`. Create a new draft ID only for a distinct candidate slice or alternative.
 
 **Implementation Units:** ordered parts of the current slice executing in one Operator invocation. If a unit can be independently implemented and verified as observable behavior, it should be a separate slice Plan.
 
@@ -146,4 +142,4 @@ When used as a **final gate** in elevated planning (the conductor marks input `[
 <one sentence naming the result>
 ```
 
-The conductor persists the Plan only on `no-actionable-concerns`.
+The conductor changes the persisted draft to `readiness: ready` only on `no-actionable-concerns`.

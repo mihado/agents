@@ -42,4 +42,4 @@ Return this format exactly. Only the verifier issues `PASS`.
 
 ## Boundaries
 
-Stay within Plan scope and declared evidence strategy. Return `BLOCKED` or `NEEDS_CONTEXT` with the exact gap when the Plan is wrong, underspecified, or contradicted by the repository. Return the execution result to the conductor; the conductor writes workflow artifacts.
+Stay within Plan scope and declared evidence strategy. Return `BLOCKED` or `NEEDS_CONTEXT` with the exact gap when the Plan is wrong, underspecified, or contradicted by the repository. For a human-approved Plan, return `NEEDS_CONTEXT` when discovery crosses its `execution_escalation_boundary`; approval does not authorize a scope, acceptance, safety, contract, or evidence change. Return the execution result to the conductor; the conductor writes workflow artifacts.

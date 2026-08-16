@@ -4,7 +4,7 @@ Standalone `/verify` follows the same safety gate and attempt model as Act.
 
 ## Plan gate
 
-1. Resolve `active.md`. Require `current_artifact_path` pointing to an artifact with `artifact_role: plan` and `readiness: implementation-ready`. Without an implementation-ready Plan, return `BLOCKED — no Plan gate` before dispatch.
+1. Resolve `active.md`. Require `current_artifact_path` pointing to an artifact with `artifact_role: plan` and `readiness: implementation-ready|human-approved`. A human-approved Plan must include its `approval` record. Without an executable Plan, return `BLOCKED — no Plan gate` before dispatch.
 
 ## Attempt creation
 

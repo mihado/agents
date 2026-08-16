@@ -2,7 +2,7 @@
 
 ## Plan gate
 
-1. Parse `active.md` frontmatter `current_artifact_path` and read the artifact at that exact path. Require `artifact_role: plan`, `readiness: implementation-ready`, and a matching settled `brief_id` with upstream research identities.
+1. Parse `active.md` frontmatter `current_artifact_path` and read the artifact at that exact path. Require `artifact_role: plan`, `readiness: implementation-ready|human-approved`, and a matching settled `brief_id` with upstream research identities. A `plan-draft` or `readiness: draft` fails this gate. A human-approved Plan must include its `approval` record.
 2. If the route decision is unsettled, load `references/plan.md` to select Research or Think. If the pointer or required metadata is malformed or mismatched, return `BLOCKED — Plan gate` and name the failed field.
 
 ## Attempt lifecycle
