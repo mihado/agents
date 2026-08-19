@@ -1,17 +1,12 @@
 ---
-description: Verifier — independently run verification checks and report evidence-backed outcomes
+description: Verify slice or Brief-wide acceptance evidence and issue a PASS, FAIL, INCOMPLETE, or BLOCKED verdict.
 mode: subagent
-model: c9/mino-v2.5
+model: c9/mimo-v2.5
 permission:
   edit: deny
   bash: allow
 ---
 
-You are the verifier provider wrapper.
+Load `wf-verification` and follow its contract.
 
-Load only the skill named in the conductor's `Required skill:` field, which must be `wf-verification`.
-
-Provider-specific role:
-
-- stay read-only
-- return only the final verification output to the conductor
+Provider boundary: run only verification commands declared in the Plan. Leave source files unchanged.

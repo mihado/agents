@@ -1,10 +1,12 @@
 # Provider Workflow
 
-Date: 2026-07-13
+Date: 2026-08-15
 
 This repository is the source of truth for a user-global agent workflow: shared skills, provider bindings, and the `apm` install/check path that makes them reproducible across machines. It does not contain project-scoped agents.
 
-OpenCode is the reference harness because it exposes explicit agent roles, model pins, permissions, commands, and subagent dispatch. Claude, Codex, and Kiro are adapters: they preserve workflow semantics where their harnesses allow them, but do not redefine the contract.
+This document is a human-readable architecture map. Workflow skills and their references remain authoritative for executable behavior and exact artifact schemas.
+
+OpenCode is the reference harness because it exposes explicit agent roles, model pins, permissions, commands, and subagent dispatch. It is the complete implementation. Kiro currently supports reviewer bindings (`reviewer`, `reviewer-adversarial`) but they are not production ready. Claude and Codex receive shared instructions and skills but do not yet have equivalent workflow agents or commands.
 
 ## Workflow at a Glance
 
@@ -12,190 +14,266 @@ The workflow is a thin dispatcher over focused skills, not a fixed agent topolog
 
 ```text
 user request
-  -> conductor chooses a lane and rigor
-  -> stable lane owner + applicable supporting practices
-  -> explicit artifact or evidence result
+  → conductor chooses a lane and rigor
+  → stable lane owner + applicable supporting practices
+  → explicit artifact or evidence result
 ```
 
 ```text
-idea -> think -> plan -> act -> verify -> review
+uncertainty → Think → Brief → Plan → Act → Verify → Review
+                                      ↑                │
+                                      └── next slice ──┘
 ```
 
 The conductor is the everyday front door; commands are optional ways to select a lane. Small clear work may stay lightweight, but follows the same authority and evidence boundaries.
 
 [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) is the authoritative executable contract for routing, escalation, artifact authority, recovery, and retries.
 
-| Lane | Workflow owner | Result |
+### Current design
+
+The workflow separates deciding, authorizing, changing, proving, and judging work. The conductor is the only component that moves durable workflow state or changes execution authority. Workers provide bounded reports or changes inside that authority; no worker can promote its own output into the next stage. The lane loop above is the same workflow at a higher level; this is its execution view.
+
+```text
+Human intent
+  → conductor settles or records the objective
+  → planner proposes a draft
+  → conductor validates and publishes an executable slice
+  → operator changes the repository
+  → verifier establishes evidence
+  → reviewer evaluates conformance and risk
+```
+
+Three rules keep the design lightweight without making it loose:
+
+- A Brief owns the full objective and its acceptance criteria; one executable Plan owns only the next bounded vertical slice.
+- A draft is durable collaboration state, while an executable Plan is the sole authority for Act and Verify.
+- Evidence is role-specific: an operator reports work, a verifier issues verdicts, and a reviewer raises findings. No positive result silently substitutes for another role's evidence.
+
+Planning and review rigor scale with uncertainty and risk. The normal path uses one planner and a closed readiness gate. Material route, safety, contract, or acceptance uncertainty elevates through research, adversarial planning, or human decision rather than being concealed inside implementation.
+
+| Lane | Stable owner | Output |
 | --- | --- | --- |
-| Idea | conductor | Intent, scope, and constraints are settled before a Brief. |
-| Think | conductor | Work-local Brief. |
-| Plan | `wf-planning` or `wf-research` | Work-local Plan, or bounded research artifacts. |
-| Act | `wf-execution` | Approved work and a concise Operator Result. |
-| Verify | `wf-verification` | Work-local verification artifact with `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
-| Review | `wf-review` | Standards/Spec findings with `file:line`; never a verification verdict. |
-| Ship | conductor | Explicit release request with rollback and operational proof. |
+| Think | conductor | Brief (`brief-<n>.md`). |
+| Plan | `wf-planning` | Durable draft for one bounded slice; the conductor publishes the executable Plan. |
+| Act | conductor (orchestrates `wf-execution`, `wf-verification`, `wf-review`) | Operator result + verification + review evidence. |
+| Verify | `wf-verification` | Verification artifact: `PASS`, `FAIL`, `INCOMPLETE`, or `BLOCKED`. |
+| Review | `wf-review` | Standards/Spec findings with disposition. |
 
-Lane ownership is fixed. Workers may select applicable practice skills inside their assigned lane and record material use, but return any change to scope, acceptance criteria, safety boundaries, or mandatory evidence to the conductor.
+Ship (release automation with rollback and operational proof) is an architectural extension outside the current kernel. Supporting practices (`shipping-and-launch`, `observability-and-instrumentation`, `git-workflow-and-versioning`) remain available for explicit release work.
 
-## Workflow Kernel and Practices
+### Uncertainty methods
 
-The workflow kernel is owned by this repository. It defines lane authority, artifacts, statuses, evidence floors, and escalation. Practice skills are optional methods selected within that boundary: they may strengthen evidence but cannot change the workflow contract. Provider adapters may change model routing, permissions, commands, and agent files, not kernel authority.
+The conductor classifies the blocker before advancing work. These methods are not workflow lanes; they resolve uncertainty for Think or Plan.
 
-### Workflow kernel
-
-| Skill | Lane | Mode / boundary |
+| Blocker | Method | Result |
 | --- | --- | --- |
-| `wf-conductor` | all | Shared control contract. Owns routing, artifacts, recovery, and bounded retries; no practice catalog. |
-| `wf-planning` | execution Plan | `execution` writes a work-local Plan; `adversarial` pressure-tests broad, security-sensitive, data, concurrency, operational, or unclear-verification work. |
-| `wf-research` | research Plan | `research` gathers bounded decision evidence; `adversarial` seeks contrary evidence. Writes work-local research artifacts, never a Plan. |
-| `wf-execution` | Act | Applies approved, bounded units and returns a concise execution result. |
-| `wf-verification` | Verify | Sole owner of `PASS`, `FAIL`, `INCOMPLETE`, and `BLOCKED`. |
-| `wf-review` | Review | `standards-spec` by default; `adversarial-risk` for auth, data, concurrency, broad, or high-risk diffs. |
-| `wf-judge` | synthesis | Reconciles worker reports only; the conductor owns the resulting lane artifact. |
+| Intent is unclear | `interview-me` | Confirmed intent feeds Think. |
+| Behavior or form needs a concrete reaction | `prototype` | Disposable reaction surface and recorded decision feed Think. |
+| A bounded factual question blocks Think or Plan | `wf-research` | Source-backed evidence returns to the invoking lane. |
+| The destination exceeds one session of dependent decisions | Suggest `wayfinder` | Bounded destination feeds Think. |
 
-Recovery is a progressive-disclosure branch of `wf-conductor`, not a separate workflow skill.
+Think invokes Research when evidence is required to settle a Brief. Plan invokes it when evidence is required to select an implementation route. A Plan-time result returns to Think when it changes the Brief's outcome, acceptance criteria, hard constraints, or settled decisions. Standalone factual requests use normal research behavior without creating workflow state.
 
-### Practice catalog
+Prototype code is decision evidence, not production evidence: it cannot satisfy Brief acceptance criteria or enter Act lineage.
 
-| Skill | Lane | Trigger / boundary |
+### Rolling slices
+
+The Brief governs the complete objective. Each Plan authorizes one bounded vertical slice with explicit Brief-criterion coverage and focused evidence. Accepted slices return to Plan until cumulative accepted evidence covers every Brief criterion; only then does the conductor run final Brief-wide verification and review.
+
+## Artifact Lifecycle
+
+A work is one coherent, human-selected objective. The conductor creates work immediately before the first durable artifact.
+
+### State machine
+
+```text
+No work
+  → Brief (Think settles intent)
+    → Plan draft (durable review state)
+    → Executable Plan (publication)
+      → Execution attempts (pointer stays on Plan)
+        → Completion candidate (user confirms closure)
+          → Completed
+
+Any active state → Abandoned (user decision)
+```
+
+### Pointer semantics
+
+`active.md` selects the one active work. Its `current_artifact_path` tracks the governing Brief or executable Plan. Drafts remain outside that pointer in `plans/`, so other conductors may prepare and review future slices without changing execution authority. `@<candidate-key>.draft.md` focuses one draft for the current conversation without changing the pointer. A reviewed draft may be `ready`, but readiness means eligible rather than selected; readiness is per revision, and any subsequent revision resets it to `draft`. The conductor resolves which draft to publish through intent-based resolution (explicit name in the current request, focused `@` draft, or the sole unambiguous ready draft) and re-reads the current revision before writing the Plan. During execution, the pointer stays on the governing Plan; `latest_attempt` tracks execution progress separately.
+
+| Event | Pointer moves to | `latest_attempt` |
 | --- | --- | --- |
-| `interview-me` | Idea / Think | Unresolved user intent, priorities, scope, or constraints. |
-| `idea-refine` | Idea | Stress-test a candidate idea after basic intent is known. |
-| `wayfinder` | Idea | Large or explicitly requested discovery; not routine Think work. |
-| `source-driven-development` | Think / Plan / conditional Act | Ground a current library, SDK, service, or upstream fact; Act escalates if it invalidates the settled route. |
-| `spec-driven-development` | Think | Requirements remain materially incomplete after discovery. |
-| `api-and-interface-design` | Plan / conditional Act | Public API or module contract; Act implements, not redefines, the settled contract. |
-| `domain-modeling` | Plan | Domain vocabulary, ownership, or boundary change. |
-| `security-and-hardening` | Plan / conditional Act | Untrusted input, auth, storage, tenant boundary, or third-party integration. |
-| `deprecation-and-migration` | Plan / conditional Act | System/API removal, user migration, or schema/data migration. |
-| `ci-cd-and-automation` | Plan / conditional Act | Build, deployment, quality-gate, or CI pipeline change. |
-| `hallmark` | execution Plan | Greenfield or full-page visual direction. |
-| `impeccable` | execution Plan | Settled product UI, component craft, or frontend polish. |
-| `frontend-ui-engineering` | execution Plan / Act | Settled UI implementation mechanics. |
-| `test-driven-development` | conditional Act | Focused automated coverage is feasible; strengthens proof. |
-| `incremental-implementation` | conditional Act | Multi-file or high-blast-radius work benefits from small verified slices. |
-| `debugging-and-error-recovery` | conditional Act | Concrete failure or unexpected behavior needs root-cause analysis. |
-| `performance-optimization` | conditional Act | A measured or explicit performance requirement applies. |
-| `browser-testing-with-devtools` | Verify | The Plan requires browser proof and working tooling exists. |
-| `code-review-and-quality` | Review | Extra multi-axis quality review is needed. |
-| `shipping-and-launch` | Ship | Explicit production-launch request. |
-| `observability-and-instrumentation` | Ship | Production visibility is required. |
-| `git-workflow-and-versioning` | Ship | Explicit commit, release, tag, or versioning request. |
+| Think writes Brief | `brief-<n>.md` | `null` |
+| Research evidence persisted | unchanged; invoking lane resumes | `null` |
+| Plan draft persisted or revised | unchanged | unchanged |
+| Plan published (ordinary or human-approved) | `plans/plan-<n>.md` | `null` |
+| Attempt starts | unchanged (stays on Plan) | `execution/attempt-<n>` |
+| Work closed | unchanged | unchanged |
 
-## Decisions, Evidence, and Artifacts
-
-| Artifact or role | Owns | Does not own |
-| --- | --- | --- |
-| Brief | Outcome, scope, acceptance criteria, hard constraints, and non-functional requirements | Detailed implementation route or helper choices |
-| Plan | Route, touchpoints, failure modes, evidence strategy, safeguards, suggested skills, and escalation conditions | An exhaustive implementation recipe or exclusive tool list |
-| Operator | Implementation method and supporting-skill selection within an approved unit | Changing the outcome, route, mandatory evidence, or safety boundaries without escalation |
-
-Non-functional requirements are outcome commitments in the Brief; mechanisms belong in the Plan or implementation. Plans recommend supporting skills but do not restrict the operator from adding tests or stricter proof.
-
-Each execution unit declares scope, intent, dependencies, failure modes, evidence strategy, safeguards, suggested skills, and escalation conditions. Use the proof appropriate to the work: focused tests where feasible for behavior-bearing code; runtime, browser, manual, operational, or external proof when the Plan requires it. Plans name the lowest adequate evidence level for behavior-bearing code: unit, integration, browser/runtime, or operational. Static review may identify potential performance impact, but measured performance claims require declared measurement evidence. Missing declared proof is `INCOMPLETE`, never `PASS`.
-
-Elevate planning or review for broad/cross-system work, auth or security impact, data or migration changes, concurrency risk, irreversible operations, or unclear verification. Act retries only a repairable `FAIL` with a concrete repair hypothesis and safe retry state. `INCOMPLETE` and `BLOCKED` stop for human disposition; the operator never declares `PASS`.
-
-The conductor is the only workflow-artifact writer. A work is one coherent, human-selected objective. It can be a feature, bug, investigation, migration, review-only change, or operational task.
-
-The conductor creates work immediately before the first durable artifact. `/think` is one route to that boundary, not a prerequisite: a clear `/plan`, bounded research request, or escalated `/act` may create work. Small clear direct work remains artifact-free until it needs durable planning, research, independent verification, review, execution context, or recovery.
-
-One work is active at a time. `.agent-contexts/active.md` is mutable navigation state that selects it; it is not evidence. The user alone starts, selects, completes, or abandons work. The conductor defaults research follow-ups, replanning, and execution attempts to the active work. It may report material mismatch but must not split, switch, or abandon work automatically.
+### Work directory layout
 
 ```text
 .agent-contexts/
-  active.md
+  active.md                          ← mutable navigation state
   work/
     <work-id>/
-      brief.md
+      brief-<n>.md                   ← decision: intent and acceptance
       research/
         research-<n>/
-          planner.md
-          planner-adversarial.md
-          synthesis.md
+          planner.md                 ← constructive evidence report
+          planner-adversarial.md     ← adversarial evidence report
+          synthesis.md               ← judge reconciliation
       plans/
-        plan-<n>.md
+        agent-chat-foundation.draft.md ← reviewable candidate; revised in place
+        plan-<n>.md                  ← executable route
       execution/
         attempt-<n>/
-          verify.md
-          review.md
+          operator.md               ← changed scope and retry safety
+          verify.md                 ← independent evidence verdict
+          review.md                 ← in-loop standards/risk review
+      reviews/
+        review-<n>.md               ← standalone user-invoked review
 ```
 
-`<work-id>` is a readable lowercase kebab-case slug. On collision, the conductor appends the smallest available numeric suffix and never overwrites another work. Artifacts use `wf-artifact/v1` YAML frontmatter with `work_id`, `artifact_role`, `artifact_id`, `upstream_artifacts`, `observed_target`, and `created_at`. Plans also declare `brief_id` and `readiness`; Act accepts only `implementation-ready` Plans.
+### Key rules
 
-Completed artifacts are immutable evidence. Small Plan changes are appended as dated amendments to the current Plan. A replacement Plan is written only when amendments obscure the current route; it links to the predecessor with `supersedes` and `supersession_reason`. Research rounds and execution attempts are separate directories. Research informs a later execution Plan but never substitutes for one.
+- The conductor alone persists durable workflow artifacts. Workers return reports.
+- The user is the final decision authority. A direct instruction may revise, replace, abandon, or advance workflow state after the conductor states any material historical or safety consequence.
+- Every artifact begins with `wf-artifact/v1` YAML frontmatter. Plan drafts use `artifact_role: plan-draft` and `readiness: draft`; published Plans use `artifact_role: plan` and either `readiness: implementation-ready` or bounded `readiness: human-approved` with an approval record.
+- The conductor persists each Plan candidate before presenting or reviewing it. A draft is durable for review and recovery but cannot authorize Act or Verify.
+- A planning request produces a draft by default. Once it passes its applicable planning gate, the conductor sets `readiness: ready` with a durable record of the gate and evidence. Readiness is per revision; revising a draft resets it to `draft` and clears that record.
+- A descriptive `candidate_key` identifies each draft, for example `agent-chat-foundation`. Multiple drafts may coexist; revisions update the named draft in place with `revision`, `revised_at`, and `revision_summary` rather than creating a lineage chain.
+- Multiple drafts may be `ready`. Readiness means eligible for ordinary publication, never selected; the conductor re-reads the resolved draft's current revision before publishing.
+- Both publication paths resolve the draft through the same order: explicit current request, focused `@` draft, sole unambiguous ready draft, or clarification. After resolution, ordinary publication requires `readiness: ready`, `readiness_revision == revision`, and the full structural-validity floor. The conductor then renames the selected draft to `plan-<n>.md`, changes its envelope to an `implementation-ready` Plan, and updates `active.md`. Git preserves the draft history; the workflow does not retain a duplicate source draft.
+- Human-approved publication is a deliberate co-development starting point, not a weaker ordinary gate. After explicit affirmation, it may bypass readiness, standard-gate completeness, adversarial review, and successor-lineage evidence. It records unresolved items, accepted concerns, and the boundary that returns `NEEDS_CONTEXT`; approval never authorizes silent changes to scope, acceptance, safety, contracts, or required evidence.
+- Completed execution evidence is immutable. The human may classify an active Plan change as immaterial and revise it in place; a material change creates a successor Plan linked to its predecessor. The conductor may recommend the classification but does not decide against the human.
+- Historical execution evidence remains immutable, but the decision owner may revise the active Brief or unexecuted next slice directly. The conductor clears `latest_attempt`, returns to Plan, and treats evidence for changed criteria as historical unless explicitly reaffirmed.
+- At every consuming gate, a material mismatch (unrelated to Plan-authorized changes) marks the artifact `STALE`.
+- Each Operator or standalone Verify invocation creates a fresh attempt. Attempts are immutable once evidence is written.
+- Act completion is a candidate; the user confirms closure.
 
-At each consuming gate, the conductor compares the artifact's declared work, upstream inputs, scope, and observed target with the work now being performed. A material mismatch makes it `STALE` for that gate. The historical artifact remains unchanged; the mismatch is recorded in the downstream artifact or recovery report. Time passing or `HEAD` changing alone does not make evidence stale.
+For full artifact schemas, lineage templates, and transition rules, see [`references/artifacts.md`](../.agents/skills/workflow/wf-conductor/references/artifacts.md).
 
-The default main-workspace loop is `Operator → Verify → Review`. Operator returns a concise result to the conductor, but no default handoff artifact: Verify independently inspects the workspace and runs the Plan's required lint, typecheck, build, test, browser, runtime, operational, or manual proof. A repairable Verify `FAIL` or Review `repair-in-scope` disposition returns bounded work to Operator. Every repair is verified again and reviewed again when its reviewed scope changed. The conductor counts both sources of repair in one shared budget, escalates after two repairs without evidence progress, and stops after three safe repair cycles.
+## Workflow Kernel
 
-Review remains read-only and report-only. It ends with one conductor-facing disposition: `no-actionable-findings`, `repair-in-scope`, `replan-required`, or `human-decision-required`. `INCOMPLETE`, `BLOCKED`, repeated signatures, unsafe retries, material scope drift, `replan-required`, and `human-decision-required` stop for human disposition.
+The kernel defines lane authority, artifact state machine, evidence floors, and escalation. It is owned by this repository and the skills below.
+
+| Skill | Lane | Mode / boundary |
+| --- | --- | --- |
+| [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) | all | Lane routing, artifact authority, recovery, bounded retries. |
+| [`wf-planning`](../.agents/skills/workflow/wf-planning/SKILL.md) | Plan | `execution` returns a durable draft; `adversarial` pressure-tests it before conductor publication. |
+| [`wf-research`](../.agents/skills/workflow/wf-research/SKILL.md) | evidence method | `research` gathers evidence; `adversarial` seeks contrary evidence. |
+| [`wf-execution`](../.agents/skills/workflow/wf-execution/SKILL.md) | Act | Applies approved units; returns operator result. |
+| [`wf-verification`](../.agents/skills/workflow/wf-verification/SKILL.md) | Verify | Sole owner of verdicts. Independent command safety classification. |
+| [`wf-review`](../.agents/skills/workflow/wf-review/SKILL.md) | Review | `standards-spec` or `adversarial-risk`. Read-only, report-only. |
+| [`wf-judge`](../.agents/skills/workflow/wf-judge/SKILL.md) | Synthesis | Reconciles worker reports. Never inspects source code. |
+
+Recovery is a branch of `wf-conductor`, not a separate skill.
+
+## Practice Skills
+
+Practice skills supply methods within workflow authority. The workflow selects the method, supplies its inputs, consumes its output, and owns the next transition; the practice skill owns its method.
+
+| Skill | Trigger |
+| --- | --- |
+| `interview-me` | Intent cannot be settled without assumptions. |
+| `prototype` | A concrete reaction is needed before committing to production acceptance. |
+| `wayfinder` | The destination exceeds one session of dependent decisions. |
+| `source-driven-development` | A current library, SDK, service, or upstream fact matters. |
+| `security-and-hardening` | Untrusted input, authentication, storage, tenant boundaries, or third-party integration apply. |
+| `browser-testing-with-devtools` | The required evidence is browser behavior and the tooling exists. |
+
+Other installed practice skills remain available for explicit requests. They are not part of the workflow architecture until the conductor has a stable trigger, authority boundary, consumed output, and transition for them.
+
+### WIP: Practice-skill integration
+
+The uncertainty methods are integrated. The following is the candidate integration sequence; trim it as real use shows a skill does not earn workflow-specific routing. Preserve each adopted method substantially as written.
+
+| Order | Practices | Boundary to settle |
+| --- | --- | --- |
+| 1 | `source-driven-development`, `spec-driven-development` | Current external facts and materially incomplete requirements in Think, Plan, and bounded Act. |
+| 2 | `api-and-interface-design`, `domain-modeling` | Public contracts, vocabulary, ownership, and module boundaries in Plan. |
+| 3 | `security-and-hardening`, `deprecation-and-migration`, `ci-cd-and-automation` | Security, migration, and delivery-system constraints that may elevate planning or constrain Act. |
+| 4 | `hallmark`, `impeccable`, `frontend-ui-engineering` | Greenfield direction, settled UI design, and implementation mechanics across Think, Plan, and Act. |
+| 5 | `test-driven-development`, `incremental-implementation`, `debugging-and-error-recovery`, `performance-optimization` | Test-first behavior, slice sizing, failure investigation, and measured performance work in Act. |
+| 6 | `browser-testing-with-devtools`, `code-review-and-quality` | Browser/runtime proof in Verify and additional quality review in Review. |
+| 7 | `shipping-and-launch`, `observability-and-instrumentation`, `git-workflow-and-versioning` | Explicit release, production visibility, and version-control work outside the current kernel. |
+
+For each practice, define the trigger, workflow inputs, consumed output, authority boundary, and completion transition. Exercise it on representative work before integrating the next boundary.
+
+Deterministic patching of vendored skills is deferred. A future supply-chain design must preserve upstream provenance, apply repository-owned patches reproducibly, fail closed on conflicts, and review the effective skill before acceptance.
+
+### WIP: Context distillation
+
+Git records accepted project state: source changes, settled workflow contracts, durable documentation, ADRs, and evidence that authorizes, proves, or gates work. It is not the default store for session transcripts or every exploratory artifact. Capturing raw agent context in Git before its shape is settled creates churn, hides material changes, and gives provisional thinking more authority than it has earned.
+
+Thinking traces still matter. They preserve provenance for material decisions, rejected approaches, failed experiments, discovered constraints, and the uncertainty that led to a later rule. They are useful input for improving skills, workflow contracts, and eventually model training, but are not yet reliable operational memory: current models cannot consistently retrieve, prioritize, and apply large unstructured traces without introducing noise or stale authority.
+
+The current boundary is distillation:
+
+```text
+working conversation or scratch trace
+  → distilled learning, decision, or constraint
+  → documentation or ADR when settled and broadly reusable
+  → workflow artifact only when it authorizes, proves, or gates work
+  → Git when the resulting record is accepted project state
+```
+
+A future trace system may preserve raw thinking separately with explicit provenance, retention, retrieval, and learning rules. Do not introduce it until there is a demonstrated use case and a credible retrieval loop.
 
 ## OpenCode Reference Binding
 
-OpenCode agent bindings own only provider concerns: model, permissions, and provider-specific return boundary. Workflow skills own reusable behavior.
+OpenCode agent bindings own provider concerns: model, permissions, and provider-specific return boundary. Workflow skills own reusable behavior.
 
 ### Dispatch pattern
 
-The conductor dispatches a named worker and supplies `Required skill: wf-*`. OpenCode resolves the worker name to its binding under `config/providers/opencode/agents/`; the wrapper loads the named workflow skill and follows its contract.
-
-When independent planning, research, or review reports need reconciliation, the conductor dispatches `judge` with `Required skill: wf-judge`. The judge receives only those reports; it does not inspect the original code, diff, or problem.
+The conductor dispatches a named worker and supplies `Required skill: wf-*`. OpenCode resolves the worker name to its binding; the wrapper loads the named workflow skill and follows its contract.
 
 ```text
 conductor dispatch: operator + Required skill: wf-execution
-  -> OpenCode resolves config/providers/opencode/agents/operator.md
-  -> operator wrapper loads wf-execution
-  -> wf-execution returns Operator Result
-
-conductor dispatch: verifier + Required skill: wf-verification
-  -> OpenCode resolves config/providers/opencode/agents/verifier.md
-  -> verifier wrapper loads wf-verification
-  -> wf-verification returns the verification verdict
+  → OpenCode resolves config/providers/opencode/agents/operator.md
+  → operator wrapper loads wf-execution
+  → wf-execution returns Operator Result
 ```
 
 The conductor knows stable agent and workflow-skill names, not provider model or permission settings. A provider binding must not restate or replace the workflow contract.
 
-| Role | Agent | Model | Permissions | Responsibility |
-| --- | --- | --- | --- | --- |
-| Conductor | `conductor` | `c9/cx/gpt-5.6-terra` | edit + bash + task | lane selection, artifacts, escalation, retry loop |
-| Planner | `planner` | `c9/deepseek-v4-pro-fusion` | read-only + bash | constructive execution or research planning |
-| Adversarial planner | `planner-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash | independent risk or contrary-evidence pass |
-| Operator | `operator` | `c9/minimax-m3` | edit + bash | bounded approved execution |
-| Verifier | `verifier` | `c9/mino-v2.5` | read-only + bash | independent evidence verdict |
-| Reviewer | `reviewer` | `c9/deepseek-v4-pro-fusion` | read-only + bash | Standards + Spec review |
-| Adversarial reviewer | `reviewer-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash | auth, data, concurrency, and failure-mode review |
-| Judge | `judge` | `c9/cx/gpt-5.6-sol` | read-only + bash | synthesize independent worker reports |
+| Role | Agent | Model | Permissions |
+| --- | --- | --- | --- |
+| Conductor | `conductor` | `c9/cx/gpt-5.6-terra` | edit + bash + task |
+| Planner | `planner` | `c9/deepseek-v4-pro-fusion` | read-only + bash |
+| Adversarial planner | `planner-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash |
+| Operator | `operator` | `c9/minimax-m3` | edit + bash |
+| Verifier | `verifier` | `c9/mimo-v2.5` | read-only + bash |
+| Reviewer | `reviewer` | `c9/deepseek-v4-pro-fusion` | read-only + bash |
+| Adversarial reviewer | `reviewer-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash |
+| Judge | `judge` | `c9/cx/gpt-5.6-sol` | read-only + bash |
 
-Model IDs are provider-qualified so subagents cannot silently inherit the parent model. The exact models may evolve; lane authority and evidence boundaries do not.
+Model IDs are provider-qualified so subagents cannot silently inherit the parent model. Models may evolve; lane authority and evidence boundaries do not.
 
 ### Commands
 
 | Command | Behavior |
 | --- | --- |
 | `/think` | Produce a Brief. |
-| `/plan` | Produce an execution plan; `research` or `mode:research` produces research artifacts. |
-| `/act` | Operator, verifier, and safe repair loop. |
+| `/plan` | Produce the next execution Plan. |
+| `/act` | Operator, Verify, Review, and bounded repair cycles. |
 | `/verify` | Standalone independent verification. |
 | `/review` | Standards/Spec review with conditional adversarial elevation. |
 
-Recovery requests such as “where are we?” reconstruct the goal, active work, artifact evidence, drift, and one next move from Git state and `.agent-contexts/`.
-
-## Source, Installation, and POC Status
+## Source and Installation
 
 | Kind | Source of truth | Runtime target |
 | --- | --- | --- |
-| Shared instructions | repo root `AGENTS.md`, `CLAUDE.md` | linked into provider homes where needed |
-| Shared skills | `.agents/skills/` | flat per-skill links: `~/.agents/skills/<skill-name>/` for OpenCode, plus provider homes where needed |
-| Provider agents and commands | `config/providers/<provider>/` | provider-global home |
-| Provider config | `config/providers/<provider>/` | provider-global config |
+| Shared instructions | repo root `AGENTS.md`, `CLAUDE.md` | linked into provider homes |
+| Shared skills | `.agents/skills/` | flat per-skill links at `~/.agents/skills/<skill-name>/` |
+| Provider config | `config/providers/<provider>.json` | provider-global config |
+| Provider agents/commands | `config/providers/<provider>/{agents,commands}/` | provider-global home |
 
-Provider runtime directories such as repo-root `.opencode/` or `.claude/` are installation targets, not workflow source. The repository groups source skills by domain, but each installed home exposes a flat skill namespace: for example, source `.agents/skills/workflow/wf-conductor/` installs at `~/.agents/skills/wf-conductor/`.
+The repository groups source skills by domain, but each installed home exposes a flat skill namespace: source `.agents/skills/workflow/wf-conductor/` installs at `~/.agents/skills/wf-conductor/`.
 
-`apm providers install` installs or links shared instructions, skills, agents, commands, configuration, and MCP entries. `apm providers check` verifies the runtime still points to managed source. `apm skills fetch -> review -> accept -> check` is the vendor supply chain. Restart OpenCode after installation or workflow changes because agents and skills load at startup.
-
-The POC proves this routing model on OpenCode: Brief, plan, bounded execution, independent verification, conditional review, and recovery from artifacts. Deferred: validated browser automation, resumable checkpoints or autonomous loops, tracker-backed Wayfinder, complete Claude/Codex/Kiro parity, and production release automation.
-
-Next, dogfood a small bug, multi-file feature, and settled UI task. Record the target revision, request, artifacts, commands, verdict, review disposition, and friction; turn recurring failures into tests or routing-contract checks.
+`apm install` performs aggregate installation (symlinks, MCP, provider config). `apm check` performs aggregate integrity verification (doctor, MCP, providers, skills). `apm providers install` and `apm providers check` handle provider configuration only. `apm skills fetch → review → reject <unwanted> → accept` is the vendor supply chain; `apm skills check` verifies live lock integrity after promotion. Restart the harness after installation or workflow changes.
 
 ## Supporting Records
 
@@ -203,9 +281,8 @@ Next, dogfood a small bug, multi-file feature, and settled UI task. Record the t
 | --- | --- |
 | [`docs/assessments/2026-07-08-poc-workflow-architecture-learnings.md`](assessments/2026-07-08-poc-workflow-architecture-learnings.md) | Evolution, upstream comparisons, and decisions |
 | [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) | Executable conductor contract |
+| [`references/artifacts.md`](../.agents/skills/workflow/wf-conductor/references/artifacts.md) | Artifact state-transition authority |
 | `config/providers/opencode/agents/conductor.md` | OpenCode conductor binding |
-| `.agents/skills/workflow/*` | Repository-source workflow-owner contracts; installed as flat skill directories |
-| `.agents/skills/engineering/*` | Repository-source practice-discipline contracts; installed as flat skill directories |
 
 ## References
 
@@ -213,7 +290,6 @@ Next, dogfood a small bug, multi-file feature, and settled UI task. Record the t
 - [Matt Pocock skills](https://github.com/mattpocock/skills)
 - [Compound Engineering plugin](https://github.com/EveryInc/compound-engineering-plugin)
 - [SmallHarness](https://github.com/GetSmallAI/SmallHarness)
-- [Oh My Pi](https://github.com/can1357/oh-my-pi)
 - [OpenCode agents](https://opencode.ai/docs/agents/)
 - [OpenCode commands](https://opencode.ai/docs/commands/)
 - [OpenCode permissions](https://opencode.ai/docs/permissions/)
