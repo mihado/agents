@@ -142,7 +142,7 @@ approval:
   execution_escalation_boundary: <scope, acceptance, safety, contract, or evidence change that must return NEEDS_CONTEXT>
 ```
 
-Both forms write `.agent-contexts/work/<work-id>/plans/plan-<n>.md` with `artifact_role: plan`, `source_draft_id`, and `source_draft_revision`. Update the source draft's `last_published_plan_id`, `last_published_at`, and set its `readiness: draft`. Update `active.md` and reset `latest_attempt` to `null`.
+Both forms rename the resolved current draft to `.agent-contexts/work/<work-id>/plans/plan-<n>.md`, replace draft-only envelope fields with `artifact_role: plan`, `artifact_id: plan-<n>`, and the applicable Plan readiness, and retain its current `revision`, `revised_at`, and `revision_summary`. Update `active.md` and reset `latest_attempt` to `null`. Do not retain a duplicate source draft.
 
 Successive slice Plans are sequential contracts. Use `supersedes` only to replace a defective or obsolete Plan.
 

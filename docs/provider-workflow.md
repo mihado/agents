@@ -139,14 +139,16 @@ Any active state → Abandoned (user decision)
 ### Key rules
 
 - The conductor alone persists durable workflow artifacts. Workers return reports.
+- The user is the final decision authority. A direct instruction may revise, replace, abandon, or advance workflow state after the conductor states any material historical or safety consequence.
 - Every artifact begins with `wf-artifact/v1` YAML frontmatter. Plan drafts use `artifact_role: plan-draft` and `readiness: draft`; published Plans use `artifact_role: plan` and either `readiness: implementation-ready` or bounded `readiness: human-approved` with an approval record.
 - The conductor persists each Plan candidate before presenting or reviewing it. A draft is durable for review and recovery but cannot authorize Act or Verify.
 - A planning request produces a draft by default. Once it passes its applicable planning gate, the conductor sets `readiness: ready` with a durable record of the gate and evidence. Readiness is per revision; revising a draft resets it to `draft` and clears that record.
 - A descriptive `candidate_key` identifies each draft, for example `agent-chat-foundation`. Multiple drafts may coexist; revisions update the named draft in place with `revision`, `revised_at`, and `revision_summary` rather than creating a lineage chain.
 - Multiple drafts may be `ready`. Readiness means eligible for ordinary publication, never selected; the conductor re-reads the resolved draft's current revision before publishing.
-- Both publication paths resolve the draft through the same order: explicit current request, focused `@` draft, sole unambiguous ready draft, or clarification. After resolution, ordinary publication requires `readiness: ready`, `readiness_revision == revision`, and the full structural-validity floor. It writes an `implementation-ready` Plan.
+- Both publication paths resolve the draft through the same order: explicit current request, focused `@` draft, sole unambiguous ready draft, or clarification. After resolution, ordinary publication requires `readiness: ready`, `readiness_revision == revision`, and the full structural-validity floor. The conductor then renames the selected draft to `plan-<n>.md`, changes its envelope to an `implementation-ready` Plan, and updates `active.md`. Git preserves the draft history; the workflow does not retain a duplicate source draft.
 - Human-approved publication is a deliberate co-development starting point, not a weaker ordinary gate. After explicit affirmation, it may bypass readiness, standard-gate completeness, adversarial review, and successor-lineage evidence. It records unresolved items, accepted concerns, and the boundary that returns `NEEDS_CONTEXT`; approval never authorizes silent changes to scope, acceptance, safety, contracts, or required evidence.
-- Completed artifacts are immutable. A Plan may receive dated amendments; a replacement Plan links to its predecessor.
+- Completed execution evidence is immutable. The human may classify an active Plan change as immaterial and revise it in place; a material change creates a successor Plan linked to its predecessor. The conductor may recommend the classification but does not decide against the human.
+- Historical execution evidence remains immutable, but the decision owner may revise the active Brief or unexecuted next slice directly. The conductor clears `latest_attempt`, returns to Plan, and treats evidence for changed criteria as historical unless explicitly reaffirmed.
 - At every consuming gate, a material mismatch (unrelated to Plan-authorized changes) marks the artifact `STALE`.
 - Each Operator or standalone Verify invocation creates a fresh attempt. Attempts are immutable once evidence is written.
 - Act completion is a candidate; the user confirms closure.
@@ -243,7 +245,7 @@ The conductor knows stable agent and workflow-skill names, not provider model or
 | Planner | `planner` | `c9/deepseek-v4-pro-fusion` | read-only + bash |
 | Adversarial planner | `planner-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash |
 | Operator | `operator` | `c9/minimax-m3` | edit + bash |
-| Verifier | `verifier` | `c9/mino-v2.5` | read-only + bash |
+| Verifier | `verifier` | `c9/mimo-v2.5` | read-only + bash |
 | Reviewer | `reviewer` | `c9/deepseek-v4-pro-fusion` | read-only + bash |
 | Adversarial reviewer | `reviewer-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash |
 | Judge | `judge` | `c9/cx/gpt-5.6-sol` | read-only + bash |

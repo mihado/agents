@@ -55,6 +55,12 @@ The conductor owns lane selection, escalation, worker dispatch, artifact writes,
 
 Subagents return analysis only; judge receives worker outputs only, never raw code or diffs.
 
+### Decision owner authority
+
+The user is the final authority for scope, artifact revision, publication, abandonment, and workflow exceptions. A direct user instruction overrides lifecycle defaults and artifact immutability rules. Before an irreversible or historically confusing change, state its material consequence, then carry out the instruction.
+
+Historical execution evidence remains immutable. The active Brief, Plan, and unexecuted draft remain editable working state. The human classifies an active Plan change as immaterial or material; the conductor may recommend a classification and state its consequence. A user-directed decision change may return the active pointer to the Brief and invalidate old acceptance for changed criteria; it does not erase the historical evidence.
+
 ## Routing invariants
 
 - The conductor alone persists durable workflow artifacts. Workers return reports.

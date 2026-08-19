@@ -36,8 +36,10 @@ Body: `# Active Work` with `<work-id>`, Markdown link to artifact, and `(<artifa
 | --- | --- | --- |
 | Think writes first Brief | `brief-01.md` | `null` |
 | Think writes superseding Brief | `brief-<n>.md` | `null` |
+| User-directed active Brief revision | unchanged (revised Brief) | `null` |
 | Plan draft persisted or revised | unchanged | unchanged |
-| Plan published (ordinary or human-approved) | `plans/plan-<n>.md` | `null` |
+| Selected draft renamed and published (ordinary or human-approved) | `plans/plan-<n>.md` | `null` |
+| Human-classified immaterial Plan revision | unchanged | unchanged |
 | Plan superseded | `plans/plan-<n+1>.md` | `null` (reset) |
 | Slice attempt starts | unchanged (stays on Plan) | `work/<work-id>/execution/attempt-<n>` |
 | Final gate starts | unchanged (stays on Plan) | `work/<work-id>/execution/final-<n>` |
@@ -85,11 +87,11 @@ created_at: <ISO-8601 timestamp>
 
 | Role | `artifact_id` pattern | `upstream_artifacts` | Extra fields |
 | --- | --- | --- | --- |
-| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only) |
+| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only) |
 | `research-report` | `research-<n>-planner` or `research-<n>-planner-adversarial` | `[brief-<n>]` | — |
 | `research-synthesis` | `research-<n>-synthesis` | `[research-<n>-planner, research-<n>-planner-adversarial]` | — |
-| `plan-draft` | `draft-<candidate-key>` | `[brief-<n>]` | `brief_id`, `candidate_key`, `readiness: draft|ready`, `revision`, `revised_at`, `revision_summary`, `readiness_revision` + `readiness_gate` + `readiness_evidence` + `ready_at` (when ready), `last_published_plan_id` + `last_published_at` (after publication) |
-| `plan` | `plan-<n>` | Ordinary first: `[brief-<n>]`. Ordinary successor: `[brief-<n>, plan-<prev>, attempt-<m>-verify, attempt-<m>-review]`. Superseding: `[brief-<n>, plan-<prev>, <evidence motivating replacement>]`. Human-approved: `[brief-<n>]` plus any known prior Plan or evidence IDs; accepted predecessor Verify/Review evidence is not required. | `brief_id`, `source_draft_id`, `source_draft_revision`, `readiness: implementation-ready|human-approved`, `approval` (human-approved only), `supersedes` + `supersession_reason` (supersession only) |
+| `plan-draft` | `draft-<candidate-key>` | `[brief-<n>]` | `brief_id`, `candidate_key`, `readiness: draft|ready`, `revision`, `revised_at`, `revision_summary`, `readiness_revision` + `readiness_gate` + `readiness_evidence` + `ready_at` (when ready) |
+| `plan` | `plan-<n>` | Ordinary first: `[brief-<n>]`. Ordinary successor: `[brief-<n>, plan-<prev>, attempt-<m>-verify, attempt-<m>-review]`. Superseding: `[brief-<n>, plan-<prev>, <evidence motivating replacement>]`. Human-approved: `[brief-<n>]` plus any known prior Plan or evidence IDs; accepted predecessor Verify/Review evidence is not required. | `brief_id`, `revision`, `revised_at`, `revision_summary`, `readiness: implementation-ready|human-approved`, `approval` (human-approved only), `supersedes` + `supersession_reason` (supersession only) |
 | `operator-result` | `attempt-<n>-operator` | `[plan-<n>]` | — |
 | `verification` | `attempt-<n>-verify` | `[plan-<n>, attempt-<n>-operator]`. Standalone: `[plan-<n>]` | `verification_mode: standalone` (standalone only) |
 | `review` | `attempt-<n>-review` | `[plan-<n>, attempt-<n>-verify]` | — |
@@ -112,7 +114,11 @@ At every consuming gate, compare declared work, inputs, scope, and target with c
 
 Completed artifacts are immutable evidence. Drafts are working artifacts and follow their own revision rule below.
 
-**Plan amendments:** non-semantic clarification only, and only before execution evidence exists (`latest_attempt` not yet set). Semantic changes require a superseding Plan with `supersedes` and `supersession_reason`. Reset `latest_attempt` to `null`.
+**Plan revisions:** The human decides whether a requested change is immaterial or material. The conductor may explain the consequences and recommend a classification, but does not decide against the human. An immaterial revision updates the active Plan in place, increments `revision`, and updates `revised_at` and `revision_summary`; it may occur after attempts exist. The latest revision governs future work, and earlier evidence remains valid under that revision. A material change requires a superseding Plan with `supersedes` and `supersession_reason`; reset `latest_attempt` to `null`.
+
+**User-directed current-state revisions:** The decision owner may revise the active Brief or an unexecuted draft directly. Preserve existing execution evidence unchanged. A Brief revision clears `latest_attempt` and returns to Plan before new execution. If it changes an AC's meaning, existing evidence for that AC becomes historical context and cannot satisfy final-gate eligibility unless the decision owner explicitly reaffirms it. Active Plan revisions follow the human-classified immaterial/material rule above.
+
+An in-place Brief revision starts at `revision: 1` and increments on each subsequent user-directed revision. It updates `revised_at` and `revision_summary`. A Brief without a user-directed revision omits these fields.
 
 **Plan drafts:** working artifacts representing candidate slices. Schema constraints:
 
@@ -126,10 +132,9 @@ Completed artifacts are immutable evidence. Drafts are working artifacts and fol
     - An artifact ID or persisted report path: `"<artifact-id-or-path>"` — references durable evidence consumed or produced by the gate.
   - `ready_at`: ISO-8601 timestamp of gate passage.
 - `revision`: integer starting at 1. Incremented on each in-place revision; `revised_at` and `revision_summary` updated alongside.
-- `last_published_plan_id`, `last_published_at`: set by the conductor after publication; absent until then.
 - Multiple drafts may coexist. Revisions update the same `candidate_key` in place; do not use `supersedes` or draft-to-draft lineage.
 - Drafts are discovered from `plans/`; they are not recorded in `active.md`.
-- Publishing snapshots the named draft at its current revision into a separate `plan-<n>`. Ordinary publication requires `readiness: ready` with matching `readiness_revision` and normal Plan lineage. Explicit human approval may publish the current matching draft without ordinary readiness, completeness, or lineage requirements (see human-approved Plans below). The source draft resets to `readiness: draft` after publication and never enters execution lineage.
+- Publishing renames the named draft at its current revision to `plan-<n>.md` and changes its envelope to `artifact_role: plan` with `artifact_id: plan-<n>`. It is no longer a draft. Ordinary publication requires `readiness: ready` with matching `readiness_revision` and normal Plan lineage. Explicit human approval may publish the current matching draft without ordinary readiness, completeness, or lineage requirements (see human-approved Plans below).
 
 **Human-approved Plans:** `readiness: human-approved` authorizes a human-directed co-development starting point. It requires a valid draft envelope, matching active Brief, explicit human affirmation, and `approval` with unresolved items, accepted concerns, and an execution escalation boundary. It may bypass ordinary readiness, completeness, and successor-lineage gates. The operator returns `NEEDS_CONTEXT` when discovery crosses that boundary.
 
