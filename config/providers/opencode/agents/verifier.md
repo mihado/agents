@@ -1,7 +1,7 @@
 ---
 description: Verify slice or Brief-wide acceptance evidence and issue a PASS, FAIL, INCOMPLETE, or BLOCKED verdict.
 mode: subagent
-model: c9/mino-v2.5
+model: c9/mimo-v2.5
 permission:
   edit: deny
   bash: allow
