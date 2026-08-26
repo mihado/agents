@@ -150,7 +150,7 @@ Any active state → Abandoned (user decision)
 - Completed execution evidence is immutable. The human may classify an active Plan change as immaterial and revise it in place; a material change creates a successor Plan linked to its predecessor. The conductor may recommend the classification but does not decide against the human.
 - Historical execution evidence remains immutable, but the decision owner may revise the active Brief or unexecuted next slice directly. The conductor clears `latest_attempt`, returns to Plan, and treats evidence for changed criteria as historical unless explicitly reaffirmed.
 - At every consuming gate, a material mismatch (unrelated to Plan-authorized changes) marks the artifact `STALE`.
-- Each Operator or standalone Verify invocation creates a fresh attempt. Attempts are immutable once evidence is written.
+- Each Operator or standalone Verify invocation creates a fresh attempt. Attempts are immutable once evidence is written. `latest_attempt` is cleared whenever authority moves to a new Plan or back to the Brief, and when work is abandoned.
 - Act completion is a candidate; the user confirms closure.
 
 For full artifact schemas, lineage templates, and transition rules, see [`references/artifacts.md`](../.agents/skills/workflow/wf-conductor/references/artifacts.md).

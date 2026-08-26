@@ -114,7 +114,7 @@ The conductor validates this lineage before publishing. A successor Plan without
 - `supersession_reason: <what changed>`
 - `upstream_artifacts` includes the replaced Plan ID and the evidence or mismatch that motivated replacement
 
-A superseding Plan does *not* require accepted predecessor PASS/Review. It resets the execution contract.
+A superseding Plan does *not* require accepted predecessor PASS/Review. It resets the execution contract, moves `active.md` to the successor Plan, and clears `latest_attempt`.
 
 **Publication resolution:** the conductor resolves the target draft by:
 

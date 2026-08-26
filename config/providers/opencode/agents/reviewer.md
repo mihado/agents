@@ -1,7 +1,7 @@
 ---
 description: Review a diff for correctness, regressions, repository standards, and Brief/Plan conformance.
 mode: subagent
-model: c9/deepseek-v4-pro-fusion
+model: c9/cx/gpt-5.6-terra
 permission:
   edit: deny
   bash: allow

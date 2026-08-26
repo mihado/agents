@@ -6,7 +6,7 @@ The authoritative reference for `active.md` pointer semantics, artifact lineage,
 
 - `current_artifact_path` tracks the governing decision-point artifact — Brief or executable Plan. It is the entry point for recovery and lane gates.
 - During execution, `current_artifact_path` stays on the governing Plan. Execution evidence lives in attempt directories.
-- `latest_attempt` names the most recent attempt or final directory, relative to `.agent-contexts/` (e.g. `work/<work-id>/execution/attempt-01`). Updated on each attempt start. `null` before first execution or after a Plan supersession.
+- `latest_attempt` names the most recent attempt or final directory, relative to `.agent-contexts/` (e.g. `work/<work-id>/execution/attempt-01`). Updated on each attempt start. It is `null` before first execution, whenever authority moves to a new Plan or back to the Brief, and when work is abandoned.
 
 ## `active.md` schema
 
@@ -43,7 +43,8 @@ Body: `# Active Work` with `<work-id>`, Markdown link to artifact, and `(<artifa
 | Plan superseded | `plans/plan-<n+1>.md` | `null` (reset) |
 | Slice attempt starts | unchanged (stays on Plan) | `work/<work-id>/execution/attempt-<n>` |
 | Final gate starts | unchanged (stays on Plan) | `work/<work-id>/execution/final-<n>` |
-| Work closed | unchanged | unchanged |
+| Work completed | unchanged | unchanged |
+| Work abandoned | unchanged | `null` (reset) |
 
 ## Canonical paths
 
