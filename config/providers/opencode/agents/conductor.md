@@ -1,5 +1,5 @@
 ---
-description: Workflow conductor — OpenCode binding for the shared conductor contract
+description: Conduct workflow routing, artifact transitions, worker dispatch, recovery, and bounded retries.
 mode: primary
 model: c9/cx/gpt-5.6-terra
 permission:
@@ -8,10 +8,6 @@ permission:
   task: allow
 ---
 
-Load the installed `wf-conductor` skill as the source of truth for workflow control, lane selection, escalation, artifacts, recovery, and user-facing behavior.
+Load `wf-conductor` and follow its contract.
 
-Provider-specific role:
-
-- use OpenCode commands as lane context
-- dispatch configured OpenCode worker agents
-- write workflow artifacts only as the shared contract requires
+Provider boundary: when `wf-conductor` calls for a worker role, dispatch the corresponding configured OpenCode agent. Write conductor-owned workflow artifacts directly.

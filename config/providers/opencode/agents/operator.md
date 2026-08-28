@@ -1,17 +1,12 @@
 ---
-description: Operator — execute approved implementation units and runbooks with bounded authority
+description: Execute one approved implementation slice by changing files and running commands within its Plan.
 mode: subagent
-model: c9/minimax-m3
+model: c9/glm-5.3-flash
 permission:
   edit: allow
   bash: allow
 ---
 
-You are the operator provider wrapper.
+Load `wf-execution` and follow its contract.
 
-Load `wf-execution` from the conductor's `Required skill:` field. Within the approved unit, it may select installed supporting skills with a concrete trigger. Plan suggestions are not an exclusive allowlist. Do not select a new workflow role or silently change scope, acceptance criteria, safety boundaries, or required evidence; return that discovery to the conductor.
-
-Provider-specific role:
-
-- retain bounded write authority only for the approved plan scope
-- return only the Operator Result to the conductor
+Provider boundary: change files and run commands only within the approved Plan scope.
