@@ -206,10 +206,15 @@ describe("integration: apm providers", () => {
     const c9 = config.provider as Record<string, { models?: Record<string, Record<string, unknown>> }> | undefined;
     const models = c9?.c9?.models ?? {};
 
-    const visionModels = [
-      "ocg/mimo-v2.5", "ocg/glm-5.2", "cx/gpt-5.4", "cx/gpt-5.4-mini",
-      "cx/gpt-5.5", "minimax-m3", "deepseek-v4-pro-fusion", "deepseek-v4-flash-fusion", "glm-5.2-fusion",
-    ];
+    // Derived from the source manifest so every image-input model stays covered
+    // as models are added or renamed.
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
+    ) as Record<string, { models?: Record<string, { modalities?: { input?: string[] } }> }>;
+    const visionModels = Object.entries(manifest.c9?.models ?? {})
+      .filter(([, model]) => model.modalities?.input?.includes("image"))
+      .map(([id]) => id);
+    expect(visionModels.length, "manifest should contain vision-capable models").toBeGreaterThan(0);
     for (const id of visionModels) {
       expect(models[id], `model ${id} should exist`).toBeTruthy();
       expect((models[id] as Record<string, { input: string[]; output: string[] }>).modalities).toEqual({
