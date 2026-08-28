@@ -57,14 +57,32 @@ All paths relative to `.agent-contexts/`:
 | Adversarial research | `work/<work-id>/research/research-<n>/planner-adversarial.md` | `research-report` |
 | Research synthesis | `work/<work-id>/research/research-<n>/synthesis.md` | `research-synthesis` |
 | Plan draft | `work/<work-id>/plans/<candidate-key>.draft.md` | `plan-draft` |
+| Adversarial plan report | `work/<work-id>/plans/<candidate-key>.adversarial-<n>.md` | `plan-adversarial` |
+| Plan adjudication | `work/<work-id>/plans/<candidate-key>.adjudication-<n>.md` | `plan-adjudication` |
 | Execution plan | `work/<work-id>/plans/plan-<n>.md` | `plan` |
 | Operator result | `work/<work-id>/execution/attempt-<n>/operator.md` | `operator-result` |
 | Verification (slice) | `work/<work-id>/execution/attempt-<n>/verify.md` | `verification` |
 | Review (in-loop) | `work/<work-id>/execution/attempt-<n>/review.md` | `review` |
+| Elevated review report (standards, in-loop) | `work/<work-id>/execution/attempt-<n>/review-standards.md` | `review` |
+| Elevated review report (adversarial, in-loop) | `work/<work-id>/execution/attempt-<n>/review-adversarial.md` | `review` |
+| Elevated review report (standards, standalone) | `work/<work-id>/reviews/review-<n>-standards.md` | `standalone-review` |
+| Elevated review report (adversarial, standalone) | `work/<work-id>/reviews/review-<n>-adversarial.md` | `standalone-review` |
 | Review (standalone) | `work/<work-id>/reviews/review-<n>.md` | `standalone-review` |
+| Dispatch diagnostic | `work/<work-id>/dispatch/dispatch-<id>-attempt-<n>.md` | `dispatch-diagnostic` |
 | Final manifest | `work/<work-id>/execution/final-<n>/manifest.md` | `final-manifest` |
 | Final verification | `work/<work-id>/execution/final-<n>/verify.md` | `final-verification` |
 | Final review | `work/<work-id>/execution/final-<n>/review.md` | `final-review` |
+
+## Dispatch inputs
+
+The dispatch envelope (see [SKILL.md](../SKILL.md) § Dispatch envelope) carries the minimal envelope — shared `dispatch_id`, canonical `workspace_root`, declared `repository_root`, and `observed_target` — plus, for artifact-consuming dispatches, one compact, complete, ordered `inputs` list of the project inputs the worker consumes. Each entry declares:
+
+- `path` — root-relative to `workspace_root` (no absolute paths, no `..`)
+- expected identity where applicable: `work_id`, `artifact_role`, `artifact_id`, `revision`
+
+Before dispatch, the conductor validates each entry: the path resolves under `workspace_root` with lexical containment and resolved-path/symlink containment, and declared identity fields match the artifact's frontmatter exactly. Repository evidence (diffs, source, commands) resolves under the declared `repository_root`, never under `workspace_root` alone.
+
+The first pass sends no bodies. A retry may attach only the matching validated bodies for declared inputs — never substitute, reorder, or extend the list. The list is complete: every project artifact the worker must consume is declared in it, and workers that find a required artifact missing from the list report the gap instead of reading undeclared files.
 
 ## Artifact integrity
 
@@ -91,15 +109,18 @@ created_at: <ISO-8601 timestamp>
 | `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only) |
 | `research-report` | `research-<n>-planner` or `research-<n>-planner-adversarial` | `[brief-<n>]` | — |
 | `research-synthesis` | `research-<n>-synthesis` | `[research-<n>-planner, research-<n>-planner-adversarial]` | — |
-| `plan-draft` | `draft-<candidate-key>` | `[brief-<n>]` | `brief_id`, `candidate_key`, `readiness: draft|ready`, `revision`, `revised_at`, `revision_summary`, `readiness_revision` + `readiness_gate` + `readiness_evidence` + `ready_at` (when ready) |
+| `plan-draft` | `draft-<candidate-key>` | `[brief-<n>]` | `brief_id`, `candidate_key`, `readiness: draft|ready`, `revision`, `revised_at`, `revision_summary` (elevated revision-loop revisions append the per-concern progress record), `readiness_revision` + `readiness_gate` + `readiness_evidence` + `ready_at` (when ready) |
+| `plan-adversarial` | `<candidate-key>-adversarial-<n>` | `[brief-<n>, draft-<candidate-key>]` | — |
+| `plan-adjudication` | `<candidate-key>-adjudication-<n>` | `[draft-<candidate-key>, <candidate-key>-adversarial-<n>]` | — |
 | `plan` | `plan-<n>` | Ordinary first: `[brief-<n>]`. Ordinary successor: `[brief-<n>, plan-<prev>, attempt-<m>-verify, attempt-<m>-review]`. Superseding: `[brief-<n>, plan-<prev>, <evidence motivating replacement>]`. Human-approved: `[brief-<n>]` plus any known prior Plan or evidence IDs; accepted predecessor Verify/Review evidence is not required. | `brief_id`, `revision`, `revised_at`, `revision_summary`, `readiness: implementation-ready|human-approved`, `approval` (human-approved only), `supersedes` + `supersession_reason` (supersession only) |
 | `operator-result` | `attempt-<n>-operator` | `[plan-<n>]` | — |
 | `verification` | `attempt-<n>-verify` | `[plan-<n>, attempt-<n>-operator]`. Standalone: `[plan-<n>]` | `verification_mode: standalone` (standalone only) |
-| `review` | `attempt-<n>-review` | `[plan-<n>, attempt-<n>-verify]` | — |
-| `standalone-review` | `review-<n>` | `[plan-<n>]` or `[]` | `diff_ref` |
+| `review` | `attempt-<n>-review` (in-loop elevated reports: `attempt-<n>-review-standards` / `attempt-<n>-review-adversarial`) | `[plan-<n>, attempt-<n>-verify]`; the synthesized two-reviewer result adds both elevated report IDs | — |
+| `standalone-review` | `review-<n>` (elevated reports: `review-<n>-standards` / `review-<n>-adversarial`) | `[brief-<n>]`, extended by a `plan-<n>` and/or `attempt-<m>-verify` entry for each Plan/verifier artifact the invocation supplies; the synthesized two-reviewer result adds both elevated report IDs | `diff_ref` |
+| `dispatch-diagnostic` | `dispatch-<id>-attempt-<n>` | `[]` | `dispatch_id`, `failure_class`, `reason`, `retry_of`, `retry_ordinal`, `failed_at` |
 | `final-manifest` | `final-<n>-manifest` | `[brief-<n>, <all accepted slice Plan, Verify, and Review IDs>]` | `baseline_target`, `accepted_slices`, `cumulative_commands`, `all_ac_ids`, `cumulative_only_acs`, `diff_base` |
 | `final-verification` | `final-<n>-verify` | `[brief-<n>, final-<n>-manifest, <all accepted slice verify IDs>]` | `verification_mode: final`, `diff_base`, `cumulative_commands` |
-| `final-review` | `final-<n>-review` | `[brief-<n>, final-<n>-verify, final-<n>-manifest, <all accepted slice review IDs>]` | `diff_base` |
+| `final-review` | `final-<n>-review` | `[brief-<n>, final-<n>-manifest, final-<n>-verify, <all accepted slice Plan, Verify, and Review IDs>]` | `diff_base` |
 
 ### Target semantics
 
@@ -133,6 +154,7 @@ An in-place Brief revision starts at `revision: 1` and increments on each subseq
     - An artifact ID or persisted report path: `"<artifact-id-or-path>"` — references durable evidence consumed or produced by the gate.
   - `ready_at`: ISO-8601 timestamp of gate passage.
 - `revision`: integer starting at 1. Incremented on each in-place revision; `revised_at` and `revision_summary` updated alongside.
+- Elevated revision-loop revisions append a compact progress record to `revision_summary` for every cited concern — the concern identifier or short statement, `concern_origin` (the persisted report path/ID plus finding identifier for the first report raising that concern; later reports raising the same unresolved concern retain that `concern_origin` and record their current source path/ID alongside), the route attempted, and the evidence-backed outcome (`resolved`, `narrowed`, `disproved`, or `no-progress`) — preserving prior entries. A structural readiness concern's `concern_origin` combines the persisted draft artifact ID and revision with the checklist item number instead of a report path/ID. The record lives inside `revision_summary`; ordinary drafts and lightweight revisions keep a concise `revision_summary`, and no separate progress artifact is created.
 - Multiple drafts may coexist. Revisions update the same `candidate_key` in place; do not use `supersedes` or draft-to-draft lineage.
 - Drafts are discovered from `plans/`; they are not recorded in `active.md`.
 - Publishing renames the named draft at its current revision to `plan-<n>.md` and changes its envelope to `artifact_role: plan` with `artifact_id: plan-<n>`. It is no longer a draft. Ordinary publication requires `readiness: ready` with matching `readiness_revision` and normal Plan lineage. Explicit human approval may publish the current matching draft without ordinary readiness, completeness, or lineage requirements (see human-approved Plans below).

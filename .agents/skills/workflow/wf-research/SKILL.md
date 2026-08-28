@@ -9,6 +9,12 @@ description: Owns bounded evidence decisions before execution planning is approp
 
 Research answers a bounded decision question. The conductor dispatches research only after Idea/Think has established the decision question, scope boundary, and decision owner. Return unresolved intent or an unbounded question to Think.
 
+## Workspace boundary
+
+Resolve project artifacts only under the `workspace_root` declared in the dispatch envelope, and repository evidence only under the declared `repository_root` — an explicitly declared contained repository root, never a scan result — with lexical containment and resolved-path/symlink containment in both cases. In a single-repository workspace `repository_root` equals `workspace_root`. Do not search `$HOME`, `/`, parent directories, or unrelated roots to discover project artifacts. This restriction does not apply to official documentation URLs, permitted network access, or installed executable/tool paths.
+
+When the envelope declares an artifact, use the declared artifact at its declared root-relative path; do not substitute another copy.
+
 ## Evidence contract
 
 Use the strongest available evidence and name it:

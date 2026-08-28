@@ -10,9 +10,13 @@ description: Independently verifies execution-plan evidence and reports bounded 
 The conductor specifies the verification mode when dispatching:
 
 - **slice**: assess only the current Plan's declared evidence and Brief AC IDs with status `advanced` in the Plan's `## Brief Coverage`. ACs with status `out-of-slice`, `already-met`, or `cumulative-only` are not assessed. Also check for regressions materially applicable to the slice scope. Command authority comes from the current slice Plan.
-- **final**: assess every Brief AC ID using the cumulative evidence manifest supplied by the conductor. Command authority comes from the manifest's `cumulative_commands` (the union of all accepted slice Plans' declared commands). The manifest also supplies the diff base, accepted slice references, and the complete AC list including `cumulative-only` criteria.
+- **final**: assess every Brief AC ID using the declared Brief and the cumulative evidence manifest supplied by the conductor. The Brief supplies full AC bodies and contracts. Command authority comes from the manifest's `cumulative_commands` (the union of all accepted slice Plans' declared commands). The manifest also supplies the diff base, accepted slice references, and the complete AC list including `cumulative-only` criteria.
 
 If no mode is specified, default to `slice`.
+
+## Workspace root
+
+Resolve project artifacts, the Plan/Brief/manifest, only beneath the conductor-provided canonical `workspace_root`, and repository evidence only beneath the declared `repository_root` — each with lexical containment and resolved-path/symlink containment. Consume only conductor-declared inputs whose expected identity matches [the dispatch-input validation](../wf-conductor/references/artifacts.md#dispatch-inputs). Official documentation, permitted network access, and installed tools are unaffected.
 
 ## Mandate
 
@@ -29,7 +33,7 @@ If no mode is specified, default to `slice`.
 
 ### Final mode
 
-1. Read the cumulative evidence manifest supplied by the conductor.
+1. Read the declared Brief and the cumulative evidence manifest supplied by the conductor.
 2. Discover configured verification commands. Compare with the manifest's `cumulative_commands`. Report material omissions as `INCOMPLETE`.
 3. Independently classify each manifest command (see Command safety below).
 4. Execute only manifest commands whose safety context is sufficient. Run all cumulative commands in order.

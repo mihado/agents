@@ -9,7 +9,7 @@ description: Owns Standards/Spec, adversarial-risk, and final cumulative review.
 
 Review critiques a diff against the Brief, Plan, and available verification evidence. Read-only: report findings only.
 
-Read the diff plus available Brief, Plan, and verification artifacts. Inspect surrounding local code only to explain a finding. If verification evidence is absent, report the gap — a diff alone is not behavioral proof. For behavior-bearing changes, inspect changed or relevant tests before deciding whether declared evidence is adequate. Source inspection may identify performance risk as potential impact only; claim a measured regression only from declared measurement evidence.
+Read the diff plus available Brief, Plan, and verification artifacts. Use the declared artifacts from the dispatch envelope: read each at its declared `workspace_root`-relative path. Resolve the diff and surrounding code only under the declared `repository_root`; do not search `$HOME`, `/`, parent directories, or unrelated roots for project artifacts. This restriction does not apply to official documentation URLs, permitted network access, or installed executable/tool paths. Inspect surrounding local code only to explain a finding. If verification evidence is absent, report the gap — a diff alone is not behavioral proof. For behavior-bearing changes, inspect changed or relevant tests before deciding whether declared evidence is adequate. Source inspection may identify performance risk as potential impact only; claim a measured regression only from declared measurement evidence.
 
 Use `code-review-and-quality` only when the conductor requests an additional multi-axis quality pass.
 
@@ -91,7 +91,7 @@ No adversarial concerns found. The invariants appear to hold, and the change int
 
 ## Final mode
 
-The conductor dispatches final review with `Mode: final` and the persisted cumulative evidence manifest.
+The conductor dispatches final review with `Mode: final` and a closed declared input set: the Brief, the final manifest, the final verification, and the accepted slice Plan/Verify/Review artifacts enumerated in the manifest's `accepted_slices`.
 
 1. **Establish cumulative scope** — read the manifest's accepted slices, all Brief ACs, cumulative-only evidence contracts, and the final verification result. The review surface is the cumulative diff from `diff_base`.
 2. **Review Brief conformance** — assess whether final verification addresses every Brief AC: normal ACs should be `MET`; cumulative-only ACs should cite their declared final evidence.

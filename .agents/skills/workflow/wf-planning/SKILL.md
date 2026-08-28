@@ -16,7 +16,7 @@ The conductor selects the mode.
 
 ### Process
 
-1. Inspect available code, tests, configuration, and official documentation before making factual claims. For an empty or greenfield workspace, record the absence of local evidence and ground the Plan in the settled Brief and authoritative sources.
+1. Inspect available code, tests, configuration, and official documentation before making factual claims. For an empty or greenfield workspace, record the absence of local evidence and ground the Plan in the settled Brief and authoritative sources. Work from the dispatch envelope: read the declared Brief or draft at its declared `workspace_root`-relative path; do not substitute another copy. Resolve repository evidence only under the declared `repository_root` and never search `$HOME`, `/`, or parent directories for project artifacts. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
 2. Plan the next bounded vertical slice — one coherent increment that delivers observable behavior, fits one focused Operator invocation, has direct evidence, and leaves the repository healthy.
 3. Map the slice to the Brief acceptance criteria it advances (`AC<n>` IDs). Mark unrelated criteria `out-of-slice`.
 4. For a greenfield workspace, the first slice establishes the smallest runnable and verifiable skeleton (manifest, source/test layout, build/typecheck/lint/test commands, minimal entry point); later slices deliver vertical behavior against it.
@@ -102,7 +102,7 @@ revision_summary: <initial draft, or concise description of the latest revision>
 
 ### Process
 
-1. Independently inspect the Brief and relevant repository evidence.
+1. Independently inspect the Brief and relevant repository evidence. Read declared artifacts at their declared `workspace_root`-relative paths; resolve repository evidence only under the declared `repository_root`, never `$HOME`, `/`, or parent directories. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
 2. Pressure-test route assumptions, tracer-bullet shape, and each unit's evidence and safeguards.
 3. Surface edge cases, error paths, coupling, complexity creep, and regression risk.
 

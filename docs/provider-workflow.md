@@ -48,8 +48,10 @@ Three rules keep the design lightweight without making it loose:
 - A Brief owns the full objective and its acceptance criteria; one executable Plan owns only the next bounded vertical slice.
 - A draft is durable collaboration state, while an executable Plan is the sole authority for Act and Verify.
 - Evidence is role-specific: an operator reports work, a verifier issues verdicts, and a reviewer raises findings. No positive result silently substitutes for another role's evidence.
+- Dispatches are addressed: the conductor resolves the canonical workspace root from the `pwd -P`-canonicalized invocation directory as `workspace_root` — the workspace need not be a Git worktree — and workers resolve project artifacts only under it — never `$HOME`, `/`, or unrelated roots. Each dispatch also declares a contained `repository_root`; repository evidence resolves only under it. Every worker dispatch carries a minimal dispatch envelope — shared `dispatch_id`/`workspace_root`/`repository_root`/`observed_target`; artifact-consuming workers (the read-only workers plus the verifier) additionally receive an ordered `inputs` list declaring each root-relative path and expected identity instead of inlined bodies, and one retry may attach only the matching validated bodies for declared inputs. Path, input, transport, and report-envelope failures are `DISPATCH_FAILURE` with no domain, gate, readiness, lineage, acceptance, or revision-budget authority; operator and verifier dispatch failures are `BLOCKED`.
+- Multi-repo workspaces delegate through an explicit tally: the manager is the sole writer of the tally and its published artifacts, concurrent delegations open unique `(repository_root, repository_work_id)` rows with distinct stable work IDs, the manager publishes normal Brief/Plan artifacts into the target repository's stable work directory, adoption completes through the repository's local `active.md` pointer — set only by the repository's conductor — and status requests update the tally at `.agent-contexts/delegations.md` from each nonterminal row's exact repository child work dir — never the repository's `active.md`. See [`references/workspace-delegation.md`](../.agents/skills/workflow/wf-conductor/references/workspace-delegation.md).
 
-Planning and review rigor scale with uncertainty and risk. The normal path uses one planner and a closed readiness gate. Material route, safety, contract, or acceptance uncertainty elevates through research, adversarial planning, or human decision rather than being concealed inside implementation.
+Planning and review rigor scale with uncertainty and risk. The normal path uses one planner and a closed readiness gate. Elevated planning runs an adjudication and revision loop, shared across adjudication and final-gate feedback, that continues while each persisted planner revision makes evidence-backed progress on the cited concerns and stops as `BLOCKED — planning loop` once the loop turns circular; dispatch failures never count as revisions or progress. Material route, safety, contract, or acceptance uncertainty elevates through research, adversarial planning, or human decision rather than being concealed inside implementation.
 
 | Lane | Stable owner | Output |
 | --- | --- | --- |
@@ -63,7 +65,7 @@ Ship (release automation with rollback and operational proof) is an architectura
 
 ### Uncertainty methods
 
-The conductor classifies the blocker before advancing work. These methods are not workflow lanes; they resolve uncertainty for Think or Plan.
+The conductor classifies the blocker before advancing work. Classification follows a fixed precedence: explicit user-owned decision, scope or acceptance criteria, safety/non-functional/privacy/security boundary, public-contract semantic change, publication/abandonment/workflow exception, then implementation mechanics (local APIs, package signatures and compatibility, naming and file layout, DTOs, fixture and evidence/test mechanics). Mechanics continue automatically through research or planner revision unless supported evidence changes a settled boundary. These methods are not workflow lanes; they resolve uncertainty for Think or Plan.
 
 | Blocker | Method | Result |
 | --- | --- | --- |
@@ -124,6 +126,8 @@ Any active state → Abandoned (user decision)
           planner.md                 ← constructive evidence report
           planner-adversarial.md     ← adversarial evidence report
           synthesis.md               ← judge reconciliation
+      dispatch/
+        dispatch-<id>-attempt-<n>.md ← conductor diagnostic for a failed dispatch
       plans/
         agent-chat-foundation.draft.md ← reviewable candidate; revised in place
         plan-<n>.md                  ← executable route

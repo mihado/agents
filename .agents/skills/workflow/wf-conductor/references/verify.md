@@ -12,8 +12,10 @@ Standalone `/verify` follows the same safety gate and attempt model as Act.
 
 ## Dispatch
 
-3. Dispatch the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the Brief, Plan, current workspace, and Plan evidence profile (including evidence-safety classifications and exact verification commands).
+3. Dispatch the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the dispatch envelope, and validated ordered declared inputs — the Brief and Plan, plus any operator result or evidence artifact this flow supplies — and the Plan evidence profile (including evidence-safety classifications and exact verification commands). Validate every supplied project artifact under [references/artifacts.md](artifacts.md) § Dispatch inputs (path containment and expected frontmatter identity).
 4. Write the result to `execution/attempt-<n>/verify.md` with metadata binding it to the Brief, Plan, attempt, observed target, and verified evidence scope. Use the standalone lineage form (upstream includes Plan only, plus `verification_mode: standalone`).
+
+The verifier receives no automatic retry: a verifier `DISPATCH_FAILURE` is `BLOCKED` under the dispatch-failure contract in [SKILL.md](../SKILL.md), and the attempt rules above apply.
 
 Without classified evidence commands in the Plan, the verifier will return `INCOMPLETE` for any stateful checks.
 
