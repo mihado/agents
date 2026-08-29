@@ -29,9 +29,9 @@ Every planner dispatch below is artifact-consuming: its dispatch envelope declar
 
 `@<candidate-key>.draft.md` focuses one draft for the current conversation. It is conversational context only — it never changes `active.md`. While focused, the conductor re-reads the current revision before revising, reviewing, marking ready, or publishing it.
 
-For batch planning requests, the conductor reviews all active-Brief drafts, makes safe in-authority revisions, runs readiness gates, and marks eligible drafts ready. It does not publish a Plan unless the user expresses publication intent. Return only decisions requiring human authority, including which ready slice to publish when multiple candidates remain.
+For batch planning requests, the conductor reviews all active-Brief drafts, makes safe in-authority revisions, runs readiness gates, and marks eligible drafts ready. In `delivery_mode: autonomous`, publish and execute one unambiguous ready draft; return only a genuine user-owned decision or stop condition. In `delivery_mode: approval-required`, do not publish a Plan unless the user expresses publication intent; return only decisions requiring human authority, including which ready slice to publish when multiple candidates remain.
 
-Unless the user explicitly requests publication, complete this lane after persisting the draft and report the draft-only completion format below.
+In `delivery_mode: approval-required`, complete this lane after persisting the draft unless the user explicitly requests publication. In `delivery_mode: autonomous`, publish and execute one unambiguous ready draft after its gate passes.
 
 ### Standard execution (single planner)
 
@@ -89,9 +89,10 @@ The standard gate (`readiness_gate: standard-validation`) is a closed checklist.
 4. Every `advanced` AC has a named evidence expectation.
 5. Every implementation unit names scope, dependency, failure behavior, safeguards, and an escalation condition.
 6. Verification checklist is non-empty.
-7. No unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).
-8. No material staleness: `observed_target` is reachable from the current worktree without unrelated drift.
-9. Valid lineage: successor or supersession `upstream_artifacts` meet the applicable gate (see Publication below).
+7. Every configured verification command materially applicable to the slice is declared exactly, or recorded as inapplicable with scope-based reasoning; every stateful command has its required safety context.
+8. No unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).
+9. No material staleness: `observed_target` is reachable from the current worktree without unrelated drift.
+10. Valid lineage: successor or supersession `upstream_artifacts` meet the applicable gate (see Publication below).
 
 On pass, set `readiness: ready`, `readiness_revision` to the current `revision`, `readiness_gate: standard-validation`, `readiness_evidence` to `[{ gate: "standard-validation", result: "passed" }]` plus any persisted report paths consumed, and `ready_at`. On fail, remain `readiness: draft` and report the failing items.
 
@@ -99,7 +100,7 @@ Elevated planning uses the final adversarial check as its gate (`readiness_gate:
 
 ### Default completion
 
-Unless the user explicitly requests publication, return:
+In `delivery_mode: approval-required` without explicit publication intent, return:
 
 ```md
 ## Plan Draft Persisted
@@ -130,10 +131,10 @@ A superseding Plan does *not* require accepted predecessor PASS/Review. It reset
 
 1. A draft explicitly named in the user's current request.
 2. The focused `@` draft in the current conversation.
-3. One unambiguous eligible (`readiness: ready`) draft for the active Brief.
+3. In `delivery_mode: autonomous`, one unambiguous eligible (`readiness: ready`) draft for the active Brief.
 4. A clarification prompt if more than one candidate remains plausible.
 
-Clear intent — "implement this," "proceed with this plan," "make this the next slice" — publishes the resolved draft's current re-read revision.
+Clear intent — "implement this," "proceed with this plan," "make this the next slice" — or `delivery_mode: autonomous` — publishes the resolved draft's current re-read revision.
 
 Before writing either Plan, re-read the resolved draft and confirm it is the current revision, has a valid `plan-draft` envelope, and matches the active Brief.
 
@@ -163,6 +164,7 @@ All artifacts include `wf-artifact/v1` metadata.
 After a successful slice (accepted Operator → Verify → Review), the conductor compares slice evidence with the Brief:
 
 - **Work remains:** plan the next slice from the current repository state and accepted evidence. Return to Plan dispatch.
+- **Work remains in `delivery_mode: autonomous`:** plan, publish, and execute the next unambiguous ready slice.
 - **Route, acceptance, or safety boundary changed:** return to Research or Think.
 - **All Brief AC IDs covered:** run final Brief-wide Verify and Review (see [references/act.md](act.md)).
 

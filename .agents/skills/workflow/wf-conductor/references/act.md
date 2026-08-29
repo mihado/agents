@@ -23,10 +23,14 @@ Each operator invocation starts a fresh attempt. Attempts are immutable once the
 6. **Dispatch verifier.** Send the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the dispatch envelope, and validated ordered declared inputs — the Brief, Plan, and operator result — plus the Plan evidence profile. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs (path containment and expected frontmatter identity). Write its result to `execution/attempt-<n>/verify.md` with metadata binding it to the Brief, Plan, attempt, observed target, and evidence scope.
 
 7. **Route on verdict:**
-   - `PASS`: dispatch Review.
-   - `FAIL` with a concrete repair hypothesis and safe retry conditions: persist verify.md, then apply repair gate (see below).
-   - `FAIL` without a concrete hypothesis or with unsafe retry conditions: stop for human disposition.
-   - `INCOMPLETE` or `BLOCKED`: stop for human disposition.
+    - `PASS`: dispatch Review.
+    - `FAIL` with a concrete repair hypothesis and safe retry conditions: persist verify.md, then apply repair gate (see below).
+    - `FAIL` without a concrete hypothesis or with unsafe retry conditions: stop for human disposition.
+    - `INCOMPLETE`: route by the verifier's evidence routing record:
+      - `implementation` with `Ownership: owned`, a concrete repair hypothesis, and safe retry conditions: persist verify.md, then apply the repair gate.
+      - `plan`: return to Plan. Missing materially applicable commands, evidence contracts, command classifications, target scope, preconditions, cleanup/recovery, or stop conditions are Plan defects. Publish a superseding Plan with the Verify artifact as evidence before another execution attempt; this does not consume the repair budget.
+      - `external`, `manual`, or ambiguous ownership: stop for the named owner.
+    - `BLOCKED`: stop for the stated dependency, safety boundary, or owner.
 
 8. **Persist and route on review:** Persist the Review result to `execution/attempt-<n>/review.md`, then route on disposition:
    - `no-actionable-findings`: slice complete (see below).
@@ -45,7 +49,15 @@ Before starting any repair attempt:
 1. Persist the current Verify or Review artifact that authorized the repair.
 2. If this attempt was itself a repair, evaluate evidence progress against its predecessor and update counters.
 3. Apply the repair budget. If the budget is exhausted or a hard pause applies, stop.
-4. Start a fresh attempt (return to step 3 in the execution cycle) only if the budget permits, a concrete safe repair hypothesis exists, and retry is safe.
+4. Start a fresh attempt (return to step 3 in the execution cycle) only if the budget permits, a concrete safe repair hypothesis exists, the changed source or state is owned, and retry is safe.
+
+## Owned state
+
+Owned state is repository state declared by the Plan, explicitly user-directed as a named test artifact, or created and precisely identified by the current attempt.
+
+A declared test fixture, generated environment file, Compose override, disposable test container, temporary directory, or process started by the current attempt is owned state. The conductor may create, remove, or repair owned state when the operation is bounded, deterministic, idempotent, and has a concrete verification path. Record a user-directed artifact in the next Plan or repair evidence before changing it.
+
+A local configuration file, credential source, service, process, or environment value outside the declared test contract is external state. Diagnose external state without mutation and stop for its owner.
 
 ## Evidence progress
 
@@ -66,15 +78,16 @@ The initial failing attempt provides the baseline for the first repair. Reset th
 A repair is unsafe (stop for human disposition) when:
 - the diff is unchanged from the prior attempt
 - the operation is partial or non-idempotent
-- the Plan is defective (the failure is in the Plan, not the implementation)
-- the environment has failed (credentials, services, infrastructure)
+- the target is external state or ownership is ambiguous
+- the Plan does not authorize the required command, state lifecycle, or evidence contract
+- credentials, services, infrastructure, or another unavailable dependency prevent meaningful verification
 
 ## Repair budget
 
 Count verifier-driven and review-driven repairs in one shared budget:
 - After **two consecutive no-progress repairs**: hard pause. Escalate to the user; the next repair requires explicit user approval.
 - After **three total repair cycles**: stop regardless of progress.
-- `INCOMPLETE`, `BLOCKED`, unsafe retry conditions, or material scope drift: stop for human disposition immediately.
+- `BLOCKED`, unsafe retry conditions, or material scope drift: stop for human disposition immediately. Route `INCOMPLETE` under the evidence-routing record above.
 
 ## Completion candidate
 

@@ -7,7 +7,9 @@ description: Owns conductor workflow control -- lane selection, escalation, arti
 
 ## Routing
 
-Every turn starts here. Detect the route from user intent. Commands are explicit selectors; ordinary language routes through the same model.
+Every conductor turn starts by reading `active.md` when active work exists. Apply its durable work authority, then apply the current user instruction — which overrides conflicting stored authority — and select the route. Commands are explicit selectors; ordinary language routes through the same model.
+
+When the current instruction changes delivery mode, scope, pause state, or closure state, update `active.md` before dispatching or returning. Before publication, execution, recovery, or successor-slice selection, re-read `active.md` as action authority.
 
 ### Precedence
 
@@ -94,6 +96,12 @@ Implementation mechanics include local APIs, package signatures and compatibilit
 ### Decision owner authority
 
 The user is the final authority for scope, artifact revision, publication, abandonment, and workflow exceptions. A direct user instruction overrides lifecycle defaults and artifact immutability rules. Before an irreversible or historically confusing change, state its material consequence, then carry out the instruction.
+
+An instruction to work autonomously, proceed with limited input, or carry work through delivery sets `delivery_mode: autonomous` in `active.md`. That mode authorizes ready Plan publication, Act, and successor slices without another publication prompt. It ends on explicit user pause, mode change, abandonment, or completion.
+
+In `delivery_mode: autonomous`, persist each worker result, re-read `active.md`, route the resulting state, and continue the next authorized lifecycle action. A draft, worker result, ready Plan, accepted slice, or repair result is intermediate state, not a response boundary.
+
+Stop only for an explicit user pause, mode change, abandonment, or closure; a genuine user-owned decision; an unsafe or external block; `BLOCKED — planning loop`; an unavailable required worker; or the required completion confirmation.
 
 Historical execution evidence remains immutable. The active Brief, Plan, and unexecuted draft remain editable working state. The human classifies an active Plan change as immaterial or material; the conductor may recommend a classification and state its consequence. A user-directed decision change may return the active pointer to the Brief and invalidate old acceptance for changed criteria; it does not erase the historical evidence.
 

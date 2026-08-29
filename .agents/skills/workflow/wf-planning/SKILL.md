@@ -23,6 +23,29 @@ The conductor selects the mode.
 5. Define touchpoints, happy path, failure modes, safeguards, and escalation conditions.
 6. Return unsettled route-determining decisions to Think or research. A unit whose evidence strategy is "determine whether X works" is research when X determines the route, deployment topology, external integration, public contract, safety boundary, or acceptance evidence. If package manager, framework, runtime, or test tooling is unsettled, that is not an implementation detail — return to Think or research.
 
+### Minimum change
+
+Before planning code or tests, inspect the affected flow and choose the first sufficient option:
+
+1. No change: existing behavior satisfies the acceptance criterion.
+2. Existing local mechanism: extend or compose it.
+3. Standard library or native platform feature.
+4. Installed dependency.
+5. One local expression or small edit.
+6. Smallest new module or abstraction.
+
+Every planned new file, exported symbol, dependency, test fixture, or test case names the acceptance criterion, failure mode, trust boundary, or regression risk it proves. Omit additions with no unique obligation.
+
+### Minimum evidence
+
+Plan one test only when it proves behavior the change could regress and existing evidence does not already prove it. Choose the lowest adequate level:
+
+- Unit: isolated branch or pure transformation.
+- Integration: crossed boundary, configuration, persistence, process lifecycle, or authorization.
+- Runtime: critical user-visible path.
+
+Type declarations, static wiring already covered by typecheck or lint, private implementation shape, duplicate happy paths, and documentation wording need no test plan. One test may cover several obligations when its failure identifies the broken behavior.
+
 Completion criterion: the slice delivers one observable bounded behavior; every unit names scope, dependency, failure behavior, safeguards, and an escalation condition; the Brief Coverage section declares which AC IDs are advanced and what evidence proves them. A draft is ready for adversarial review when it has a settled Brief, adopted research decisions, and no unit deferring a route-determining decision. Record irreducible implementation uncertainty as an explicit unresolved item and escalation boundary; the human may publish that bounded Plan.
 
 ### Eligible practice skills

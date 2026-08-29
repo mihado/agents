@@ -3,6 +3,6 @@ description: Execute the plan through bounded Operator, Verify, and Review repai
 agent: conductor
 ---
 
-Run the act lane. The conductor retries only repairable, safe `FAIL` results; `INCOMPLETE` and `BLOCKED` stop for disposition.
+Run the act lane. Route verification results under `wf-conductor`: repair concrete, safe gaps in owned implementation evidence; return Plan evidence defects to Plan; apply every remaining stop rule from the conductor contract.
 
 Optional override arguments: `$ARGUMENTS`

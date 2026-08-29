@@ -13,7 +13,7 @@ Every unit must declare:
 **Design context:** <settled interaction, visual, product, or operational decisions; `not applicable` only when true>
 **Evidence strategy:** <test-first | characterization | static | browser/runtime | operational | manual>
 **Evidence target:** <test, command, browser flow, pre/post measure, or human disposition; for behavior-bearing code, state the lowest adequate level: unit | integration | browser/runtime | operational>
-**Evidence safety:** <non-mutating | isolated-stateful | externally-stateful>; for isolated-stateful or externally-stateful, declare target scope, preconditions, cleanup/recovery, and stop conditions
+**Evidence safety:** <non-mutating | isolated-stateful | externally-stateful>; for isolated-stateful or externally-stateful, declare target scope, owned state and ownership marker, preconditions, cleanup/recovery, and stop conditions
 **No-test exception:** <why automated testing is unsuitable; `none` when test-first/characterization applies>
 **Operational safeguards:** <dry run, idempotency, rollback/recovery, and stop conditions; `not applicable` only when true>
 **Suggested supporting skills:** <triggered skills likely useful to the operator; `none` only when true>
@@ -31,7 +31,7 @@ Each command-bearing evidence item must declare the exact command and arguments.
 - `<exact command with arguments>` — safety: <non-mutating | isolated-stateful | externally-stateful>; scope: <target paths or systems>
 ```
 
-For isolated-stateful or externally-stateful commands, also declare preconditions, cleanup/recovery, and stop conditions. The verifier independently classifies commands and executes only Plan-declared ones.
+For isolated-stateful or externally-stateful commands, also declare owned state and its ownership marker, preconditions, cleanup/recovery, and stop conditions. An ownership marker is a current-attempt creation marker or a fixture declaration or recorded user direction for a pre-existing named test artifact. The verifier independently classifies commands and executes only Plan-declared ones.
 
 ## Execution-mode vocabulary
 

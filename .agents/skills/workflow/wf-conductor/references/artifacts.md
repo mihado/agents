@@ -23,10 +23,11 @@ work_status: active
 current_artifact_path: work/<work-id>/<canonical-artifact-path>
 current_artifact_id: <artifact-id>
 latest_attempt: <work/<work-id>/execution/attempt-<n> | work/<work-id>/execution/final-<n> | null>
+delivery_mode: <approval-required | autonomous>
 ---
 ```
 
-Closure adds: `work_status: completed|abandoned`, `closed_at`, `closure_reason`.
+`delivery_mode` is durable work authority. It defaults to `approval-required`. A direct autonomous-delivery instruction sets it to `autonomous`; an explicit pause or mode change updates it. Closure adds: `work_status: completed|abandoned`, `closed_at`, `closure_reason`, and resets `delivery_mode` to `approval-required`.
 
 Body: `# Active Work` with `<work-id>`, Markdown link to artifact, and `(<artifact-id>)`.
 

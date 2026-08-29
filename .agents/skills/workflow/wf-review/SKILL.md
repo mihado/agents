@@ -51,7 +51,8 @@ The conductor selects the mode.
 1. **Establish review surface** — identify changed behavior, stated scope, and available evidence.
 2. **Review Standards** — check correctness, regressions, and repository conventions. Use Fowler smells only when repository standards are silent.
 3. **Review Spec** — check whether the change matches the Brief, Plan, or stated scope.
-4. **Return only findings that matter** — every reported issue changes a merge, follow-up, or risk decision.
+4. **Check unique obligations** — for every new production line and test, ask: “What unique obligation does this carry?” Report code or tests with no unique obligation as an overbuild finding.
+5. **Return only findings that matter** — every reported issue changes a merge, follow-up, or risk decision.
 
 Completion criterion: every material standards or conformance issue is cited with `file:line` and severity.
 

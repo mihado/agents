@@ -16,7 +16,7 @@ For `/think`:
 3. If a bounded factual question must be answered to settle the Brief (e.g. API constraints, platform capabilities, rate limits), invoke `wf-research`. Persist evidence under the active work. Resume Think with the result. If the result makes the intended outcome incoherent, return to the user.
 3. When writing the first durable artifact for a user-selected work, choose a readable lowercase kebab-case `work_id` and create `.agent-contexts/work/<work-id>/`. On collision, append the smallest available numeric suffix.
 4. Write `.agent-contexts/work/<work-id>/brief-01.md` only when intent, constraints, and acceptance are settled. Use the Brief frontmatter template below.
-5. After the Brief is persisted, publish `.agent-contexts/active.md` pointing to it (`current_artifact_path: work/<work-id>/brief-<n>.md`, `current_artifact_id: brief-<n>`).
+5. After the Brief is persisted, publish `.agent-contexts/active.md` pointing to it (`current_artifact_path: work/<work-id>/brief-<n>.md`, `current_artifact_id: brief-<n>`) with `delivery_mode: autonomous` when the user has given autonomous-delivery authority; otherwise use `delivery_mode: approval-required`.
 6. When risk or ambiguity is high, deepen the direct interview rather than dispatching workers.
 
 ## Active Brief revision
