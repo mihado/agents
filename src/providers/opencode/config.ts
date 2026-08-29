@@ -3,7 +3,7 @@ import path from "node:path";
 import { readJson, fail } from "../../core/commands.js";
 import { getConfigHome } from "../../core/paths.js";
 import { resolveExecutable } from "../../core/commands.js";
-import type { ProviderManifest } from "../types.js";
+import type { ProviderManifest, ProviderManifestEntry } from "../types.js";
 
 export function getOpenCodeConfigPath(): string {
   return path.join(getConfigHome(), "opencode", "opencode.jsonc");
@@ -161,7 +161,14 @@ export function loadProviderManifest(root: string): ProviderManifest {
 }
 
 function validateProviderManifest(manifest: ProviderManifest): void {
-  for (const [id, def] of Object.entries(manifest)) {
+  if (!isObject(manifest.provider) || Object.keys(manifest.provider).length === 0) {
+    fail("providers.json must contain at least one provider");
+  }
+  if (manifest.plugin !== undefined && (!Array.isArray(manifest.plugin) || !manifest.plugin.every((plugin) => typeof plugin === "string" && plugin))) {
+    fail("providers.json plugin must be an array of non-empty strings");
+  }
+
+  for (const [id, def] of Object.entries(manifest.provider)) {
     if (!id || typeof def !== "object") {
       fail(`providers.json: "${id}" must be an object`);
     }
@@ -179,7 +186,7 @@ function validateProviderManifest(manifest: ProviderManifest): void {
   }
 }
 
-export function toOpenCodeProvider(providerId: string, def: ProviderManifest[string]): Record<string, unknown> {
+export function toOpenCodeProvider(providerId: string, def: ProviderManifestEntry): Record<string, unknown> {
   return {
     npm: def.npm || "@ai-sdk/openai-compatible",
     name: def.name || providerId,
@@ -208,7 +215,7 @@ export function checkProviders(root: string): boolean {
   const config = readOpenCodeConfig();
   let failures = 0;
 
-  for (const [providerId, def] of Object.entries(manifest)) {
+  for (const [providerId, def] of Object.entries(manifest.provider)) {
     const expected = toOpenCodeProvider(providerId, def);
     const current = (config.provider as Record<string, unknown>)?.[providerId];
     if (!current) {
@@ -218,6 +225,15 @@ export function checkProviders(root: string): boolean {
       console.log(`PASS  provider ${providerId} configured`);
     } else {
       console.error(`FAIL  provider ${providerId} config differs from providers.json`);
+      failures++;
+    }
+  }
+
+  const expectedPlugins = manifest.plugin ?? [];
+  const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
+  for (const plugin of expectedPlugins) {
+    if (!configuredPlugins.includes(plugin)) {
+      console.error(`FAIL  plugin ${plugin} not configured`);
       failures++;
     }
   }
@@ -233,7 +249,7 @@ export function installProviders(root: string): void {
   let changed = false;
   const failures = 0;
 
-  for (const [providerId, def] of Object.entries(manifest)) {
+  for (const [providerId, def] of Object.entries(manifest.provider)) {
     const expected = toOpenCodeProvider(providerId, def);
     const current = (config.provider as Record<string, unknown>)[providerId];
     if (current && JSON.stringify(current) === JSON.stringify(expected)) {
@@ -243,6 +259,15 @@ export function installProviders(root: string): void {
     (config.provider as Record<string, unknown>)[providerId] = expected;
     changed = true;
     console.log(`linked  provider ${providerId}`);
+  }
+
+  const expectedPlugins = manifest.plugin ?? [];
+  const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
+  const plugins = [...new Set([...configuredPlugins, ...expectedPlugins])];
+  if (plugins.length > 0 && JSON.stringify(configuredPlugins) !== JSON.stringify(plugins)) {
+    config.plugin = plugins;
+    changed = true;
+    console.log(`linked  plugin ${expectedPlugins.join(", ")}`);
   }
 
   if (changed && failures === 0) {

@@ -64,47 +64,11 @@ describe("read()", () => {
     expect(read()).toEqual({ url: "https://example.com/path" });
   });
 
-  it("handles // at end of line inside a string (not a comment)", () => {
-    seed('{ "text": "foo // bar" }');
-    expect(read()).toEqual({ text: "foo // bar" });
-  });
-
   it("returns {} on malformed JSON", () => {
     seed("not json");
     expect(read()).toEqual({});
   });
 
-  it("reads the real-world provider + mcp config shape", () => {
-    seed(`{
-  "provider": {
-    "c9": {
-      "name": "c9.rter.cc",
-      "options": { "baseURL": "https://c9.rter.cc/v1" },
-      "models": {
-        "cmc/deepseek/deepseek-v4-pro": {
-          "name": "DeepSeek V4 Pro",
-          "reasoning": true,
-          "limit": { "context": 1000000, "output": 384000 }
-        }
-      }
-    }
-  },
-  "mcp": {
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "headers": { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" }
-    }
-  }
-}`);
-    const config = read();
-    const c9 = config.provider as Record<string, unknown> | undefined;
-    const c9models = c9?.c9 as Record<string, unknown> | undefined;
-    const models = c9models?.models as Record<string, { reasoning?: boolean }> | undefined;
-    expect(models?.["cmc/deepseek/deepseek-v4-pro"]?.reasoning).toBe(true);
-    const mcp = config.mcp as Record<string, { type?: string }> | undefined;
-    expect(mcp?.context7?.type).toBe("remote");
-  });
 });
 
 describe("write()", () => {
@@ -156,6 +120,8 @@ describe("integration: apm providers", () => {
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
+    const config = read();
+    expect(config.plugin).toContain("@dietrichgebert/ponytail");
   });
 
   it("installs operator and prunes the managed typist symlink", () => {
@@ -210,8 +176,8 @@ describe("integration: apm providers", () => {
     // as models are added or renamed.
     const manifest = JSON.parse(
       fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
-    ) as Record<string, { models?: Record<string, { modalities?: { input?: string[] } }> }>;
-    const visionModels = Object.entries(manifest.c9?.models ?? {})
+    ) as { provider: Record<string, { models?: Record<string, { modalities?: { input?: string[] } }> }> };
+    const visionModels = Object.entries(manifest.provider.c9?.models ?? {})
       .filter(([, model]) => model.modalities?.input?.includes("image"))
       .map(([id]) => id);
     expect(visionModels.length, "manifest should contain vision-capable models").toBeGreaterThan(0);

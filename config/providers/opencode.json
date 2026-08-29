@@ -1,151 +1,156 @@
 {
-  "c9": {
-    "name": "c9.rter.cc",
-    "baseURL": "https://c9.rter.cc/v1",
-    "apiKey": "{env:C9RTER_API_KEY}",
-    "models": {
-      "ocg/mimo-v2.5-pro": {
-        "name": "MiMo V2.5 Pro",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1048576, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "ocg/mimo-v2.5": {
-        "name": "MiMo V2.5",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "ocg/glm-5.2": {
-        "name": "GLM-5.2",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 131072 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "cx/gpt-5.6-sol": {
-        "name": "GPT-5.6 Sol",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 200000, "output": 58400 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "cx/gpt-5.6-terra": {
-        "name": "GPT-5.6 Terra",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 200000, "output": 58400 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "cx/gpt-5.6-luna": {
-        "name": "GPT-5.6 Luna",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 200000, "output": 58400 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "minimax-m3": {
-        "name": "MiniMax M3",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 131072 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "mimo-v2.5": {
-        "name": "MiMo V2.5",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "deepseek-v4-pro-fusion": {
-        "name": "DeepSeek-V4 Pro Fusion",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 384000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "deepseek-v4-flash-fusion": {
-          "name": "DeepSeek-V4 Flash Fusion",
+  "plugin": [
+    "@dietrichgebert/ponytail"
+  ],
+  "provider": {
+    "c9": {
+      "name": "c9.rter.cc",
+      "baseURL": "https://c9.rter.cc/v1",
+      "apiKey": "{env:C9RTER_API_KEY}",
+      "models": {
+        "ocg/mimo-v2.5-pro": {
+          "name": "MiMo V2.5 Pro",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1048576, "output": 128000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "ocg/mimo-v2.5": {
+          "name": "MiMo V2.5",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 128000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "ocg/glm-5.2": {
+          "name": "GLM-5.2",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 131072 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "cx/gpt-5.6-sol": {
+          "name": "GPT-5.6 Sol",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 200000, "output": 58400 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "cx/gpt-5.6-terra": {
+          "name": "GPT-5.6 Terra",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 200000, "output": 58400 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "cx/gpt-5.6-luna": {
+          "name": "GPT-5.6 Luna",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 200000, "output": 58400 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "minimax-m3": {
+          "name": "MiniMax M3",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 131072 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "mimo-v2.5": {
+          "name": "MiMo V2.5",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 128000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "deepseek-v4-pro-fusion": {
+          "name": "DeepSeek-V4 Pro Fusion",
           "reasoning": true,
           "tool_call": true,
           "temperature": true,
           "limit": { "context": 1000000, "output": 384000 },
           "modalities": { "input": ["text", "image"], "output": ["text"] }
         },
-      "glm-5.3-flash": {
-        "name": "GLM-5.3 Flash",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 131072 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "glm-5.2-fusion": {
-        "name": "GLM-5.2 Fusion",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 131072 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "cmc-ds-v4-pro-fusion": {
-        "name": "DeepSeek-V4 Pro Fusion (CMC)",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 384000 }
-      },
-      "moa": {
-        "name": "MOA",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 384000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "moa-gpt": {
-        "name": "MOA-GPT",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 200000, "output": 58400 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "kr/claude-sonnet-5": {
-        "name": "Kiro Claude Sonnet 5",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "kr/claude-opus-5": {
-        "name": "Kiro Claude Opus 5",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
-      },
-      "kr/claude-haiku-4.5": {
-        "name": "Kiro Claude Haiku 4.5",
-        "reasoning": true,
-        "tool_call": true,
-        "temperature": true,
-        "limit": { "context": 1000000, "output": 128000 },
-        "modalities": { "input": ["text", "image"], "output": ["text"] }
+        "deepseek-v4-flash-fusion": {
+            "name": "DeepSeek-V4 Flash Fusion",
+            "reasoning": true,
+            "tool_call": true,
+            "temperature": true,
+            "limit": { "context": 1000000, "output": 384000 },
+            "modalities": { "input": ["text", "image"], "output": ["text"] }
+          },
+        "glm-5.3-flash": {
+          "name": "GLM-5.3 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 131072 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "glm-5.2-fusion": {
+          "name": "GLM-5.2 Fusion",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 131072 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "cmc-ds-v4-pro-fusion": {
+          "name": "DeepSeek-V4 Pro Fusion (CMC)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 384000 }
+        },
+        "moa": {
+          "name": "MOA",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 384000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "moa-gpt": {
+          "name": "MOA-GPT",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 200000, "output": 58400 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "kr/claude-sonnet-5": {
+          "name": "Kiro Claude Sonnet 5",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 128000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "kr/claude-opus-5": {
+          "name": "Kiro Claude Opus 5",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 128000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "kr/claude-haiku-4.5": {
+          "name": "Kiro Claude Haiku 4.5",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 128000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        }
       }
     }
   }
