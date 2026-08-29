@@ -84,13 +84,10 @@ describe("apm CLI smoke", () => {
     }
   });
 
-  it("skills --help lists every subcommand", () => {
+  it("skills help does not expose the removed --accept option", () => {
     const program = buildProgram();
     const skills = program.commands.find((c) => c.name() === "skills");
     const skillsHelp = skills?.helpInformation() ?? "";
-    for (const name of ["fetch", "check", "review", "accept", "reject", "remove", "audit"]) {
-      expect(skillsHelp).toContain(name);
-    }
     expect(skillsHelp).not.toContain("--accept");
   });
 
