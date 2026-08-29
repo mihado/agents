@@ -169,6 +169,27 @@
       "commit": "df1edb2e05487d0aa6d93c747141e0aed1187f25",
       "sha256": "1a1905f2c608ad85fcb524bf376ed34f83d99b73347b850fe1b160aeb5e51187"
     },
+    "thermo-nuclear-code-quality-review": {
+      "source": "cursor/plugins",
+      "srcPath": "thermos/skills/thermo-nuclear-code-quality-review",
+      "path": "skills/engineering/thermo-nuclear-code-quality-review",
+      "commit": "68836ddaf5697224520f1847d90cdb90ca8babaa",
+      "sha256": "1bb59994582195f4e209546efe5f9fc5d05d6f19c91d5b18048d0f2186a4fbd2"
+    },
+    "thermo-nuclear-review": {
+      "source": "cursor/plugins",
+      "srcPath": "thermos/skills/thermo-nuclear-review",
+      "path": "skills/engineering/thermo-nuclear-review",
+      "commit": "68836ddaf5697224520f1847d90cdb90ca8babaa",
+      "sha256": "a859fab03b5adb8b673e852e8ad63b3f8648dcd239fbead8eca530c800c81ec4"
+    },
+    "thermos": {
+      "source": "cursor/plugins",
+      "srcPath": "thermos/skills/thermos",
+      "path": "skills/engineering/thermos",
+      "commit": "68836ddaf5697224520f1847d90cdb90ca8babaa",
+      "sha256": "9cf3a0718e5996d63cae0b5c47fe8f5b18533003ebe8eea6f3c7b3ca34dcda15"
+    },
     "humanize-writing": {
       "source": "lguz/humanize-writing-skill",
       "srcPath": "skills/humanize-writing",
@@ -408,6 +429,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/addyosmani-agent-skills-LICENSE",
       "licenseSha256": "f877a8366ac7fcbe83485940745bc6018bc884db812585ecf52af44233590095"
+    },
+    "cursor/plugins": {
+      "repository": "https://github.com/cursor/plugins.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/cursor-plugins-LICENSE",
+      "licenseSha256": "472fe89b07ddab0ada7005fdca222b72f54f0ac89bb0ec83eadd80aa8a5f7138"
     },
     "lguz/humanize-writing-skill": {
       "repository": "https://github.com/lguz/humanize-writing-skill.git",
