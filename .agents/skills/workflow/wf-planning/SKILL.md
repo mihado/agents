@@ -18,14 +18,18 @@ The conductor selects the mode and supplies a closed input set.
 2. Load every profile reference in the declared profile set. Trace the affected flow before selecting the route.
 3. Plan the next bounded vertical slice: one observable increment, one focused Operator invocation, direct evidence, and a healthy repository.
 4. Map every Brief acceptance criterion exactly once as `advanced`, `out-of-slice`, `already-met`, or `cumulative-only`.
-5. Select the first sufficient route: existing behavior, existing local mechanism, standard library/native platform, installed dependency, small local edit, then the smallest new owner or abstraction with a present unique obligation.
-6. Name touchpoints, happy path, failures, safeguards, escalation, and the lowest adequate proof. For every value crossing a package boundary, name its producer, minimal public signature, consumer, and declaration-boundary proof. Keep implementation types and assembly details private. Return an escalation boundary for every unresolved route-determining decision.
+5. Select the first sufficient route: existing behavior, existing local mechanism, standard library/native platform, installed dependency, small local edit, then the smallest new owner or abstraction with a present unique obligation. Reuse an established repository pattern first; if none fits, use a reputable public pattern and cite it. A novel architecture is unresolved until its owner approves it.
+6. Name touchpoints, happy path, failures, safeguards, escalation, and the lowest adequate proof. For every package-crossing value, trace its direct consumer and the existing composition path before choosing a seam. Reuse the narrowest project-native seam: a server-only composition subpath may accept concrete runtime types already used by its direct consumer only when declaration-boundary proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; use a plain port only when it prevents a real policy or consumer-boundary leak. Name producer, consumer, lifecycle owner, signature, and declaration-boundary proof. Return an escalation boundary only for an unresolved decision that can change outcome, ownership, route, safety, or proof.
 
-Completion criterion: the candidate covers every material decision its profile claims to cover; each unit has scope, dependency, failure behavior, safeguard, escalation, and falsifiable evidence; every package-crossing value has a minimal public seam and declaration-boundary proof; its minimum route leaves no speculative structure.
+Completion criterion: the candidate covers every material decision its profile claims to cover; each unit has scope, dependency, failure behavior, safeguard, escalation, and falsifiable evidence; every package-crossing value has a project-native seam and declaration-boundary proof; its minimum route leaves no speculative structure.
 
 ### Minimum evidence
 
 Plan one test only when it proves behavior the change could regress and existing evidence does not already prove it. Choose the lowest adequate level: unit for isolated logic, integration for a crossed boundary, or runtime for a critical user path. Static wiring already covered by typecheck or lint and duplicate happy paths need no test plan.
+
+### Composition
+
+Treat a package seam as implementation mechanics until repository evidence shows competing seams change an approved ownership, safety, compatibility, or lifecycle boundary. Prefer the established composition pattern and make it observable in the next slice. Ask for a decision only when that evidence cannot settle a material boundary; do not turn a local factory or type choice into an architecture stop.
 
 ### Candidate output
 
@@ -62,7 +66,7 @@ revision_summary: <initial candidate, or concise change>
 - Extension threshold: <observable condition requiring more structure, or `none — no credible next rung`>
 
 ## Public Seams
-- <producer> → <consumer>: `<minimal plain signature>`; proof: <declaration-boundary check>
+- <producer> → <consumer> (lifecycle: <owner>): `<narrowest project-native signature>`; proof: <server-only subpath absent from shared/browser exports and reachable only from server composition, or other declaration-boundary check>; rationale: <existing composition pattern, or boundary leak prevented>
 
 ## Implementation Units
 ### U1: <unit name>
@@ -79,7 +83,7 @@ revision_summary: <initial candidate, or concise change>
 - <route-determining uncertainty, or `none`>
 ```
 
-**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification. It must use a descriptive `candidate_key`, state its profile, and keep every new file, export, dependency, fixture, and test tied to a unique present obligation.
+**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification. It must use a descriptive `candidate_key`, state its profile, and keep every new file, export, dependency, fixture, and test tied to a unique present obligation. A new port, adapter, or factory needs a present boundary obligation; framework types in a deliberately narrow server-only composition seam are not alone a reason to add one.
 
 ## Graft mode
 

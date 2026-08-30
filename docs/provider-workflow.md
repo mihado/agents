@@ -174,7 +174,7 @@ Bounded edits to workflow-owned documentation, skills, provider wrappers, or con
 
 ### Package seams
 
-When a planned value crosses a package boundary, the Plan names its producer, consumer, minimal public signature, and declaration-boundary proof. Private implementation types and runtime assembly remain behind that seam; “private” never removes the value a consumer needs.
+When a planned value crosses a package boundary, the Plan traces the direct consumer and existing composition path before selecting the narrowest project-native seam. It names producer, consumer, lifecycle owner, signature, and declaration-boundary proof. A deliberately narrow server-only composition subpath may accept the concrete runtime types already used by its direct consumer only when the proof shows it is absent from shared/browser exports and reachable only from the server composition graph; a plain port or adapter earns its cost only when it prevents a real policy or consumer-boundary leak. “Private” never removes the value a consumer needs.
 
 | Skill | Lane | Mode / boundary |
 | --- | --- | --- |

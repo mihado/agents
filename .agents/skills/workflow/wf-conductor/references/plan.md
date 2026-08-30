@@ -10,7 +10,7 @@ Resolve `.agent-contexts/active.md` and read the active Brief. If no active work
 
 Execution planning is eligible when:
 - The Brief has a settled outcome, acceptance criteria, hard constraints, decision owner, and required safety/non-functional commitments.
-- Remaining unknowns are confined to implementation mechanics (local API shape, naming, file layout, test-harness specifics) that cannot change the approved route, deployment topology, external integration, or acceptance evidence.
+- Remaining unknowns are confined to implementation mechanics (including a project-native package seam, local API shape, naming, file layout, and test-harness specifics) that cannot change the approved outcome, ownership, deployment topology, external integration, or acceptance evidence.
 
 If a bounded factual question blocks route selection, invoke `wf-research`. Persist evidence under the active work. Resume Plan when the evidence remains within Brief authority; return to Think when it changes outcome, ACs, hard constraints, or settled decisions.
 
@@ -83,7 +83,7 @@ The standard gate (`readiness_gate: standard-validation`) is a closed checklist.
 3. Every Brief AC represented exactly once with a closed status (`advanced`, `out-of-slice`, `already-met`, `cumulative-only`).
 4. Every `advanced` AC has a named evidence expectation.
 5. Every implementation unit names scope, dependency, failure behavior, safeguards, and an escalation condition.
-6. Every package-crossing value names its producer, minimal public signature, consumer, and declaration-boundary proof; implementation types and assembly details remain private.
+6. Every package-crossing value names its producer, consumer, owning lifecycle, narrowest project-native seam, and declaration-boundary proof. A server-only composition seam may use the concrete runtime types already used by its direct consumer only when that proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; introduce a plain port only when it prevents a real policy or consumer-boundary leak.
 7. Verification checklist is non-empty.
 8. Every configured verification command materially applicable to the slice is declared exactly, or recorded as inapplicable with scope-based reasoning; every stateful command has its required safety context.
 9. No unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).

@@ -12,4 +12,4 @@ Select one composite profile set covering every material route, contract, domain
 | User-facing browser interaction | `ui` |
 | Retry, concurrency, rollout, irreversible operation, or consequential failure | `risk` |
 
-Combine profiles whenever their decisions interact: use `api-interface + domain` for a stateful public contract. Add an independent candidate only when comparing a competing route or independently challenging consequential risk can change the Plan. Load every profile reference named by the composite set.
+Combine profiles whenever their decisions interact: use `api-interface + domain` for a stateful public contract. Reuse an established repository pattern first; when none fits, compare reputable public patterns rather than inventing an architecture. Add an independent candidate only when comparing a competing route or independently challenging consequential risk can change the Plan. Load every profile reference named by the composite set.
