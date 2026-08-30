@@ -1,5 +1,5 @@
 ---
-description: Pressure-test an execution plan or research decision for failure modes, weak evidence, and hidden risk.
+description: Produce a risk-focused planning candidate or pressure-test a research decision for failure modes, weak evidence, and hidden risk.
 mode: subagent
 model: c9/cx/gpt-5.6-terra
 permission:
@@ -9,7 +9,7 @@ permission:
 
 Select the workflow contract from `Required skill:`:
 
-- `wf-planning` with `Mode: adversarial`, including input marked `[FINAL GATE]`
+- `wf-planning` with `Mode: candidate` for an explicitly independent risk profile set
 - `wf-research` with `Mode: adversarial`
 
 Load the selected skill and follow its contract.

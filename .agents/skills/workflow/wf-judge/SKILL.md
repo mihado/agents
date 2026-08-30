@@ -67,23 +67,31 @@ When input is marked `[RESEARCH SYNTHESIS]`:
 
 If either report is empty, trivial, or lacks source-backed claims, state the asymmetry and reduce evidence quality.
 
-## Plan adjudication
+## Plan panel
 
-When input is marked `[PLAN ADJUDICATION]` (a draft Plan + adversarial critique):
+When input is marked `[PLAN PANEL]` (complete candidate Plans, optionally plus a governing graft draft):
 
 ```md
-## Adjudicated Findings
-- <finding with unit reference, or `No actionable findings.`>
+## Planning Disposition: <select | graft | add-planner | replan-required>
 
-## Plan Disposition: <no-actionable-findings | revise-plan | replan-required>
-<one sentence naming the reason and applicable findings>
+- Base: <candidate ID, governing draft ID, or `none`>
+- Grafts:
+  - From: <candidate ID and section>
+    Adopt: <existing candidate decision>
+    Reason: <Brief risk resolved>
+- Rejected:
+  - <candidate decision> — <why it exceeds the pragmatic minimum>
+- Missing planner: <none, or profile — why its answer changes route, safeguard, or proof>
 ```
 
-- `no-actionable-findings` — the adversarial critique raises no credible defects; the conductor may publish the persisted draft as an executable Plan after the final gate.
-- `revise-plan` — concrete findings the constructive planner can address within the current Brief and route.
-- `replan-required` — the critique reveals a route-determining defect that returns work to Think or research.
+- `select` — one candidate or the supplied governing draft is the minimum safe route; no graft is required.
+- `graft` — one candidate is viable and must adopt only named existing decisions from other candidates.
+- `add-planner` — the candidate set lacks one risk profile necessary to select a route, safeguard, or proof.
+- `replan-required` — the candidate set exposes a Brief-level gap or contradiction.
 
-Choose the most conservative disposition supported by the supplied draft and critique.
+When a governing graft draft is supplied, assess it against the same closed candidate set. Preserve it with `select` unless a cited Brief defect requires another graft, a missing profile, or re-planning; never replace it with an earlier candidate merely because that candidate was the original base.
+
+Completion criterion: each material candidate difference is selected, rejected, or cited as a graft; every graft names an existing candidate decision. Choose the most conservative disposition supported by the supplied inputs.
 
 ## Review synthesis
 

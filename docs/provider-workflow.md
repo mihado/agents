@@ -102,7 +102,7 @@ Any active state → Abandoned (user decision)
 
 ### Pointer semantics
 
-`active.md` selects the one active work. Its `current_artifact_path` tracks the governing Brief or executable Plan. Drafts remain outside that pointer in `plans/`, so other conductors may prepare and review future slices without changing execution authority. `@<candidate-key>.draft.md` focuses one draft for the current conversation without changing the pointer. A reviewed draft may be `ready`, but readiness means eligible rather than selected; readiness is per revision, and any subsequent revision resets it to `draft`. The conductor resolves which draft to publish through intent-based resolution (explicit name in the current request, focused `@` draft, or the sole unambiguous ready draft) and re-reads the current revision before writing the Plan. During execution, the pointer stays on the governing Plan; `latest_attempt` tracks execution progress separately.
+`active.md` selects the one active work. Its `current_artifact_path` tracks the governing Brief or executable Plan. `plans/` contains only drafts and published Plans; current candidate and adjudication working papers live in `planning/<slice-key>/run-<n>/` and revise in place. Every consuming dispatch pins its expected revision. `@<candidate-key>.draft.md` focuses one draft for the current conversation without changing the pointer. A reviewed draft may be `ready`, but readiness means eligible rather than selected; readiness is per revision, and any subsequent revision resets it to `draft`. The conductor resolves which draft to publish through intent-based resolution (explicit name in the current request, focused `@` draft, or the sole unambiguous ready draft) and re-reads the current revision before writing the Plan. During execution, the pointer stays on the governing Plan; `latest_attempt` tracks execution progress separately.
 
 | Event | Pointer moves to | `latest_attempt` |
 | --- | --- | --- |
@@ -128,6 +128,11 @@ Any active state → Abandoned (user decision)
           synthesis.md               ← judge reconciliation
       dispatch/
         dispatch-<id>-attempt-<n>.md ← conductor diagnostic for a failed dispatch
+      planning/
+        <slice-key>/
+          run-<n>/
+            candidate-<n>.md         ← current complete candidate
+            adjudication-<n>.md      ← current panel decision
       plans/
         agent-chat-foundation.draft.md ← reviewable candidate; revised in place
         plan-<n>.md                  ← executable route
@@ -163,10 +168,18 @@ For full artifact schemas, lineage templates, and transition rules, see [`refere
 
 The kernel defines lane authority, artifact state machine, evidence floors, and escalation. It is owned by this repository and the skills below.
 
+### Workflow maintenance
+
+Bounded edits to workflow-owned documentation, skills, provider wrappers, or contract tests that do not create or modify a user work package stay outside the kernel lifecycle. Read the authority and direct consumers once, make the smallest coherent change, run one focused proof and `git diff --check`, and add adversarial review only for routing, authority, safety, or artifact-semantics changes. They create no Brief, Plan, Act, Verify, or workflow artifacts.
+
+### Package seams
+
+When a planned value crosses a package boundary, the Plan names its producer, consumer, minimal public signature, and declaration-boundary proof. Private implementation types and runtime assembly remain behind that seam; “private” never removes the value a consumer needs.
+
 | Skill | Lane | Mode / boundary |
 | --- | --- | --- |
 | [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) | all | Lane routing, artifact authority, recovery, bounded retries. |
-| [`wf-planning`](../.agents/skills/workflow/wf-planning/SKILL.md) | Plan | `execution` returns a durable draft; `adversarial` pressure-tests it before conductor publication. |
+| [`wf-planning`](../.agents/skills/workflow/wf-planning/SKILL.md) | Plan | `candidate` returns one complete Plan from a conductor-selected composite profile set; `graft` applies judge-cited decisions to its selected base. Independent candidates are added only when comparison changes the Plan. |
 | [`wf-research`](../.agents/skills/workflow/wf-research/SKILL.md) | evidence method | `research` gathers evidence; `adversarial` seeks contrary evidence. |
 | [`wf-execution`](../.agents/skills/workflow/wf-execution/SKILL.md) | Act | Applies approved units; returns operator result. |
 | [`wf-verification`](../.agents/skills/workflow/wf-verification/SKILL.md) | Verify | Sole owner of verdicts. Independent command safety classification. |

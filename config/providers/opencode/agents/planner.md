@@ -9,7 +9,7 @@ permission:
 
 Select the workflow contract from `Required skill:`:
 
-- `wf-planning` with `Mode: execution`
+- `wf-planning` with `Mode: candidate` or `Mode: graft`
 - `wf-research` with `Mode: research`
 
 Load the selected skill and follow its contract.

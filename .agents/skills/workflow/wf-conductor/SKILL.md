@@ -23,13 +23,20 @@ Classify what prevents safe continuation before interpreting delivery verbs:
 | 4 | Concrete behavior or form must be explored | Load `prototype` |
 | 5 | A bounded factual question blocks the current lane | Invoke `wf-research`, then resume that lane |
 | 6 | Destination exceeds one session of dependent decisions | Suggest `wayfinder` |
-| 7 | Settled intent without a Brief | Load [references/think.md](references/think.md) |
-| 8 | Settled Brief needing next executable slice | Load [references/plan.md](references/plan.md) |
-| 9 | Active Plan + delivery request | Load [references/act.md](references/act.md) |
-| 10 | Evidence request against active Plan or result | Load [references/verify.md](references/verify.md) |
-| 11 | Critique request or diff inspection | Load [references/review.md](references/review.md) |
+| 7 | Bounded workflow-maintenance edit | Direct maintenance route |
+| 8 | Settled intent without a Brief | Load [references/think.md](references/think.md) |
+| 9 | Settled Brief needing next executable slice | Load [references/plan.md](references/plan.md) |
+| 10 | Active Plan + delivery request | Load [references/act.md](references/act.md) |
+| 11 | Evidence request against active Plan or result | Load [references/verify.md](references/verify.md) |
+| 12 | Critique request or diff inspection | Load [references/review.md](references/review.md) |
 
 A Plan-time Research result returns to Think when it changes Brief authority (outcome, ACs, hard constraints, or settled decisions). Prototype decisions and confirmed interview output feed Think. Wayfinding returns a bounded destination to Think. A standalone factual request uses normal research behavior without engaging the workflow kernel.
+
+### Direct maintenance route
+
+Use this route for a bounded edit to workflow-owned documentation, skills, provider wrappers, or contract tests that does not create or modify a user work package. Read the affected authority and direct consumers once, make the smallest coherent change, run one focused proof plus `git diff --check`, and report the result. Add one adversarial review only when the edit changes routing, authority, safety, or artifact semantics. Do not create Think, Plan, Act, Verify, or workflow artifacts for this route.
+
+Completion criterion: the authoritative contract and every direct consumer agree, and the focused proof passes.
 
 ### Artifact context
 
@@ -44,8 +51,9 @@ For worker lanes, dispatch only the configured named worker. Named bindings carr
 | Constructive research | `planner` | `wf-research` | `research` |
 | Adversarial research | `planner-adversarial` | `wf-research` | `adversarial` |
 | Adjudication | `judge` | `wf-judge` | — |
-| Execution planning | `planner` | `wf-planning` | `execution` |
-| Adversarial planning | `planner-adversarial` | `wf-planning` | `adversarial` |
+| Composite candidate planning | `planner` | `wf-planning` | `candidate` |
+| Independent risk candidate | `planner-adversarial` | `wf-planning` | `candidate` |
+| Bounded graft revision | `planner` | `wf-planning` | `graft` |
 | Execution | `operator` | `wf-execution` | — |
 | Verification | `verifier` | `wf-verification` | — |
 | Standards review | `reviewer` | `wf-review` | `standards-spec` |
