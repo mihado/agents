@@ -24,11 +24,12 @@ Classify what prevents safe continuation before interpreting delivery verbs:
 | 5 | A bounded factual question blocks the current lane | Invoke `wf-research`, then resume that lane |
 | 6 | Destination exceeds one session of dependent decisions | Suggest `wayfinder` |
 | 7 | Bounded workflow-maintenance edit | Direct maintenance route |
-| 8 | Settled intent without a Brief | Load [references/think.md](references/think.md) |
-| 9 | Settled Brief needing next executable slice | Load [references/plan.md](references/plan.md) |
-| 10 | Active Plan + delivery request | Load [references/act.md](references/act.md) |
-| 11 | Evidence request against active Plan or result | Load [references/verify.md](references/verify.md) |
-| 12 | Critique request or diff inspection | Load [references/review.md](references/review.md) |
+| 8 | User supplies a delegated-work path to activate | Load `wf-handoff` Receive, then Think |
+| 9 | Settled intent without a Brief | Load [references/think.md](references/think.md) |
+| 10 | Settled Brief needing next executable slice | Load [references/plan.md](references/plan.md) |
+| 11 | Active Plan + delivery request | Load [references/act.md](references/act.md) |
+| 12 | Evidence request against active Plan or result | Load [references/verify.md](references/verify.md) |
+| 13 | Critique request or diff inspection | Load [references/review.md](references/review.md) |
 
 A Plan-time Research result returns to Think when it changes Brief authority (outcome, ACs, hard constraints, or settled decisions). Prototype decisions and confirmed interview output feed Think. Wayfinding returns a bounded destination to Think. A standalone factual request uses normal research behavior without engaging the workflow kernel.
 
@@ -67,21 +68,19 @@ Subagents return analysis only; judge receives worker outputs only, never raw co
 
 ### State and repository roots
 
-The conductor starts from `$PWD`, canonicalized as `workspace_root`. This exact root owns `.agent-contexts/`; first use creates it there. Never climb to select another `.agent-contexts/`. A nested repository's state belongs to its own conductor and is excluded from source evidence. A repository conductor may read an explicitly addressed inbox handoff, but never write parent state.
+The conductor canonicalizes its own `$PWD` as `invocation_dir` for re-orientation. It resolves state only from that directory: `state_root` is the canonical absolute path `<invocation_dir>/.agent-contexts/`. First use creates that directory. Never climb from `invocation_dir` to discover another `.agent-contexts/`; a parent or nested conductor's state is excluded from source evidence. To defer settled work to another repository, load `wf-handoff`; it writes one explicit pending request and never activates target work.
 
-`workspace_root` identity is a verifiable fact — the directory that already owns the active work's `.agent-contexts/`, confirmed by reading its `active.md` — never a claim to accept on assertion, whether from directory-nesting assumptions or from the user. Decision owner authority (below) governs scope, acceptance, publication, and abandonment; it does not extend to redefining which root owns existing state. A stated root that conflicts with where the governing `active.md` already lives is a re-orientation signal: load [references/recovery.md](references/recovery.md) against the existing `active.md` before accepting any other root, and report a mismatch rather than widen or relocate the root to resolve it.
+Every conductor filesystem read or write uses a canonical absolute path beneath `state_root`; never pass a relative path to a filesystem tool. Artifact paths may be `invocation_dir`-relative in metadata and dispatch inputs, but they are identifiers, not write targets.
 
-An ancestor workspace — one that handed this conductor a request — is never in scope for `workspace_root` or `repository_root` here. Every dispatch in this section (`planner`, `judge`, `operator`, `verifier`) targets only the invoking conductor's own root; none needs, carries, or reasons about an ancestor's root, so directory-nesting facts about an ancestor are structurally irrelevant to them regardless of who states them. The one place ancestry is recorded is a Brief's `source_handoffs` (see [references/think.md](references/think.md)), and only as a verbatim copy of the adopted handoff's own `parent_workspace_root` — never re-derived, recomputed, or corrected from a nesting assertion.
-
-Every dispatch also declares one canonical `repository_root` for source, commands, and runtime evidence. It is an explicit target, never discovered by scanning, and may differ from or sit outside `workspace_root`. Artifact lookup resolves only under `workspace_root`; repository evidence resolves only under `repository_root`. Both roots use lexical and resolved-path containment for paths beneath them. Workers must not search parent directories or unrelated roots to discover artifacts or source. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
+Every dispatch carries `invocation_dir` as its artifact root and one explicit canonical `repository_root` for source, commands, and runtime evidence. `repository_root` may differ from or sit outside `invocation_dir`. Artifact lookup resolves only under `invocation_dir`; repository evidence resolves only under `repository_root`. Both roots use lexical and resolved-path containment for paths beneath them. Workers must not search parent directories or unrelated roots to discover artifacts or source. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
 
 ### Dispatch envelope
 
 Every configured worker dispatch — `planner`, `planner-adversarial`, `judge`, `reviewer`, `reviewer-adversarial`, `operator`, and `verifier` (research uses the planner bindings) — carries the minimal dispatch envelope:
 
 - `dispatch_id`
-- canonical `workspace_root`
-- declared `repository_root` — the canonical root of the explicitly declared repository this dispatch targets; it may equal `workspace_root`
+- canonical `invocation_dir`
+- declared `repository_root` — the canonical root of the explicitly declared repository this dispatch targets; it may equal `invocation_dir`
 - `observed_target`
 
 Artifact-consuming dispatches — the read-only workers above and the verifier — additionally carry `inputs`: one compact, complete, ordered list of the declared project inputs. Each input entry names a root-relative path and its expected `work_id`, `artifact_role`, `artifact_id`, and `revision` where applicable. Schema and validation: [references/artifacts.md](references/artifacts.md) § Dispatch inputs.
@@ -90,7 +89,7 @@ The first pass sends no artifact bodies. One retry may attach only the matching 
 
 ### Dispatch failure
 
-Path, input, transport, and report-envelope errors are `DISPATCH_FAILURE`. A dispatch failure carries no domain, gate, readiness, lineage, acceptance, or revision-budget authority. Persist a conductor diagnostic at `.agent-contexts/work/<work-id>/dispatch/dispatch-<id>-attempt-<n>.md` with `artifact_role: dispatch-diagnostic` and `artifact_id: dispatch-<id>-attempt-<n>`, where `<n>` increments per diagnostic for the same `dispatch_id` — diagnostics are immutable evidence, so the post-retry diagnostic never overwrites the first. Record the shared `dispatch_id`, envelope and provenance, failure class, reason, retry link and ordinal, and timestamps.
+Path, input, transport, and report-envelope errors are `DISPATCH_FAILURE`. A dispatch failure carries no domain, gate, readiness, lineage, acceptance, or revision-budget authority. Persist a conductor diagnostic at the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/dispatch/dispatch-<id>-attempt-<n>.md` path with `artifact_role: dispatch-diagnostic` and `artifact_id: dispatch-<id>-attempt-<n>`, where `<n>` increments per diagnostic for the same `dispatch_id` — diagnostics are immutable evidence, so the post-retry diagnostic never overwrites the first. Record the shared `dispatch_id`, envelope and provenance, failure class, reason, retry link and ordinal, and timestamps.
 
 Retry once only, before any usable valid report, and only for read-only workers. A second read-only dispatch failure after that inline retry persists a second diagnostic and returns `BLOCKED — DISPATCH_FAILURE`; no report and no enclosing gate advances. Operator and verifier dispatches receive no automatic retry: their dispatch failure is `BLOCKED`, and existing attempt rules remain.
 
@@ -127,8 +126,8 @@ Historical execution evidence remains immutable. The active Brief, Plan, and une
 - One `Operator → Verify → Review` cycle per slice. Accepted slices route back to Plan while Brief ACs remain uncovered.
 - Repair only a concrete in-scope failure with safe retry conditions. Route changed scope, acceptance, or safety to Plan, Research, Think, or the user.
 - Run the final Brief-wide gate only when accepted slice evidence covers every Brief AC (closed eligibility rule in [references/act.md](references/act.md)).
-- A Brief born from a handoff or a cited parent context records that origin in `source_handoffs`. The link is required, not discretionary, and is never dropped on a later revision — it is the only way that reasoning stays auditable once the source document moves or is forgotten.
-- A conductor never writes into an ancestor's `.agent-contexts/`; it may only read an explicitly addressed handoff that ancestor placed in its own inbox (see [references/workspace-delegation.md](references/workspace-delegation.md)). Ordinary dispatches never target, need, or reason about an ancestor's root.
+- A Brief created from delegated work records its request and consulted context in `source_contexts`. The link is required and remains on later revisions.
+- A conductor reads cross-root context only at an explicit absolute path. Ordinary dispatches never target, need, or reason about another conductor's root.
 - `repair-change` returns bounded work to the operator. Classify `replan-required` under the user blocker classifier: route implementation mechanics through research or planner revision, return boundary-changing evidence to Think, and stop only for a genuine user-owned decision. `human-decision-required` stops for the stated decision.
 
 Load [references/act.md](references/act.md) for attempt lifecycle, repair budget, slice acceptance, and final-gate mechanics.

@@ -49,7 +49,7 @@ Body: `# Active Work` with `<work-id>`, Markdown link to artifact, and `(<artifa
 
 ## Canonical paths
 
-All paths relative to `.agent-contexts/`:
+Artifact identifiers below are `invocation_dir`-relative metadata. Before any filesystem read or write, resolve them to canonical absolute paths beneath `<invocation_dir>/.agent-contexts/`; relative identifiers are never filesystem targets.
 
 | Artifact | Path | `artifact_role` |
 | --- | --- | --- |
@@ -76,12 +76,12 @@ All paths relative to `.agent-contexts/`:
 
 ## Dispatch inputs
 
-The dispatch envelope (see [SKILL.md](../SKILL.md) § Dispatch envelope) carries the minimal envelope — shared `dispatch_id`, canonical `workspace_root`, declared `repository_root`, and `observed_target` — plus, for artifact-consuming dispatches, one compact, complete, ordered `inputs` list of the project inputs the worker consumes. Each entry declares:
+The dispatch envelope (see [SKILL.md](../SKILL.md) § Dispatch envelope) carries the minimal envelope — shared `dispatch_id`, canonical `invocation_dir`, declared `repository_root`, and `observed_target` — plus, for artifact-consuming dispatches, one compact, complete, ordered `inputs` list of the project inputs the worker consumes. Each entry declares:
 
-- `path` — root-relative to `workspace_root` (no absolute paths, no `..`); this is conductor-owned artifact state, not a repository-relative path
+- `path` — relative to `invocation_dir` (no absolute paths, no `..`); this is conductor-owned artifact state, not a repository-relative path
 - expected identity where applicable: `work_id`, `artifact_role`, `artifact_id`, `revision`
 
-Before dispatch, the conductor validates each entry: the path resolves under `workspace_root` with lexical containment and resolved-path/symlink containment, and declared identity fields match the artifact's frontmatter exactly. Repository evidence (diffs, source, commands) resolves under the separately declared `repository_root`, never under `workspace_root` alone.
+Before dispatch, the conductor validates each entry: the path resolves under `invocation_dir` with lexical containment and resolved-path/symlink containment, and declared identity fields match the artifact's frontmatter exactly. Repository evidence (diffs, source, commands) resolves under the separately declared `repository_root`, never under `invocation_dir` alone.
 
 The first pass sends no bodies. A retry may attach only the matching validated bodies for declared inputs — never substitute, reorder, or extend the list. The list is complete: every project artifact the worker must consume is declared in it, and workers that find a required artifact missing from the list report the gap instead of reading undeclared files.
 
@@ -107,7 +107,8 @@ created_at: <ISO-8601 timestamp>
 
 | Role | `artifact_id` pattern | `upstream_artifacts` | Extra fields |
 | --- | --- | --- | --- |
-| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only); `source_handoffs` (required whenever the Brief adopts a handoff or cites parent context; absent only when no such origin exists — see think.md) |
+| `delegated-work` | `delegated-01` | `[]` | `repository_root`, `target_invocation_dir` (equals `repository_root`), non-empty `context_paths`, `status: pending|activated`, `activated_at` (activated only) |
+| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only); `source_contexts` (required when delegated work informs the Brief; see think.md) |
 | `research-report` | `research-<n>-planner` or `research-<n>-planner-adversarial` | `[brief-<n>]` | — |
 | `research-synthesis` | `research-<n>-synthesis` | `[research-<n>-planner, research-<n>-planner-adversarial]` | — |
 | `plan-candidate` | `<candidate-key>-run-<n>-candidate-<n>` | `[brief-<n>]` | `brief_revision`, `planning_run`, `planner_profile`, `revision`, `revised_at`, `revision_summary` |
@@ -133,7 +134,7 @@ created_at: <ISO-8601 timestamp>
 
 At every consuming gate, compare declared work, inputs, scope, and target with current state. Material mismatch (unrelated to Plan-authorized changes) is `STALE`. Preserve original unchanged; record mismatch downstream.
 
-A `source_handoffs` entry that no longer resolves is recorded as a mismatch, never silently dropped — the Brief's own text is unaffected, but the broken link is surfaced rather than quietly disappearing from the audit trail.
+A `source_contexts` entry that cannot be read at its declared absolute path is recorded as a mismatch, never silently dropped — the Brief's own text is unaffected, but the broken link is surfaced.
 
 ### Immutability and supersession
 
@@ -150,7 +151,7 @@ An in-place Brief revision starts at `revision: 1` and increments on each subseq
 **Plan drafts:** working artifacts that select one complete candidate. Schema constraints:
 
 - `artifact_id`: `draft-<candidate-key>` where `candidate_key` is descriptive kebab-case (e.g. `agent-chat-foundation`).
-- `governing_candidate` pins one persisted `plan-candidate` by artifact ID, workspace-relative path, and revision. Its `brief_id` and `brief_revision` must match the active Brief. `adjudication` pins the persisted `plan-adjudication` selecting that revision. A newer candidate never changes the draft without a new adjudication and draft revision.
+- `governing_candidate` pins one persisted `plan-candidate` by artifact ID, invocation-relative path, and revision. Its `brief_id` and `brief_revision` must match the active Brief. `adjudication` pins the persisted `plan-adjudication` selecting that revision. A newer candidate never changes the draft without a new adjudication and draft revision.
 - `readiness`: `draft` or `ready`. Any revision resets `readiness` to `draft` and clears the readiness record.
 - When `readiness: ready`:
   - `readiness_revision`: the `revision` value that passed the gate. Ordinary publication requires `readiness_revision == revision`.

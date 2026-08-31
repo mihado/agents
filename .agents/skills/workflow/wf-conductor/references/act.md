@@ -9,18 +9,18 @@
 
 Each operator invocation starts a fresh attempt. Attempts are immutable once their evidence is written.
 
-3. Create `execution/attempt-<n>/` (incrementing from the highest existing attempt). Update `active.md` frontmatter `latest_attempt` to the full `.agent-contexts/`-relative path (e.g. `work/<work-id>/execution/attempt-01`). Do not move `current_artifact_path` away from the governing Plan.
+3. Create the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/` directory (incrementing from the highest existing attempt). Update the absolute `<invocation_dir>/.agent-contexts/active.md` frontmatter `latest_attempt` to the invocation-relative identifier (e.g. `work/<work-id>/execution/attempt-01`). Do not move `current_artifact_path` away from the governing Plan.
 
 ## Execution cycle
 
-4. **Dispatch operator.** Resolve the Plan's pinned governing candidate and validate its path, identity, revision, and Brief binding. Send the configured `operator` with `Required skill: wf-execution`, the minimal dispatch envelope — `dispatch_id`, canonical `workspace_root`, declared `repository_root`, `observed_target` — and the settled Plan, Brief, pinned candidate, and any concrete prior finding when repairing. The Plan and Brief ride as dispatch content; the pinned candidate is a declared validated input. Persist the operator result to `execution/attempt-<n>/operator.md` with metadata binding it to the Plan, Brief, candidate, attempt, and observed target.
+4. **Dispatch operator.** Resolve the Plan's pinned governing candidate and validate its path, identity, revision, and Brief binding. Send the configured `operator` with `Required skill: wf-execution`, the minimal dispatch envelope — `dispatch_id`, canonical `invocation_dir`, declared `repository_root`, `observed_target` — and the settled Plan, Brief, pinned candidate, and any concrete prior finding when repairing. The Plan and Brief ride as dispatch content; the pinned candidate is a declared validated input. Persist the operator result to the canonical absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/operator.md` with metadata binding it to the Plan, Brief, candidate, attempt, and observed target.
 
 5. **Route on operator status:**
    - `COMPLETE`: continue to Verify. Pass operator.md to the verifier; require all Plan units included in this dispatch to have completed.
    - `BLOCKED`: stop. Persist the operator result and return the dependency or safety disposition to the user.
    - `NEEDS_CONTEXT`: stop. Persist the operator result and return the missing decision to Plan, Think, or the named decision owner.
 
-6. **Dispatch verifier.** Send the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the dispatch envelope, and validated ordered declared inputs — the Brief, Plan, and operator result — plus the Plan evidence profile. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs (path containment and expected frontmatter identity). Write its result to `execution/attempt-<n>/verify.md` with metadata binding it to the Brief, Plan, attempt, observed target, and evidence scope.
+6. **Dispatch verifier.** Send the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the dispatch envelope, and validated ordered declared inputs — the Brief, Plan, and operator result — plus the Plan evidence profile. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs (path containment and expected frontmatter identity). Write its result to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md` path with metadata binding it to the Brief, Plan, attempt, observed target, and evidence scope.
 
 7. **Route on verdict:**
     - `PASS`: dispatch Review.
@@ -32,7 +32,7 @@ Each operator invocation starts a fresh attempt. Attempts are immutable once the
       - `external`, `manual`, or ambiguous ownership: stop for the named owner.
     - `BLOCKED`: stop for the stated dependency, safety boundary, or owner.
 
-8. **Persist and route on review:** Persist the Review result to `execution/attempt-<n>/review.md`, then route on disposition:
+8. **Persist and route on review:** Persist the Review result to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/review.md` path, then route on disposition:
    - `no-actionable-findings`: slice complete (see below).
    - `repair-change`: apply repair gate (see below) with the bounded finding as input.
    - `replan-required`: classify the finding under the user blocker classifier in [SKILL.md](../SKILL.md) — route implementation mechanics through Research or Plan, return boundary-changing evidence to Think, and stop only for a genuine user-owned decision.
@@ -125,10 +125,10 @@ If the Brief has acceptance criteria not yet covered by accepted slice evidence:
 
 When eligibility is satisfied:
 
-1. Create `execution/final-<n>/`. Update `latest_attempt` to `work/<work-id>/execution/final-<n>`.
-2. Assemble and **persist** the cumulative evidence manifest to `execution/final-<n>/manifest.md` (see `references/artifacts.md` § Final gate): Brief ID, accepted slices with Plan/Verify/Review IDs and ACs advanced, cumulative commands, complete AC list, diff base from `plan-01`'s baseline.
-3. **Final Verify:** dispatch the verifier with `Required skill: wf-verification`, `Mode: final`, the dispatch envelope, and validated ordered declared inputs — the Brief and the final manifest — so final verification can assess full AC bodies and contracts, not only the manifest's enumeration. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs. No retry: a final Verify `DISPATCH_FAILURE` blocks under the dispatch-failure contract in [SKILL.md](../SKILL.md). Write to `execution/final-<n>/verify.md` with `artifact_role: final-verification`.
-4. On `PASS`: dispatch **final Review** with `Mode: final`, the dispatch envelope, and a closed ordered declared input set — the Brief, the final manifest, the final verification, and the Plan, Verify, and Review artifacts enumerated in the manifest's `accepted_slices`; nothing else is declared. The cumulative diff remains command/source context computed from `repository_root` and the manifest's `diff_base`, not an artifact input. One read-only retry per the dispatch-failure contract; a final Review `DISPATCH_FAILURE` after that retry blocks under the same rule. Write to `execution/final-<n>/review.md` with `artifact_role: final-review`.
+1. Create the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/final-<n>/` directory. Update the absolute `<invocation_dir>/.agent-contexts/active.md` path with `latest_attempt: work/<work-id>/execution/final-<n>`.
+2. Assemble and **persist** the cumulative evidence manifest to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/final-<n>/manifest.md` path (see `references/artifacts.md` § Final gate): Brief ID, accepted slices with Plan/Verify/Review IDs and ACs advanced, cumulative commands, complete AC list, diff base from `plan-01`'s baseline.
+3. **Final Verify:** dispatch the verifier with `Required skill: wf-verification`, `Mode: final`, the dispatch envelope, and validated ordered declared inputs — the Brief and the final manifest — so final verification can assess full AC bodies and contracts, not only the manifest's enumeration. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs. No retry: a final Verify `DISPATCH_FAILURE` blocks under the dispatch-failure contract in [SKILL.md](../SKILL.md). Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/final-<n>/verify.md` path with `artifact_role: final-verification`.
+4. On `PASS`: dispatch **final Review** with `Mode: final`, the dispatch envelope, and a closed ordered declared input set — the Brief, the final manifest, the final verification, and the Plan, Verify, and Review artifacts enumerated in the manifest's `accepted_slices`; nothing else is declared. The cumulative diff remains command/source context computed from `repository_root` and the manifest's `diff_base`, not an artifact input. One read-only retry per the dispatch-failure contract; a final Review `DISPATCH_FAILURE` after that retry blocks under the same rule. Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/final-<n>/review.md` path with `artifact_role: final-review`.
 5. On final Review `no-actionable-findings`: the work is a **completion candidate**.
 6. On final Verify `FAIL`, `INCOMPLETE`, `BLOCKED`, or final Review `repair-change` / `replan-required` / `human-decision-required`: stop for human disposition. Final gate failures are not auto-repaired.
 
@@ -147,7 +147,7 @@ The conductor:
 - Review: no actionable findings
 - ACs advanced: <AC IDs>
 - ACs remaining: <AC IDs>
-- Evidence: `.agent-contexts/work/<work-id>/execution/attempt-<n>/`
+- Evidence: `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/`
 - Next: plan next slice
 ```
 
@@ -156,7 +156,7 @@ The conductor:
 - All Brief ACs: MET
 - Final Verification: PASS
 - Final Review: no actionable findings
-- Evidence: `.agent-contexts/work/<work-id>/execution/`
+- Evidence: `<invocation_dir>/.agent-contexts/work/<work-id>/execution/`
 - Recommend: close work?
 ```
 
@@ -164,13 +164,13 @@ The conductor:
 ## Act Blocked
 - Gate: <Plan | Operator | Verify | Review>
 - Status: <BLOCKED | NEEDS_CONTEXT | FAIL | replan-required | human-decision-required>
-- Evidence: `.agent-contexts/work/<work-id>/execution/attempt-<n>/`
+- Evidence: `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/`
 - Blocker: <short reason and disposition owner>
 ```
 
 ```md
 ## Act Incomplete
 - Verification: INCOMPLETE
-- Evidence: `.agent-contexts/work/<work-id>/execution/attempt-<n>/`
+- Evidence: `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/`
 - Required disposition: <missing evidence and human owner>
 ```

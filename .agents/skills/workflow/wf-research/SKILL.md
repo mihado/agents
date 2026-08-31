@@ -11,7 +11,7 @@ Research answers a bounded decision question. The conductor dispatches research 
 
 ## Workspace boundary
 
-Resolve project artifacts only under the conductor-owned `workspace_root` declared in the dispatch envelope, and repository evidence only under the separately declared `repository_root`, never a scan result, with lexical containment and resolved-path/symlink containment in both cases. `repository_root` may equal, differ from, or sit outside `workspace_root`. Do not search parent directories or unrelated roots to discover project artifacts or source. This restriction does not apply to official documentation URLs, permitted network access, or installed executable/tool paths.
+Resolve project artifacts only under the conductor-provided `invocation_dir` declared in the dispatch envelope, and repository evidence only under the separately declared `repository_root`, never a scan result, with lexical containment and resolved-path/symlink containment in both cases. `repository_root` may equal, differ from, or sit outside `invocation_dir`. Do not search parent directories or unrelated roots to discover project artifacts or source. This restriction does not apply to official documentation URLs, permitted network access, or installed executable/tool paths.
 
 When the envelope declares an artifact, use the declared artifact at its declared root-relative path; do not substitute another copy.
 

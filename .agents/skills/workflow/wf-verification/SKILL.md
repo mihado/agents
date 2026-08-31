@@ -16,7 +16,7 @@ If no mode is specified, default to `slice`.
 
 ## Workspace root
 
-Resolve project artifacts, the Plan/Brief/manifest, only beneath the conductor-provided canonical `workspace_root`, and repository evidence only beneath the declared `repository_root` — each with lexical containment and resolved-path/symlink containment. Consume only conductor-declared inputs whose expected identity matches [the dispatch-input validation](../wf-conductor/references/artifacts.md#dispatch-inputs). Official documentation, permitted network access, and installed tools are unaffected.
+Resolve project artifacts, the Plan/Brief/manifest, only beneath the conductor-provided canonical `invocation_dir`, and repository evidence only beneath the declared `repository_root` — each with lexical containment and resolved-path/symlink containment. Consume only conductor-declared inputs whose expected identity matches [the dispatch-input validation](../wf-conductor/references/artifacts.md#dispatch-inputs). Official documentation, permitted network access, and installed tools are unaffected.
 
 ## Mandate
 

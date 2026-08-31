@@ -4,7 +4,7 @@ Execution planning for the next bounded vertical slice.
 
 ## Prerequisites
 
-Resolve `.agent-contexts/active.md` and read the active Brief. If no active work exists but the request is settled, follow the bootstrap procedure in [references/think.md](think.md) (create work directory, write Brief, publish `active.md`) before proceeding. If no Brief exists, return to Think.
+Resolve the absolute `<invocation_dir>/.agent-contexts/active.md` path and read the active Brief. If no active work exists but the request is settled, follow the bootstrap procedure in [references/think.md](think.md) (create work directory, write Brief, publish `active.md`) before proceeding. If no Brief exists, return to Think.
 
 ## Eligibility
 
@@ -36,8 +36,8 @@ In `delivery_mode: approval-required`, complete this lane after persisting the d
 
 A graft's output is either **expand** — before selection, a new `candidate-<n+1>`/`adjudication-<n+1>` pair joins the still-open set — or **rework** — after selection, on a structural-readiness failure, the pinned candidate and its adjudication revise in place. Expand while comparing candidates; rework only the one candidate a draft already points to.
 
-1. Reuse the `candidate_key` for the same proposed slice; names, terminology, and Brief changes do not create another key. Before reuse, confirm the existing key has the same observable outcome; on a different outcome, choose a distinct key. Default to reworking the current run in place across ordinary Brief revisions. Open a new `run-<n+1>` only when the active Brief ID changes, the slice's own observable outcome changes, or the prior run stopped; when one does supersede the current run, delete the superseded run's directory once the new run's first candidate is persisted, and retarget the draft's `current_run` to it. Dispatch `planner` with `Required skill: wf-planning`, `Mode: candidate`, the active Brief, and the selected composite profile set. Before persistence, reject a summary or outline: the result must satisfy the candidate-completeness gate below. Persist it at `planning/<candidate-key>/run-<n>/candidate-<n>.md` with `artifact_role: plan-candidate` before another worker consumes it. When panel selection requires an independent risk candidate, dispatch `planner-adversarial` with the same Brief and its declared risk profile set; dispatch other independent candidates only when a distinct competing route needs comparison.
-2. Dispatch `judge` with `Required skill: wf-judge`, the closed persisted candidate set, and `[PLAN PANEL]`. Persist the disposition at `planning/<candidate-key>/run-<n>/adjudication-<n>.md` with `artifact_role: plan-adjudication`.
+1. Reuse the `candidate_key` for the same proposed slice; names, terminology, and Brief changes do not create another key. Before reuse, confirm the existing key has the same observable outcome; on a different outcome, choose a distinct key. Default to reworking the current run in place across ordinary Brief revisions. Open a new `run-<n+1>` only when the active Brief ID changes, the slice's own observable outcome changes, or the prior run stopped; when one does supersede the current run, delete the superseded run's absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/` directory once the new run's first candidate is persisted, and retarget the draft's `current_run` to it. Dispatch `planner` with `Required skill: wf-planning`, `Mode: candidate`, the active Brief, and the selected composite profile set. Before persistence, reject a summary or outline: the result must satisfy the candidate-completeness gate below. Persist it at the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/candidate-<n>.md` path with `artifact_role: plan-candidate` before another worker consumes it. When panel selection requires an independent risk candidate, dispatch `planner-adversarial` with the same Brief and its declared risk profile set; dispatch other independent candidates only when a distinct competing route needs comparison.
+2. Dispatch `judge` with `Required skill: wf-judge`, the closed persisted candidate set, and `[PLAN PANEL]`. Persist the disposition at the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/adjudication-<n>.md` path with `artifact_role: plan-adjudication`.
 3. **Route on disposition:**
    - `select`: write or retarget the governing draft to the selected candidate revision and adjudication, run the structural readiness gate against that pinned candidate, then set `readiness: ready` with `readiness_gate: panel-adjudication`.
    - `graft` (expand): dispatch `planner` with `Mode: graft`, the base candidate or current governing draft, the judge disposition, and only cited candidate evidence. Persist the returned complete candidate as a new candidate slot, expand and close the candidate set with it, then re-adjudicate that set as a new adjudication. Retarget the governing draft and run readiness only after the re-adjudication selects it.
@@ -63,7 +63,7 @@ Before persisting a `plan-candidate`, verify it has a valid envelope pinned to t
 
 ## Draft persistence
 
-Every execution-planning request produces complete candidate papers under `.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/` and a governing draft at `.agent-contexts/work/<work-id>/plans/<candidate-key>.draft.md`. The draft pins one adjudicated candidate revision; it never copies the candidate body. `current_run` names the candidate_key's live run; rework revises that run's candidates or adjudication in place with `revision`, and their consumers pin the expected revision. Create a new `candidate_key` only for a distinct observable slice; revise its governing draft in place.
+Every execution-planning request produces complete candidate papers under the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/` path and a governing draft at the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/plans/<candidate-key>.draft.md` path. The draft pins one adjudicated candidate revision; it never copies the candidate body. `current_run` names the candidate_key's live run; rework revises that run's candidates or adjudication in place with `revision`, and their consumers pin the expected revision. Create a new `candidate_key` only for a distinct observable slice; revise its governing draft in place.
 
 Persist with `artifact_role: plan-draft`, the active `brief_id`, current observed target, `current_run`, `governing_candidate` (candidate ID, path, and revision), `adjudication` (ID, path, and revision), `readiness: draft`, `revision`, `revised_at`, and a concise `revision_summary`. Increment `revision` when retargeting or recording a readiness repair. A newer candidate never changes a draft without adjudication.
 
@@ -111,7 +111,7 @@ In `delivery_mode: approval-required` without explicit publication intent, retur
 
 ## Publication (slice Plan)
 
-Each Plan is the executable contract for one bounded vertical slice, not the complete objective. Write to `.agent-contexts/work/<work-id>/plans/plan-<n>.md`. It must include the active Brief identity, upstream artifacts, observed target, and `artifact_role: plan`.
+Each Plan is the executable contract for one bounded vertical slice, not the complete objective. Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/plans/plan-<n>.md` path. It must include the active Brief identity, upstream artifacts, observed target, and `artifact_role: plan`.
 
 **Successor lineage gate:** For `plan-02` onward as a *new slice* (not a replacement), `upstream_artifacts` must include:
 - The prior slice Plan ID (e.g. `plan-01`)
@@ -153,7 +153,7 @@ approval:
   execution_escalation_boundary: <scope, acceptance, safety, contract, or evidence change that must return NEEDS_CONTEXT>
 ```
 
-Both forms rename the resolved current draft to `.agent-contexts/work/<work-id>/plans/plan-<n>.md`, replace draft-only envelope fields with `artifact_role: plan`, `artifact_id: plan-<n>`, and the applicable Plan readiness, and retain its pinned candidate, adjudication, `revision`, `revised_at`, and `revision_summary`. Update `active.md` and reset `latest_attempt` to `null`. Do not retain a duplicate source draft. In the same step, delete every other candidate and adjudication file under `current_run` — the pinned pair is the only one execution still reads; a rejected alternative is never consulted again.
+Both forms rename the resolved current draft to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/plans/plan-<n>.md` path, replace draft-only envelope fields with `artifact_role: plan`, `artifact_id: plan-<n>`, and the applicable Plan readiness, and retain its pinned candidate, adjudication, `revision`, `revised_at`, and `revision_summary`. Update the absolute `<invocation_dir>/.agent-contexts/active.md` path and reset `latest_attempt` to `null`. Do not retain a duplicate source draft. In the same step, delete every other candidate and adjudication file under `current_run` — the pinned pair is the only one execution still reads; a rejected alternative is never consulted again.
 
 Successive slice Plans are sequential contracts. Use `supersedes` only to replace a defective or obsolete Plan.
 
@@ -172,6 +172,6 @@ After a successful slice (accepted Operator → Verify → Review), the conducto
 
 ```md
 ## Plan Published
-- Status: plan-<n> persisted at `.agent-contexts/work/<work-id>/plans/plan-<n>.md`; `active.md` updated.
+- Status: plan-<n> persisted at `<invocation_dir>/.agent-contexts/work/<work-id>/plans/plan-<n>.md`; `<invocation_dir>/.agent-contexts/active.md` updated.
 - Next: run `/act` or inspect the plan.
 ```
