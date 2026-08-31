@@ -107,7 +107,7 @@ created_at: <ISO-8601 timestamp>
 
 | Role | `artifact_id` pattern | `upstream_artifacts` | Extra fields |
 | --- | --- | --- | --- |
-| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only) |
+| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only); `source_handoffs` (required whenever the Brief adopts a handoff or cites parent context; absent only when no such origin exists — see think.md) |
 | `research-report` | `research-<n>-planner` or `research-<n>-planner-adversarial` | `[brief-<n>]` | — |
 | `research-synthesis` | `research-<n>-synthesis` | `[research-<n>-planner, research-<n>-planner-adversarial]` | — |
 | `plan-candidate` | `<candidate-key>-run-<n>-candidate-<n>` | `[brief-<n>]` | `brief_revision`, `planning_run`, `planner_profile`, `revision`, `revised_at`, `revision_summary` |
@@ -132,6 +132,8 @@ created_at: <ISO-8601 timestamp>
 ### Staleness
 
 At every consuming gate, compare declared work, inputs, scope, and target with current state. Material mismatch (unrelated to Plan-authorized changes) is `STALE`. Preserve original unchanged; record mismatch downstream.
+
+A `source_handoffs` entry that no longer resolves is recorded as a mismatch, never silently dropped — the Brief's own text is unaffected, but the broken link is surfaced rather than quietly disappearing from the audit trail.
 
 ### Immutability and supersession
 

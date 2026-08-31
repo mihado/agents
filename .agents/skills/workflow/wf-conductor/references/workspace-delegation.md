@@ -38,7 +38,7 @@ The request is the handoff. Keep it self-contained; `parent_context_path` is opt
 1. Adopt only a request the user explicitly selects by `<request-id>`.
 2. Validate that the request is exactly `<repository-root>/.agent-contexts/inbox/<request-id>.md`, `repository_root` equals the invocation root, and every declared path passes lexical and resolved-path containment beneath its declared root.
 3. Read `parent_context_path` only when supplied and validated. If a supplied path is malformed or conflicts with the request, report the gap; do not search parent directories for a substitute.
-4. If local work is already active, require the user's decision before replacing it. Otherwise create local work from the request and continue under the normal lifecycle.
+4. If local work is already active, require the user's decision before replacing it. Otherwise create local work from the request and continue under the normal lifecycle. Recording the request's own path, and its `parent_context_path` if supplied, in the resulting Brief's `source_handoffs` is required, not optional cleanup (see think.md) — this is the only place that reasoning is recoverable from once the request is read.
 
 ## Boundary
 
