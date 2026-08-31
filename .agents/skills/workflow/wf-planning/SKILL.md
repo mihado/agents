@@ -16,7 +16,7 @@ The conductor selects the mode and supplies a closed input set.
 
 1. Inspect available code, tests, configuration, and official documentation before factual claims. Read only declared project artifacts. Resolve repository evidence only under the declared `repository_root`.
 2. Load every profile reference in the declared profile set. Trace the affected flow before selecting the route.
-3. Plan the next bounded vertical slice: one observable increment, one focused Operator invocation, direct evidence, and a healthy repository.
+3. Plan the next bounded vertical slice: one observable increment, one focused Operator invocation, direct evidence, and a healthy repository. Record the current behavior, settled decisions, affected callers/files, failure policy, and exclusions that let the operator act without re-deciding the route.
 4. Map every Brief acceptance criterion exactly once as `advanced`, `out-of-slice`, `already-met`, or `cumulative-only`.
 5. Select the first sufficient route: existing behavior, existing local mechanism, standard library/native platform, installed dependency, small local edit, then the smallest new owner or abstraction with a present unique obligation. Reuse an established repository pattern first; if none fits, use a reputable public pattern and cite it. A novel architecture is unresolved until its owner approves it.
 6. Name touchpoints, happy path, failures, safeguards, escalation, and the lowest adequate proof. For every package-crossing value, trace its direct consumer and the existing composition path before choosing a seam. Reuse the narrowest project-native seam: a server-only composition subpath may accept concrete runtime types already used by its direct consumer only when declaration-boundary proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; use a plain port only when it prevents a real policy or consumer-boundary leak. Name producer, consumer, lifecycle owner, signature, and declaration-boundary proof. Return an escalation boundary only for an unresolved decision that can change outcome, ownership, route, safety, or proof.
@@ -46,6 +46,7 @@ upstream_artifacts:
 observed_target: <target>
 created_at: <ISO-8601 timestamp>
 brief_id: brief-<n>
+brief_revision: <active Brief revision, or `0` when omitted>
 candidate_key: <descriptive-kebab-case>
 planning_run: run-<n>
 planner_profile: <profile combination, or `general`>
@@ -57,6 +58,14 @@ revision_summary: <initial candidate, or concise change>
 ## Slice Outcome
 <observable result>
 
+## Context
+- Current behavior: <what is missing or wrong, with repository evidence>
+- Existing path: <entry point → affected owner → observable outcome, with file:line references>
+- Why this slice: <why this is the smallest useful increment>
+
+## Settled Decisions
+- <decision> — <repository evidence, Brief decision, or cited public pattern>
+
 ## Brief Coverage
 - AC1: advanced — expected evidence: <evidence>
 
@@ -67,6 +76,9 @@ revision_summary: <initial candidate, or concise change>
 
 ## Public Seams
 - <producer> → <consumer> (lifecycle: <owner>): `<narrowest project-native signature>`; proof: <server-only subpath absent from shared/browser exports and reachable only from server composition, or other declaration-boundary check>; rationale: <existing composition pattern, or boundary leak prevented>
+
+## Change Map
+- `<path>`: <concrete responsibility changed; existing pattern or caller reference>
 
 ## Implementation Units
 ### U1: <unit name>
@@ -81,9 +93,15 @@ revision_summary: <initial candidate, or concise change>
 
 ## Escalation Notes
 - <route-determining uncertainty, or `none`>
+
+## Risks
+- <material pre-existing or introduced risk, consequence, and why it is in or out of this slice; `none`>
+
+## Out of Scope
+- <excluded work, or `none`>
 ```
 
-**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification. It must use a descriptive `candidate_key`, state its profile, and keep every new file, export, dependency, fixture, and test tied to a unique present obligation. A new port, adapter, or factory needs a present boundary obligation; framework types in a deliberately narrow server-only composition seam are not alone a reason to add one.
+**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification alone. A published Plan authorizes execution through its pinned candidate revision. It is a complete proposed Plan, never a summary or outline. Its Context, Settled Decisions, Change Map, Risks, and Out of Scope sections resolve the operator's route rather than restating repository code. It must use a descriptive `candidate_key` for the observable slice, not its current terminology; state its profile; and keep every new file, export, dependency, fixture, and test tied to a unique present obligation. A new port, adapter, or factory needs a present boundary obligation; framework types in a deliberately narrow server-only composition seam are not alone a reason to add one. The conductor confirms key reuse against the existing slice outcome before persistence.
 
 ## Graft mode
 
@@ -91,4 +109,4 @@ Read only the declared Brief, selected base candidate or governing draft, judge 
 
 Completion criterion: the draft realizes every cited graft, retains the base's unchallenged decisions, and leaves the operator no material route, boundary, invariant, safety, or proof decision to invent.
 
-Return the candidate format with `artifact_role: plan-draft`, `artifact_id: draft-<candidate-key>`, `upstream_artifacts` listing the Brief, selected candidates, and judge disposition, plus `readiness: draft`, `revision`, `revised_at`, and `revision_summary`.
+Return a complete candidate with the cited grafts applied; the planner never persists it and never copies a candidate into a draft.

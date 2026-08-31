@@ -7,7 +7,7 @@ description: Executes settled implementation units with bounded authority and re
 
 ## Process
 
-1. Follow each unit's execution mode, design context, evidence strategy, safeguards, and `## Minimum Route`. Before adding a file, export, dependency, fixture, test, or abstraction, confirm its named obligation remains unique and does not exceed the route's extension threshold.
+1. Resolve the Plan's pinned governing candidate at its declared path and revision. Follow that candidate's units, design context, evidence strategy, safeguards, and `## Minimum Route`. Before adding a file, export, dependency, fixture, test, or abstraction, confirm its named obligation remains unique and does not exceed the route's extension threshold.
 2. Use `test-driven-development` for behavior-bearing `code` units with `test-first` evidence. Add only the Plan's minimum evidence: a test proving behavior the changed implementation could regress that no existing test proves. Implement `ui` units against settled design context.
 3. For `operation` or `migration` work, verify preconditions and dry-run/idempotency requirements before state changes. Retry partial or non-idempotent work only with observed state and a conductor-approved recovery path.
 4. Select triggered supporting skills, record material use, then re-read the Brief and Plan and self-check the final state.

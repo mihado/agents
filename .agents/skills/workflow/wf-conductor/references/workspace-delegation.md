@@ -1,29 +1,45 @@
-# Workspace Delegation
+# Workspace Handoffs
 
-Single authority for multi-repo workspace delegation. The conductor contract ([SKILL.md](../SKILL.md) § Workspace root) resolves the workspace and dispatch roots; this reference governs delegating work into contained repositories. A workspace that does not delegate skips this protocol entirely.
+Use when a conductor asks a repository conductor to take work.
 
-## Workspace model
+## Ownership
 
-- The workspace is a canonical multi-repo working area. It need not be a Git worktree; an existing workspace is never re-derived from `git` state or a repository scan.
-- `$PWD`, canonicalized, is the `invocation_dir`. The workspace root is the nearest enclosing directory containing `.agent-contexts/`, resolved from the `invocation_dir`. On first use, when none exists, the conductor creates `.agent-contexts/` at the invocation's repository root (its canonical Git worktree root) or, outside any repository, at the `invocation_dir`; that directory is the workspace root from then on. After bootstrap the workspace root is resolved only by the nearest-`.agent-contexts/` rule — `git` is never consulted again.
-- The manager runs the workspace from the workspace root. A contained repository's own `.agent-contexts/` is repository state and never substitutes for the workspace tally.
-- Contained repository roots are declared explicitly in the tally and must be contained in the workspace root under the same lexical and resolved-path/symlink containment rules as every workspace path. Repositories are never discovered by scanning.
+- The conductor invoked from a root owns only that root's `.agent-contexts/`.
+- A workspace conductor may write one request into a declared repository inbox.
+- A repository conductor may read its explicitly addressed request and the parent context it names. It never searches upward or writes parent state.
+- The repository conductor alone writes its `active.md`, Briefs, Plans, attempts, evidence, and closure.
 
-## Delegation tally
+## Send
 
-- Tally: `.agent-contexts/delegations.md`. It is the sole workspace delegation authority. It exists only when the workspace delegates. Its body is a ledger: a declared-repositories list (workspace-relative roots) and one row per delegation. There are no per-delegation directories or records.
-- The workspace manager is the sole writer of the tally and of the manager-published artifacts. Concurrent delegations — including several work items in one repository — use distinct stable `repository_work_id`s; when a row opens, `(repository_root, repository_work_id)` must be unique in the tally. Operational assumption: one active workspace manager writes the workspace tally; no locks or compare-and-swap are defined.
-- One row maps the workspace's `workspace_work_id` to the delegation's declared, contained `repository_root` (exact), a stable `repository_work_id`, the exact `repository_work_dir` (`<repository-root>/.agent-contexts/work/<repository-work-id>/`), the published Brief/Plan paths (repository-relative), and the row's `last_observed_state` with its observation time and `last_observed_artifacts` (the exact child artifact paths/IDs used to derive the current observation), plus `opened`/`closed` timestamps. Rows declare paths; they never embed artifact bodies.
-- Status values: `dispatched` (published, no repository activity observed yet), `adopted` (repository activity observed in the row's `repository_work_dir`), and terminal `completed`, `abandoned`, `withdrawn`. `dispatched` and `adopted` are nonterminal.
-- A status request reads every nonterminal row's exact `repository_work_dir` and its artifacts, derives that row's current state from the visible exact child artifacts — never from the repository's `active.md` — and updates the same tally row's `last_observed_state`, observation time, and `last_observed_artifacts`. The manager may treat observed repository artifacts (a repository-authored Plan, execution attempts or evidence, terminal final evidence) as state progression; an adoption it cannot observe stays `dispatched` until repository activity becomes visible. A terminal observed state never regresses in the sole-writer tally. Terminal rows are not re-read except after an explicit new user decision.
+1. Write one request at `<repository-root>/.agent-contexts/inbox/<request-id>.md`. Create it once; an existing path blocks the handoff.
+2. Record the declared repository, request ID, and user-reported outcome in the workspace tally at `.agent-contexts/delegations.md` when coordination needs tracking.
 
-## Delegation flow
+```md
+---
+wf-handoff/v1: true
+request_id: <stable-kebab-case>
+parent_workspace_root: <canonical absolute path>
+parent_context_path: <canonical absolute path beneath parent workspace root>
+repository_root: <canonical absolute path>
+created_at: <ISO-8601 timestamp>
+---
 
-1. **Declare.** The target repository must already be declared in the tally. Declaring a new repository root is a conductor-recorded, user-visible act — never a scan result. The row's `repository_work_id` and exact `repository_work_dir` are fixed when the delegation opens. On opening a row, the manager validates the exact `repository_work_dir`: it is absent, or every entry beneath it is a valid canonical workflow artifact at its canonical location (canonical paths and envelope per [artifacts.md](artifacts.md)), and every artifact carries `work_id: <repository-work-id>` plus `parent_work_id: <workspace-work-id>` matching this workspace work. Any unrecognized entry, non-artifact content, malformed artifact, or unexpected nested content returns `BLOCKED — delegation conflict` and the manager does not append. Stable same-ID re-delegation of the same workspace work passes this validation.
-2. **Publish.** The manager authors the Brief or Plan as a normal artifact and publishes it into the row's exact `repository_work_dir` with the repository's canonical artifact filenames and lineage, and an envelope carrying `work_id: <repository-work-id>` plus `parent_work_id: <workspace-work-id>`. Before each publication into that child, the manager reads only that exact `repository_work_dir` — never repository-wide `.agent-contexts`, the repository pointer, or any scan — and appends exactly `brief-<next>.md` or `plans/plan-<next>.md`, where `<next>` is the highest number of that kind in that exact child directory +1 (1 when none exists). The manager creates the next file exclusively; on a filename collision it rereads only that exact child directory and retries the allocation, never overwriting. Publication only appends: it never overwrites or revises an existing repository artifact; a corrected artifact is published as the next number. Workspace-side numbering is never mixed into repository artifacts.
-3. **Adopt.** Adoption completes when the repository's local `active.md` points at the published artifact. The repository's conductor alone adopts by setting that pointer; the workspace manager never writes the repository's active pointer. A repository-side adoption is user-reported; the manager never reads the repository pointer for status.
-4. **Hand off.** After adoption the manager never edits adopted or repository-created artifacts — including the repository pointer. The repository's conductor owns every later revision, attempt, verification, review, and closure; the manager records terminal status in the tally when the user reports it or terminal final evidence is observed in the row's `repository_work_dir`.
+# Requested Outcome
+<bounded repository outcome>
 
-## Prohibited mechanisms
+## Hard Constraints
+- <constraint>
+```
 
-Delegation uses declarations and canonical artifacts only: no body copies across roots, no symlinks, no inbox directories, no receipts, no per-delegation directories or status files, and no manager-specific artifact filenames in a repository.
+The request is the handoff. Keep it self-contained; `parent_context_path` is optional read-only detail, never local workflow authority.
+
+## Receive
+
+1. Adopt only a request the user explicitly selects by `<request-id>`.
+2. Validate that the request is exactly `<repository-root>/.agent-contexts/inbox/<request-id>.md`, `repository_root` equals the invocation root, and every declared path passes lexical and resolved-path containment beneath its declared root.
+3. Read `parent_context_path` only when supplied and validated. If a supplied path is malformed or conflicts with the request, report the gap; do not search parent directories for a substitute.
+4. If local work is already active, require the user's decision before replacing it. Otherwise create local work from the request and continue under the normal lifecycle.
+
+## Boundary
+
+Inbox requests are handoff context, not workflow artifacts. No cross-root `active.md` writes, artifact adoption, recovery, or status inference.

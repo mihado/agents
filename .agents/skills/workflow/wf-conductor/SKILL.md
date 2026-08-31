@@ -65,9 +65,11 @@ The conductor owns lane selection, escalation, worker dispatch, artifact writes,
 
 Subagents return analysis only; judge receives worker outputs only, never raw code or diffs.
 
-### Workspace root
+### State and repository roots
 
-The conductor starts from `$PWD` — canonicalized as the `invocation_dir` (`pwd -P` equivalent) — and resolves the canonical workspace root: the nearest enclosing directory containing `.agent-contexts/` (first-use bootstrap and the multi-repo model: [references/workspace-delegation.md](references/workspace-delegation.md) § Workspace model). The workspace is a working area and need not be a Git worktree. That canonical root is the `workspace_root` passed to every worker. Project artifact lookup — including `.agent-contexts/` — resolves only under that canonical root, with lexical containment (no `..` or absolute-path escape) and resolved-path/symlink containment (the fully resolved real path must stay inside the root). `workspace_root` is not a repository source: every dispatch also carries a declared `repository_root` — an explicitly declared contained repository root, never a scan result — and repository evidence resolves only under it. In a single-repository workspace `repository_root` equals `workspace_root`. Workers must not search `$HOME`, `/`, parent directories, or unrelated roots to discover project artifacts. This restriction does not apply to official documentation URLs, permitted network access, or installed executable/tool paths.
+The conductor starts from `$PWD`, canonicalized as `workspace_root`. This exact root owns `.agent-contexts/`; first use creates it there. Never climb to select another `.agent-contexts/`. A nested repository's state belongs to its own conductor and is excluded from source evidence. A repository conductor may read an explicitly addressed inbox handoff, but never write parent state.
+
+Every dispatch also declares one canonical `repository_root` for source, commands, and runtime evidence. It is an explicit target, never discovered by scanning, and may differ from or sit outside `workspace_root`. Artifact lookup resolves only under `workspace_root`; repository evidence resolves only under `repository_root`. Both roots use lexical and resolved-path containment for paths beneath them. Workers must not search parent directories or unrelated roots to discover artifacts or source. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
 
 ### Dispatch envelope
 
@@ -75,7 +77,7 @@ Every configured worker dispatch — `planner`, `planner-adversarial`, `judge`, 
 
 - `dispatch_id`
 - canonical `workspace_root`
-- declared `repository_root` — the canonical root of the explicitly declared contained repository this dispatch targets; it equals `workspace_root` in a single-repository workspace
+- declared `repository_root` — the canonical root of the explicitly declared repository this dispatch targets; it may equal `workspace_root`
 - `observed_target`
 
 Artifact-consuming dispatches — the read-only workers above and the verifier — additionally carry `inputs`: one compact, complete, ordered list of the declared project inputs. Each input entry names a root-relative path and its expected `work_id`, `artifact_role`, `artifact_id`, and `revision` where applicable. Schema and validation: [references/artifacts.md](references/artifacts.md) § Dispatch inputs.

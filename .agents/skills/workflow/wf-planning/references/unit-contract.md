@@ -8,6 +8,8 @@ Every unit must declare:
 **Depends on:** <none or prior units>
 **Execution mode:** code | ui | configuration | operation | migration | documentation
 **What to change:** <concrete bounded scope>
+**Design decisions:** <settled names, ownership, algorithms, boundaries, or `none — unit follows the cited existing pattern`>
+**Affected callers / compatibility:** <callers, data, commands, or user behavior preserved or migrated; `none` only when true>
 **Happy path:** <observable route from input or trigger to accepted outcome>
 **Likely failure modes:** <validation, dependency, state, rollback, or user-facing failure behavior; `not applicable` only when true>
 **Design context:** <settled interaction, visual, product, or operational decisions; `not applicable` only when true>

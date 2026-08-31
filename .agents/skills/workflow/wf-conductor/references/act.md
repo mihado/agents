@@ -13,7 +13,7 @@ Each operator invocation starts a fresh attempt. Attempts are immutable once the
 
 ## Execution cycle
 
-4. **Dispatch operator.** Send the configured `operator` with `Required skill: wf-execution`, the minimal dispatch envelope — `dispatch_id`, canonical `workspace_root`, declared `repository_root`, `observed_target` — and the settled Plan, Brief, and any concrete prior finding when repairing; the Plan and Brief ride as dispatch content, not declared `inputs`. Persist the operator result to `execution/attempt-<n>/operator.md` with metadata binding it to the Plan, Brief, attempt, and observed target.
+4. **Dispatch operator.** Resolve the Plan's pinned governing candidate and validate its path, identity, revision, and Brief binding. Send the configured `operator` with `Required skill: wf-execution`, the minimal dispatch envelope — `dispatch_id`, canonical `workspace_root`, declared `repository_root`, `observed_target` — and the settled Plan, Brief, pinned candidate, and any concrete prior finding when repairing. The Plan and Brief ride as dispatch content; the pinned candidate is a declared validated input. Persist the operator result to `execution/attempt-<n>/operator.md` with metadata binding it to the Plan, Brief, candidate, attempt, and observed target.
 
 5. **Route on operator status:**
    - `COMPLETE`: continue to Verify. Pass operator.md to the verifier; require all Plan units included in this dispatch to have completed.
@@ -49,7 +49,7 @@ Before starting any repair attempt:
 1. Persist the current Verify or Review artifact that authorized the repair.
 2. If this attempt was itself a repair, evaluate evidence progress against its predecessor and update counters.
 3. Apply the repair budget. If the budget is exhausted or a hard pause applies, stop.
-4. Start a fresh attempt (return to step 3 in the execution cycle) only if the budget permits, a concrete safe repair hypothesis exists, the changed source or state is owned, and retry is safe.
+4. Choose **inline repair** (the conductor applies the fix directly, no operator dispatch) only when the fix is named exactly by the authorizing finding, touches one file or a handful of adjacent lines, and needs no design judgment beyond what the finding already settled. Otherwise dispatch **operator repair**: start a fresh attempt (return to step 3 in the execution cycle). Either path requires the budget, hypothesis, ownership, and safety conditions above and in Unsafe retry conditions below to hold, and either path still routes through independent Verify and Review before the repair counts toward slice acceptance — inline repair changes who applies the fix, never who confirms it.
 
 ## Owned state
 
@@ -99,7 +99,7 @@ A slice is accepted when all of the following hold for the same Plan and attempt
 
 1. **Plan binding:** The Verify and Review artifacts both reference the same `plan-<n>` in `upstream_artifacts`.
 2. **Attempt binding:** The Verify and Review artifacts both reference the same `attempt-<n>` and were produced against the same `observed_target`.
-3. **AC results:** Every AC ID listed as `advanced` in the Plan's `## Brief Coverage` has an explicit `MET` verdict in the Verify artifact.
+3. **AC results:** Every AC ID listed as `advanced` in the Plan's `## Brief Coverage` has an explicit `MET` verdict in a Verify artifact for this Plan — the current attempt's own, or an earlier attempt's that the current one names by ID when the repair between them could not have affected that AC's evidence. A narrow inline repair's Verify artifact names the carried-forward attempt rather than re-deriving verdicts it never re-examined.
 4. **Verify verdict:** `PASS`.
 5. **Review disposition:** `no-actionable-findings`.
 6. **Diff binding:** The Review's `observed_target` is consistent with the Verify's (the same workspace state was reviewed as was verified).
