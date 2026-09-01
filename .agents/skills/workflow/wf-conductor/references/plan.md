@@ -59,7 +59,7 @@ Use only configured named workers. If a required named worker or `judge` is unav
 
 ## Candidate completeness
 
-Before persisting a `plan-candidate`, verify it has a valid envelope pinned to the active Brief and its current revision; Context with repository evidence for the affected path; settled route decisions and their authority; one observable outcome; every Brief AC exactly once; a concrete minimum route; public seams when crossed; a Change Map covering every touched file or command; ordered units conforming to the complete execution-unit contract, including design decisions and affected callers/compatibility; Compatibility Context when encryption, schema/data history, public contracts, rollout, or migration files change; patterns/foundations; a non-empty exact verification checklist; material risks; and explicit out-of-scope work. On a failure, return the incomplete report to the planner once without creating a candidate artifact. A candidate that cannot pass is `BLOCKED — incomplete candidate`, not evidence for adjudication.
+Before persisting a `plan-candidate`, verify it has a valid envelope pinned to the active Brief and its current revision; Context with repository evidence for the affected path; settled route decisions and their authority; one observable outcome; one focused Operator invocation — its Implementation Units form a single independently-verifiable increment, never a bundle of units that could each be separately verified and committed; every Brief AC exactly once; a concrete minimum route; public seams when crossed; a Change Map covering every touched file or command; ordered units conforming to the complete execution-unit contract, including design decisions and affected callers/compatibility; Compatibility Context when encryption, schema/data history, public contracts, rollout, or migration files change; patterns/foundations; a non-empty exact verification checklist; material risks; and explicit out-of-scope work. On a failure, return the incomplete report to the planner once without creating a candidate artifact. A candidate that cannot pass is `BLOCKED — incomplete candidate`, not evidence for adjudication.
 
 ## Draft persistence
 
@@ -90,11 +90,12 @@ The standard gate (`readiness_gate: standard-validation`) is a closed checklist.
 4. The pinned candidate represents every Brief AC exactly once with a closed status (`advanced`, `out-of-slice`, `already-met`, `cumulative-only`).
 5. Every `advanced` AC has a named evidence expectation.
 6. Every implementation unit in the pinned candidate conforms to the complete execution-unit contract, including design decisions and affected callers/compatibility.
-7. Every package-crossing value names its producer, consumer, owning lifecycle, narrowest project-native seam, and declaration-boundary proof. A server-only composition seam may use the concrete runtime types already used by its direct consumer only when that proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; introduce a plain port only when it prevents a real policy or consumer-boundary leak.
-8. The pinned candidate's verification checklist is non-empty and declares every materially applicable configured command or its scope-based inapplicability.
-9. No pinned unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).
-10. No material staleness: `observed_target` is reachable from the current worktree without unrelated drift.
-11. Valid lineage: successor or supersession `upstream_artifacts` meet the applicable gate (see Publication below).
+7. The pinned candidate's Implementation Units form one independently-verifiable increment — one focused Operator invocation. Units that could each be separately verified and committed are a bundle of slices, not one slice; split them into successive Plans rather than publishing one candidate that spans them.
+8. Every package-crossing value names its producer, consumer, owning lifecycle, narrowest project-native seam, and declaration-boundary proof. A server-only composition seam may use the concrete runtime types already used by its direct consumer only when that proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; introduce a plain port only when it prevents a real policy or consumer-boundary leak.
+9. The pinned candidate's verification checklist is non-empty and declares every materially applicable configured command or its scope-based inapplicability.
+10. No pinned unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).
+11. No material staleness: `observed_target` is reachable from the current worktree without unrelated drift.
+12. Valid lineage: successor or supersession `upstream_artifacts` meet the applicable gate (see Publication below).
 
 Panel planning uses adjudication as its gate (`readiness_gate: panel-adjudication`). The structural checklist is a non-ready precondition for a selected or grafted draft; only an adjudicated `select` result may set readiness. On pass, `readiness_evidence` records `{ gate: "standard-validation", result: "passed" }`, every selected candidate path, and the adjudication path.
 
@@ -111,7 +112,7 @@ In `delivery_mode: approval-required` without explicit publication intent, retur
 
 ## Publication (slice Plan)
 
-Each Plan is the executable contract for one bounded vertical slice, not the complete objective. Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/plans/plan-<n>.md` path. It must include the active Brief identity, upstream artifacts, observed target, and `artifact_role: plan`.
+Each Plan is the executable contract for one bounded vertical slice — one focused Operator invocation, never a bundle of independently-verifiable units — not the complete objective. This bound applies to every publication path, including human-approved: `act.md` enforces it independently of readiness, so a bypassed gate cannot still reach the operator as one whole-Plan dispatch. Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/plans/plan-<n>.md` path. It must include the active Brief identity, upstream artifacts, observed target, and `artifact_role: plan`.
 
 **Successor lineage gate:** For `plan-02` onward as a *new slice* (not a replacement), `upstream_artifacts` must include:
 - The prior slice Plan ID (e.g. `plan-01`)

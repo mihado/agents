@@ -112,6 +112,8 @@ The user is the final authority for scope, artifact revision, publication, aband
 
 An instruction to work autonomously, proceed with limited input, or carry work through delivery sets `delivery_mode: autonomous` in `active.md`. That mode authorizes ready Plan publication, Act, and successor slices without another publication prompt. It ends on explicit user pause, mode change, abandonment, or completion.
 
+Autonomous mode changes only that prompt cadence — never the bound on what one slice or one operator dispatch may contain. `plan.md`'s one-focused-Operator-invocation requirement and `act.md`'s per-unit dispatch scoping hold identically in both modes; "autonomous" authorizes moving through slices without asking, not moving through more work per slice.
+
 In `delivery_mode: autonomous`, persist each worker result, re-read `active.md`, route the resulting state, and continue the next authorized lifecycle action. A draft, worker result, ready Plan, accepted slice, or repair result is intermediate state, not a response boundary.
 
 Stop only for an explicit user pause, mode change, abandonment, or closure; a genuine user-owned decision; an unsafe or external block; `BLOCKED — planning loop`; an unavailable required worker; or the required completion confirmation.

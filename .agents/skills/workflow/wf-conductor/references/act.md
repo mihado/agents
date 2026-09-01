@@ -13,7 +13,7 @@ Each operator invocation starts a fresh attempt. Attempts are immutable once the
 
 ## Execution cycle
 
-4. **Dispatch operator.** Resolve the Plan's pinned governing candidate and validate its path, identity, revision, and Brief binding. Send the configured `operator` with `Required skill: wf-execution`, the minimal dispatch envelope — `dispatch_id`, canonical `invocation_dir`, declared `repository_root`, `observed_target` — and the settled Plan, Brief, pinned candidate, and any concrete prior finding when repairing. The Plan and Brief ride as dispatch content; the pinned candidate is a declared validated input. Persist the operator result to the canonical absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/operator.md` with metadata binding it to the Plan, Brief, candidate, attempt, and observed target.
+4. **Dispatch operator.** Resolve the Plan's pinned governing candidate and validate its path, identity, revision, and Brief binding. When its Implementation Units include more than one independently-verifiable unit — regardless of how the Plan was published, including human-approved, which bypasses the readiness gate that would otherwise catch this — this attempt scopes to only the next unit without an accepted completion, never the full remaining set; route it through Verify, Review, and its concern-scoped commit before starting the next attempt for the following unit (return to step 3). Send the configured `operator` with `Required skill: wf-execution`, the minimal dispatch envelope — `dispatch_id`, canonical `invocation_dir`, declared `repository_root`, `observed_target` — and the settled Plan, Brief, pinned candidate, this attempt's scoped unit(s), and any concrete prior finding when repairing. The Plan and Brief ride as dispatch content; the pinned candidate is a declared validated input. Persist the operator result to the canonical absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/operator.md` with metadata binding it to the Plan, Brief, candidate, attempt, and observed target.
 
 5. **Route on operator status:**
    - `COMPLETE`: continue to Verify. Pass operator.md to the verifier; require all Plan units included in this dispatch to have completed.
@@ -91,7 +91,7 @@ Count verifier-driven and review-driven repairs in one shared budget:
 
 ## Completion candidate
 
-A successful `Operator → Verify → Review` cycle with `PASS` and `no-actionable-findings` completes the current slice. Before routing, the conductor validates **slice acceptance**:
+A successful `Operator → Verify → Review` cycle with `PASS` and `no-actionable-findings` completes one unit's attempt. When the pinned candidate has other Implementation Units without an accepted completion yet, capture this unit's concern-scoped commit and start a fresh attempt for the next uncompleted unit (return to step 3); do not evaluate slice acceptance until every unit has one. Once every unit is complete, the conductor validates **slice acceptance**:
 
 ### Slice acceptance binding
 
@@ -103,6 +103,8 @@ A slice is accepted when all of the following hold for the same Plan and attempt
 4. **Verify verdict:** `PASS`.
 5. **Review disposition:** `no-actionable-findings`.
 6. **Diff binding:** The Review's `observed_target` is consistent with the Verify's (the same workspace state was reviewed as was verified).
+7. **Unit completeness:** every Implementation Unit in the pinned candidate has a `COMPLETE` operator result, a `PASS` Verify verdict, and a `no-actionable-findings` Review disposition — this attempt's own, or an earlier attempt's under the same Plan.
+8. **Commit binding:** the accepted changes are captured in one concern-scoped commit referenced by the Verify or Review evidence.
 
 If any condition fails, the slice is not accepted and the conductor must investigate the mismatch before routing.
 
