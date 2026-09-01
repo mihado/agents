@@ -91,11 +91,12 @@ The standard gate (`readiness_gate: standard-validation`) is a closed checklist.
 5. Every `advanced` AC has a named evidence expectation.
 6. Every implementation unit in the pinned candidate conforms to the complete execution-unit contract, including design decisions and affected callers/compatibility.
 7. The pinned candidate's Implementation Units form one independently-verifiable increment — one focused Operator invocation. Units that could each be separately verified and committed are a bundle of slices, not one slice; split them into successive Plans rather than publishing one candidate that spans them.
-8. Every package-crossing value names its producer, consumer, owning lifecycle, narrowest project-native seam, and declaration-boundary proof. A server-only composition seam may use the concrete runtime types already used by its direct consumer only when that proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; introduce a plain port only when it prevents a real policy or consumer-boundary leak.
-9. The pinned candidate's verification checklist is non-empty and declares every materially applicable configured command or its scope-based inapplicability.
-10. No pinned unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).
-11. No material staleness: `observed_target` is reachable from the current worktree without unrelated drift.
-12. Valid lineage: successor or supersession `upstream_artifacts` meet the applicable gate (see Publication below).
+8. Any unit introducing or growing a domain's primary persistence or business-logic home names its Composition outcome (`wf-planning`) — Governed with a `file:line` citation into the repository's own governing architecture documentation, or Frontier with its owner's resolution. A candidate silent on this when the unit clearly reaches that scope is `BLOCKED — incomplete candidate`, not evidence for adjudication.
+9. Every package-crossing value names its producer, consumer, owning lifecycle, narrowest project-native seam, and declaration-boundary proof. A server-only composition seam may use the concrete runtime types already used by its direct consumer only when that proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; introduce a plain port only when it prevents a real policy or consumer-boundary leak.
+10. The pinned candidate's verification checklist is non-empty and declares every materially applicable configured command or its scope-based inapplicability.
+11. No pinned unit defers a route-determining decision (route, topology, external integration, public contract, safety boundary, or acceptance evidence).
+12. No material staleness: `observed_target` is reachable from the current worktree without unrelated drift.
+13. Valid lineage: successor or supersession `upstream_artifacts` meet the applicable gate (see Publication below).
 
 Panel planning uses adjudication as its gate (`readiness_gate: panel-adjudication`). The structural checklist is a non-ready precondition for a selected or grafted draft; only an adjudicated `select` result may set readiness. On pass, `readiness_evidence` records `{ gate: "standard-validation", result: "passed" }`, every selected candidate path, and the adjudication path.
 

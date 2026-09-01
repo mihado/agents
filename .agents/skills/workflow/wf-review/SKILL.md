@@ -50,7 +50,7 @@ The conductor selects the mode.
 
 1. **Establish review surface** — identify changed behavior, stated scope, and available evidence.
 2. **Review Standards** — check correctness, regressions, and repository conventions. Use Fowler smells only when repository standards are silent.
-3. **Review Spec** — check whether the change matches the Brief, Plan, or stated scope.
+3. **Review Spec** — check whether the change matches the Brief, Plan, or stated scope, including whether the diff lands where the Plan's Composition citation (`wf-planning`) declared: a Governed placement silently abandoned, or a Frontier resolution silently reopened, is a spec-conformance finding, not a judgment call.
 4. **Check unique obligations** — for every new production line and test, ask: “What unique obligation does this carry?” Report code or tests with no unique obligation as an overbuild finding.
 5. **Return only findings that matter** — every reported issue changes a merge, follow-up, or risk decision.
 

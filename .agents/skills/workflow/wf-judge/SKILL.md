@@ -91,6 +91,8 @@ When input is marked `[PLAN PANEL]` (complete candidate Plans, optionally plus a
 
 When a governing graft draft is supplied, assess it against the same closed candidate set. Preserve it with `select` unless a cited Brief defect requires another graft, a missing profile, or re-planning; never replace it with an earlier candidate merely because that candidate was the original base.
 
+A candidate citing a `file:line` Composition outcome (Governed or Frontier, `wf-planning`) against one that is silent, or that asserts Frontier where another candidate cites governing documentation, is exactly the evidence-quality asymmetry step 1 already looks for — weigh it the same way as any other disagreement.
+
 Completion criterion: each material candidate difference is selected, rejected, or cited as a graft; every graft names an existing candidate decision. Choose the most conservative disposition supported by the supplied inputs.
 
 ## Review synthesis

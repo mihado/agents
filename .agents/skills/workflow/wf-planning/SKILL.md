@@ -14,7 +14,7 @@ The conductor selects the mode and supplies a closed input set.
 
 ## Candidate mode
 
-1. Inspect available code, tests, configuration, and official documentation before factual claims. Read only declared project artifacts. Resolve repository evidence only under the declared `repository_root`.
+1. Inspect available code, tests, configuration, and official documentation before factual claims — including the repository's own architecture documentation and ADRs, not only external framework/library docs. Read only declared project artifacts. Resolve repository evidence only under the declared `repository_root`.
 2. Load every profile reference in the declared profile set. Trace the affected flow before selecting the route.
 3. Plan the next bounded vertical slice: one observable increment, one focused Operator invocation, direct evidence, and a healthy repository. Record the current behavior, settled decisions, affected callers/files, failure policy, and exclusions that let the operator act without re-deciding the route.
 4. Map every Brief acceptance criterion exactly once as `advanced`, `out-of-slice`, `already-met`, or `cumulative-only`.
@@ -29,7 +29,12 @@ Plan one test only when it proves behavior the change could regress and existing
 
 ### Composition
 
-Treat a package seam as implementation mechanics until repository evidence shows competing seams change an approved ownership, safety, compatibility, or lifecycle boundary. Prefer the established composition pattern and make it observable in the next slice. Ask for a decision only when that evidence cannot settle a material boundary; do not turn a local factory or type choice into an architecture stop.
+Before a unit introduces or grows a domain's primary persistence or business-logic home, check the repository's own governing architecture documentation for that area (an architecture doc, ADRs — the repo-owned reading step 1 now names, distinct from external framework/library docs).
+
+- **Governed** — the documentation already covers this area: adhere to it, and record the citation (`file:line`) as the unit's existing workspace pattern. If satisfying the Brief would erode the documented pattern, or repository evidence surfaces a concrete improvement to it, that is a blocker — name it rather than silently comply or silently deviate.
+- **Frontier** — the documentation is silent on this area: this is the novel-architecture case step 5 already names, unresolved until its owner approves it. Once resolved, propose the decision back into the governing documentation so the next candidate here finds it governed, not a frontier again.
+
+Below that check, treat a local factory, type choice, or non-domain package seam as implementation mechanics — reuse it, cite it, and do not turn it into an architecture stop.
 
 ### Candidate output
 
@@ -88,7 +93,7 @@ revision_summary: <initial candidate, or concise change>
 <execution-unit contract>
 
 ## Patterns and Foundations
-- Existing workspace pattern: <file:line, or `none — greenfield workspace`>
+- Existing workspace pattern: <file:line into the governing architecture doc/ADR (Governed); the frontier resolution and where it was written back (Frontier); or `none — greenfield workspace` when the repository itself has no code yet>
 - Settled foundation: <Brief decision or authoritative source>
 
 ## Verification Checklist
