@@ -72,9 +72,11 @@ If no findings, return `No review issues found.` then `## Review Disposition: no
 
 ## Adversarial-risk mode
 
-1. **Establish risk surface** — identify changed assumptions and relevant invariants, trust boundaries, untrusted-input flows, authorization, data, concurrency, and operational boundaries.
+1. **Establish risk surface** — identify changed assumptions and relevant invariants, trust boundaries, untrusted-input flows, authorization, data, concurrency, and operational boundaries. For encryption, schema/data history, public contracts, rollout, or migration-file changes, first read Compatibility Context from the Brief or Plan.
 2. **Pressure-test credible failure modes** — inspect changed files first, then directly related local code. Avoid generated files, vendor code, `node_modules`, and unrelated framework internals.
 3. **Return only credible breakage** — a finding names a concrete failure mode that could plausibly happen in this change.
+
+**Compatibility context:** `development-only` means no released consumers, shared-applied migration, or retained data need preservation; review the direct replacement and allow an existing migration file to change in place. `shared-applied` or `released` requires an explicit compatibility, rollout, migration, or retirement decision. When the context is absent or unsupported, report the missing fact only; do not assume production history or require a legacy path.
 
 Completion criterion: every credible hidden-risk issue is cited with `file:line` and severity; no generic warnings or style concerns.
 

@@ -66,6 +66,9 @@ revision_summary: <initial candidate, or concise change>
 ## Settled Decisions
 - <decision> — <repository evidence, Brief decision, or cited public pattern>
 
+## Compatibility Context
+- <development-only | shared-applied | released>: <data, migration, encryption format, or caller state that must be preserved; omit when no compatibility boundary changes>
+
 ## Brief Coverage
 - AC1: advanced — expected evidence: <evidence>
 
@@ -101,7 +104,7 @@ revision_summary: <initial candidate, or concise change>
 - <excluded work, or `none`>
 ```
 
-**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification alone. A published Plan authorizes execution through its pinned candidate revision. It is a complete proposed Plan, never a summary or outline. Its Context, Settled Decisions, Change Map, Risks, and Out of Scope sections resolve the operator's route rather than restating repository code. It must use a descriptive `candidate_key` for the observable slice, not its current terminology; state its profile; and keep every new file, export, dependency, fixture, and test tied to a unique present obligation. A new port, adapter, or factory needs a present boundary obligation; framework types in a deliberately narrow server-only composition seam are not alone a reason to add one. The conductor confirms key reuse against the existing slice outcome before persistence.
+**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification alone. A published Plan authorizes execution through its pinned candidate revision. It is a complete proposed Plan, never a summary or outline. Its Context, Settled Decisions, Change Map, Risks, and Out of Scope sections resolve the operator's route rather than restating repository code. When encryption, schema/data history, public contracts, rollout, or migration files change, Compatibility Context states whether the affected state is `development-only`, `shared-applied`, or `released`, with supporting evidence. It must use a descriptive `candidate_key` for the observable slice, not its current terminology; state its profile; and keep every new file, export, dependency, fixture, and test tied to a unique present obligation. A new port, adapter, or factory needs a present boundary obligation; framework types in a deliberately narrow server-only composition seam are not alone a reason to add one. The conductor confirms key reuse against the existing slice outcome before persistence.
 
 ## Graft mode
 
