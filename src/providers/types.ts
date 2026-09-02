@@ -23,5 +23,7 @@ export interface ProviderManifestEntry {
 }
 
 export interface ProviderManifest {
-  [id: string]: ProviderManifestEntry;
+  plugin?: string[];
+  provider: Record<string, ProviderManifestEntry>;
+  permission?: Record<string, unknown>;
 }

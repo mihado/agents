@@ -8,15 +8,16 @@ Think accepts inputs from:
 - Prototype output (recorded design decision).
 - Research disposition (adopted synthesis recorded in a superseding Brief).
 - Wayfinding output (bounded destination from a resolved frontier).
+- Delegated work selected by the user (see `wf-handoff`).
 
 For `/think`:
 
 1. Read task context and any discovery output. If empty, route to discovery instead.
 2. Apply fact-versus-decision discipline. Verify that outcome, constraints, acceptance criteria, and decision owner are settled.
 3. If a bounded factual question must be answered to settle the Brief (e.g. API constraints, platform capabilities, rate limits), invoke `wf-research`. Persist evidence under the active work. Resume Think with the result. If the result makes the intended outcome incoherent, return to the user.
-3. When writing the first durable artifact for a user-selected work, choose a readable lowercase kebab-case `work_id` and create `.agent-contexts/work/<work-id>/`. On collision, append the smallest available numeric suffix.
-4. Write `.agent-contexts/work/<work-id>/brief-01.md` only when intent, constraints, and acceptance are settled. Use the Brief frontmatter template below.
-5. After the Brief is persisted, publish `.agent-contexts/active.md` pointing to it (`current_artifact_path: work/<work-id>/brief-<n>.md`, `current_artifact_id: brief-<n>`).
+3. When writing the first durable artifact for a user-selected work, choose a readable lowercase kebab-case `work_id` and create the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/` directory. On collision, append the smallest available numeric suffix. When the user selected a delegated-work request, retain its declared `work_id` and use its existing directory; write `brief-01.md` beside `delegated-01.md` rather than generating a suffix.
+4. Write the Brief only when intent, constraints, and acceptance are settled, using its canonical absolute path beneath `<invocation_dir>/.agent-contexts/work/<work-id>/brief-01.md`. Use the Brief frontmatter template below. When the Brief comes from delegated work, preserve its requested outcome, acceptance criteria, hard constraints, settled decisions, repository scope, and expected evidence; do not reopen intent merely because the target repository has additional local context. `source_contexts` is required: add the delegated-work request and every consulted declared context path. Revisit transferred intent only on explicit user direction or evidence from a blocked or failed implementation path.
+5. After the Brief is persisted, publish the absolute `<invocation_dir>/.agent-contexts/active.md` path pointing to it (`current_artifact_path: work/<work-id>/brief-<n>.md`, `current_artifact_id: brief-<n>`) with `delivery_mode: autonomous` when the user has given autonomous-delivery authority; otherwise use `delivery_mode: approval-required`.
 6. When risk or ambiguity is high, deepen the direct interview rather than dispatching workers.
 
 ## Active Brief revision
@@ -46,6 +47,22 @@ created_at: <ISO-8601 timestamp>
 ---
 ```
 
+### Source contexts
+
+`source_contexts` is required whenever the Brief comes from delegated work; it is absent only when no outside context informed the Brief. It is the durable link back to the reasoning behind the Brief. Each entry:
+
+```yaml
+source_contexts:
+  - path: <absolute delegated-work path>
+    role: delegated-work
+  - path: <absolute consulted context path>
+    role: context
+```
+
+`path` is a file path today because that is the only provenance backend Think has. `role` is a short free-text label for what the entry is.
+
+Before writing the Brief, read every declared absolute path exactly as written; report a gap rather than persist an unreadable reference. This is provenance, not delegated authority. Populate it once, at Brief creation; do not maintain it across later revisions.
+
 ### Brief body template
 
 ```md
@@ -65,6 +82,9 @@ created_at: <ISO-8601 timestamp>
 ## Settled Decisions
 - <route-defining decision and rationale>
 
+## Expected Evidence
+- <test, command, runtime flow, or explicit reason evidence is deferred>
+
 ## Non-Goals
 - <explicitly excluded scope>
 
@@ -72,7 +92,7 @@ created_at: <ISO-8601 timestamp>
 <who resolves remaining human-owned decisions>
 ```
 
-Acceptance criteria use stable `AC<n>` IDs. Slice Plans reference these IDs to declare which criteria they advance. The Brief remains stable and does not track implementation progress.
+Acceptance criteria use stable `AC<n>` IDs. Slice Plans reference these IDs to declare which criteria they advance. Planning consumes `Expected Evidence` as the initial evidence contract and makes any slice-specific refinement explicit. The Brief remains stable and does not track implementation progress.
 
 ### AC identity rules
 
@@ -100,6 +120,6 @@ Return:
 
 ```md
 ## Think Complete
-- Brief written to `.agent-contexts/work/<work-id>/brief-01.md`
+- Brief written to `<invocation_dir>/.agent-contexts/work/<work-id>/brief-01.md`
 - Next: run `/plan`
 ```

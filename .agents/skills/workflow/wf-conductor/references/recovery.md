@@ -3,8 +3,8 @@
 Use for re-orientation, not new planning.
 
 1. Inspect branch, `git status`, recent commits, and current diff.
-2. Read `.agent-contexts/active.md`. If absent, malformed, or points outside `.agent-contexts/work/`, report the blocker and stop. If `work_status` is `completed` or `abandoned`, report closure and stop.
-3. Resolve `current_artifact_path` to the governing Brief or executable Plan. If it is a Brief, require `latest_attempt: null`; otherwise report inconsistent active state and recommend reconciliation before Act. Scan `plans/` for drafts belonging to the active Brief. Report `ready` drafts as eligible for ordinary publication and `draft` artifacts as work-in-progress; do not treat readiness, recency, or scan order as selection or execution authority. A renamed `plan-<n>.md` is no longer a draft.
+2. Read the absolute `<invocation_dir>/.agent-contexts/active.md` path. If absent, malformed, or points outside the absolute `<invocation_dir>/.agent-contexts/work/` path, report the blocker and stop. If `work_status` is `completed` or `abandoned`, report closure and stop.
+3. Resolve `current_artifact_path` beneath the absolute `<invocation_dir>/.agent-contexts/` path to the governing Brief or executable Plan and apply `delivery_mode`. If it is a Brief, require `latest_attempt: null`; otherwise report inconsistent active state and recommend reconciliation before Act. In `autonomous` mode, one unambiguous ready draft is publication and execution authority; continue it without a prompt. In `approval-required` mode, scan the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/plans/` directory for drafts belonging to the active Brief and report `ready` drafts as eligible for ordinary publication and `draft` artifacts as work-in-progress; do not treat readiness, recency, or scan order as selection or execution authority. A renamed `plan-<n>.md` is no longer a draft.
 4. **Resolve evidence:**
    - When the governing artifact is a Plan, walk backward through its `upstream_artifacts` to collect predecessor Plan IDs. For each Plan in the chain, oldest to newest, check for a Verify with `PASS` and a Review with `no-actionable-findings` bound to the same Plan and attempt. Collect the accepted set: Plan ID, Verify ID, Review ID, and ACs advanced per slice.
    - When the governing artifact is a Brief, report prior Plan and attempt artifacts only as historical activity. Do not infer that they satisfy the current Brief's acceptance criteria or list them as accepted evidence.
@@ -20,7 +20,7 @@ Return:
 <what we were trying to do>
 
 ## In Progress
-- <active work, governing artifact, and work_status>
+- <active work, governing artifact, work_status, and delivery_mode>
 - <ready drafts with paths, IDs, and revisions, or `no ready drafts`>
 - <work-in-progress drafts with paths, IDs, and revisions, or `no work-in-progress drafts`>
 

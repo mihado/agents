@@ -64,6 +64,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "cursor/plugins": {
+      "repository": "https://github.com/cursor/plugins.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "thermos/LICENSE"
+      }
     }
   },
   "skills": {
@@ -71,6 +79,21 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/using-agent-skills",
       "path": "skills/engineering/using-agent-skills"
+    },
+    "thermo-nuclear-code-quality-review": {
+      "source": "cursor/plugins",
+      "srcPath": "thermos/skills/thermo-nuclear-code-quality-review",
+      "path": "skills/engineering/thermo-nuclear-code-quality-review"
+    },
+    "thermo-nuclear-review": {
+      "source": "cursor/plugins",
+      "srcPath": "thermos/skills/thermo-nuclear-review",
+      "path": "skills/engineering/thermo-nuclear-review"
+    },
+    "thermos": {
+      "source": "cursor/plugins",
+      "srcPath": "thermos/skills/thermos",
+      "path": "skills/engineering/thermos"
     },
     "interview-me": {
       "source": "addyosmani/agent-skills",

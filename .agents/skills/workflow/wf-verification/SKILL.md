@@ -16,7 +16,7 @@ If no mode is specified, default to `slice`.
 
 ## Workspace root
 
-Resolve project artifacts, the Plan/Brief/manifest, only beneath the conductor-provided canonical `workspace_root`, and repository evidence only beneath the declared `repository_root` — each with lexical containment and resolved-path/symlink containment. Consume only conductor-declared inputs whose expected identity matches [the dispatch-input validation](../wf-conductor/references/artifacts.md#dispatch-inputs). Official documentation, permitted network access, and installed tools are unaffected.
+Resolve project artifacts, the Plan/Brief/manifest, only beneath the conductor-provided canonical `invocation_dir`, and repository evidence only beneath the declared `repository_root` — each with lexical containment and resolved-path/symlink containment. Consume only conductor-declared inputs whose expected identity matches [the dispatch-input validation](../wf-conductor/references/artifacts.md#dispatch-inputs). Official documentation, permitted network access, and installed tools are unaffected.
 
 ## Mandate
 
@@ -76,16 +76,23 @@ In both modes, commands come from a declared authority (slice Plan or cumulative
 ### Acceptance Criteria: <MET | UNMET | UNVERIFIED>
 - [<MET | UNMET | UNVERIFIED>] <criterion> — <direct evidence, or exact evidence gap and disposition owner>
 
+### Evidence routing (required for non-`PASS` verdicts)
+- Locus: <implementation | plan | external | manual>
+- Ownership: <owned | external | ambiguous>
+- Repair hypothesis: <concrete repair, or none>
+- Safe retry conditions: <conditions, or none>
+- Prohibited actions: <actions the conductor must not take>
+
 ### Verdict: <PASS | FAIL | INCOMPLETE | BLOCKED>
 <one-sentence reason>
 ```
 
 ## Verdict rules
 
-- **PASS:** every required command/evidence item passes and every in-scope acceptance criterion is `MET`.
-- **FAIL:** a repairable required check or criterion is `UNMET`. Identify a concrete failure signature and repair hypothesis when one exists.
-- **INCOMPLETE:** required evidence is unavailable, manual, external, or ambiguous. An `UNVERIFIED` required criterion is `INCOMPLETE`; name the gap and human disposition owner. A configured command materially applicable to the Plan's scope but omitted from the Plan is `INCOMPLETE` (Plan defect).
-- **BLOCKED:** a dependency, precondition, credential, environment, plan conflict, or safety boundary prevents meaningful verification. A Plan-declared command unavailable in the current environment is `BLOCKED`.
+- **PASS:** every required command/evidence item passes and every in-scope acceptance criterion is `MET`. Omit the Evidence routing section.
+- **FAIL:** a required check or criterion is `UNMET`. Identify its exact failure signature, affected paths or state, repair locus, and safe retry conditions.
+- **INCOMPLETE:** required evidence is missing or insufficient. An `UNVERIFIED` required criterion is `INCOMPLETE`. Set `Locus: implementation` only when owned, bounded repair can produce the missing evidence; set `Locus: plan` for an omitted materially applicable command, evidence contract, safety classification, target scope, precondition, cleanup/recovery procedure, or stop condition; set `Locus: external` or `manual` when another owner must supply evidence.
+- **BLOCKED:** a dependency, credential, service, unsafe command context, or external state prevents meaningful verification. Name the owner and prohibited actions. A Plan-declared command unavailable in the current environment is `BLOCKED`; a declared test environment remains `implementation` evidence when it is owned.
 - No required declared/configured verification yields `INCOMPLETE`, not `PASS`.
 - A performance criterion without its declared measurement is `INCOMPLETE`; static observation cannot satisfy it.
 

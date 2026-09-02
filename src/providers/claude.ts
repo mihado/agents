@@ -4,11 +4,55 @@ import os from "node:os";
 import { spawnSync } from "node:child_process";
 import type { Provider } from "./types.js";
 import { listSkills } from "../skills/inventory/discover.js";
-import { validateFile, linkTarget, installSkills, checkLink } from "./shared/symlinks.js";
+import { validateFile, linkTarget, installSkills, checkLink, pruneManagedSymlinks } from "./shared/symlinks.js";
 import { resolveExecutable, readJson } from "../core/commands.js";
 
 function getHome(): string {
   return process.env.CLAUDE_HOME || path.join(os.homedir(), ".claude");
+}
+
+function getManagedAgentNames(sourceDir: string): Set<string> {
+  if (!fs.existsSync(sourceDir)) return new Set<string>();
+
+  return new Set(
+    fs.readdirSync(sourceDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map((entry) => entry.name),
+  );
+}
+
+function installProviderAgents(root: string): void {
+  const home = getHome();
+  const agentSrc = path.join(root, "config", "providers", "claude", "agents");
+  const agentDir = path.join(home, "agents");
+
+  pruneManagedSymlinks(agentDir, agentSrc, getManagedAgentNames(agentSrc), "Claude agent");
+
+  if (!fs.existsSync(agentSrc)) return;
+
+  for (const entry of fs.readdirSync(agentSrc, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const source = path.join(agentSrc, entry.name);
+    const target = path.join(agentDir, entry.name);
+    linkTarget(source, target, `Claude agent ${entry.name}`);
+  }
+}
+
+function checkProviderAgents(root: string): boolean {
+  const home = getHome();
+  const agentSrc = path.join(root, "config", "providers", "claude", "agents");
+  let ok = true;
+
+  if (!fs.existsSync(agentSrc)) return ok;
+
+  for (const entry of fs.readdirSync(agentSrc, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const source = path.join(agentSrc, entry.name);
+    const target = path.join(home, "agents", entry.name);
+    if (!checkLink(source, target, `Claude agent ${entry.name}`)) ok = false;
+  }
+
+  return ok;
 }
 
 export const claude: Provider = {
@@ -22,6 +66,7 @@ export const claude: Provider = {
     linkTarget(path.join(root, "AGENTS.md"), path.join(home, "AGENTS.md"), "Claude shared instructions");
     linkTarget(path.join(root, "CLAUDE.md"), path.join(home, "CLAUDE.md"), "Claude instructions");
     installSkills(home, root, "Claude", skills);
+    installProviderAgents(root);
 
     return true;
   },
@@ -34,6 +79,7 @@ export const claude: Provider = {
     for (const skill of skills) {
       if (!checkLink(skill.absPath, path.join(home, "skills", skill.name), `Claude skill ${skill.name}`)) ok = false;
     }
+    if (!checkProviderAgents(root)) ok = false;
     return ok;
   },
 };

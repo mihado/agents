@@ -64,13 +64,18 @@ make deps                # set up Python venv (skillspector, semgrep) via uv syn
 The link script creates these symlinks:
 
 ```text
-~/.codex/AGENTS.md       -> <repo>/AGENTS.md
-~/.claude/AGENTS.md      -> <repo>/AGENTS.md
-~/.claude/CLAUDE.md      -> <repo>/CLAUDE.md
-~/.codex/skills/<name>   -> <repo>/.agents/skills/<name>
-~/.claude/skills/<name>  -> <repo>/.agents/skills/<name>
-~/.agents/skills/<name>  -> <repo>/.agents/skills/<name>
-~/.kiro/skills/<name>    -> <repo>/.agents/skills/<name>
+# skills
+~/.codex/AGENTS.md      -> <repo>/AGENTS.md
+~/.claude/AGENTS.md     -> <repo>/AGENTS.md
+~/.claude/CLAUDE.md     -> <repo>/CLAUDE.md
+~/.codex/skills/<name>  -> <repo>/.agents/skills/<name>
+~/.claude/skills/<name> -> <repo>/.agents/skills/<name>
+~/.agents/skills/<name> -> <repo>/.agents/skills/<name>
+~/.kiro/skills/<name>   -> <repo>/.agents/skills/<name>
+
+# agents
+~/.claude/agents/<name>.md          -> <repo>/config/providers/claude/agents/<name>.md
+~/.config/opencode/agents/<name>.md -> <repo>/config/providers/opencode/agents/<name>.md
 ```
 
 `~/.agents/skills/` is the universal skills path: OpenCode and Zed discover skills here. `~/.kiro/skills/` is Kiro's global skills path. If `~/.kiro` doesn't exist yet (Kiro not installed on this machine), the link script creates it so skills are ready the moment Kiro is installed.

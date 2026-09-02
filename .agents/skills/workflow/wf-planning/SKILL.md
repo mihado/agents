@@ -1,145 +1,120 @@
 ---
 name: wf-planning
-description: Owns execution-plan production and adversarial plan pressure-testing. Use with execution or adversarial mode after a settled Brief.
+description: Produces a complete candidate Plan from one conductor-selected composite profile set and revises a selected base with bounded grafts after a settled Brief.
 ---
 
 # Workflow Planning
 
-## Mode selection
+## Modes
 
-- **execution:** turn a settled Brief into an evidence-grounded draft execution plan.
-- **adversarial:** independently pressure-test a proposed route, unit shape, safeguards, and evidence. Return a report only.
+- **candidate:** produce one complete candidate Plan through the declared composite profile set. Load [`references/panels.md`](references/panels.md) and every profile reference it declares.
+- **graft:** revise the selected base candidate with only the judge-cited decisions from declared candidates.
 
-The conductor selects the mode.
+The conductor selects the mode and supplies a closed input set.
 
-## Execution mode
+## Candidate mode
 
-### Process
+1. Inspect available code, tests, configuration, and official documentation before factual claims — including the repository's own architecture documentation and ADRs, not only external framework/library docs. Read only declared project artifacts. Resolve repository evidence only under the declared `repository_root`.
+2. Load every profile reference in the declared profile set. Trace the affected flow before selecting the route.
+3. Plan the next bounded vertical slice: one observable increment, one focused Operator invocation, direct evidence, and a healthy repository. Record the current behavior, settled decisions, affected callers/files, failure policy, and exclusions that let the operator act without re-deciding the route.
+4. Map every Brief acceptance criterion exactly once as `advanced`, `out-of-slice`, `already-met`, or `cumulative-only`. When Execution Slices split one Plan across multiple named slices and an AC's evidence is not complete until more than one of them lands, name every contributing slice and which portion each owns (e.g. `AC1: advanced — S4: orchestration evidence; S5: fixed-transport evidence, completes AC1`) rather than declaring it `advanced` against the whole Plan — an AC declared against the whole Plan when only part of it is done here produces a false `INCOMPLETE`, not a defect.
+5. Select the first sufficient route: existing behavior, existing local mechanism, standard library/native platform, installed dependency, small local edit, then the smallest new owner or abstraction with a present unique obligation. Reuse an established repository pattern first; if none fits, use a reputable public pattern and cite it. A novel architecture is unresolved until its owner approves it.
+6. Name touchpoints, happy path, failures, safeguards, escalation, and the lowest adequate proof. For every package-crossing value, trace its direct consumer and the existing composition path before choosing a seam. Reuse the narrowest project-native seam: a server-only composition subpath may accept concrete runtime types already used by its direct consumer only when declaration-boundary proof shows the subpath is absent from shared/browser exports and reachable only from the server composition graph; use a plain port only when it prevents a real policy or consumer-boundary leak. Name producer, consumer, lifecycle owner, signature, and declaration-boundary proof. Return an escalation boundary only for an unresolved decision that can change outcome, ownership, route, safety, or proof.
 
-1. Inspect available code, tests, configuration, and official documentation before making factual claims. For an empty or greenfield workspace, record the absence of local evidence and ground the Plan in the settled Brief and authoritative sources. Work from the dispatch envelope: read the declared Brief or draft at its declared `workspace_root`-relative path; do not substitute another copy. Resolve repository evidence only under the declared `repository_root` and never search `$HOME`, `/`, or parent directories for project artifacts. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
-2. Plan the next bounded vertical slice — one coherent increment that delivers observable behavior, fits one focused Operator invocation, has direct evidence, and leaves the repository healthy.
-3. Map the slice to the Brief acceptance criteria it advances (`AC<n>` IDs). Mark unrelated criteria `out-of-slice`.
-4. For a greenfield workspace, the first slice establishes the smallest runnable and verifiable skeleton (manifest, source/test layout, build/typecheck/lint/test commands, minimal entry point); later slices deliver vertical behavior against it.
-5. Define touchpoints, happy path, failure modes, safeguards, and escalation conditions.
-6. Return unsettled route-determining decisions to Think or research. A unit whose evidence strategy is "determine whether X works" is research when X determines the route, deployment topology, external integration, public contract, safety boundary, or acceptance evidence. If package manager, framework, runtime, or test tooling is unsettled, that is not an implementation detail — return to Think or research.
+Completion criterion: the candidate covers every material decision its profile claims to cover; each unit has scope, dependency, failure behavior, safeguard, escalation, and falsifiable evidence; every AC spanning multiple Execution Slices names every contributing slice and its portion; every package-crossing value has a project-native seam and declaration-boundary proof; its minimum route leaves no speculative structure.
 
-Completion criterion: the slice delivers one observable bounded behavior; every unit names scope, dependency, failure behavior, safeguards, and an escalation condition; the Brief Coverage section declares which AC IDs are advanced and what evidence proves them. A draft is ready for adversarial review when it has a settled Brief, adopted research decisions, and no unit deferring a route-determining decision. Record irreducible implementation uncertainty as an explicit unresolved item and escalation boundary; the human may publish that bounded Plan.
+### Minimum evidence
 
-### Eligible practice skills
+Plan one test only when it proves behavior the change could regress and existing evidence does not already prove it. Choose the lowest adequate level: unit for isolated logic, integration for a crossed boundary, or runtime for a critical user path. Static wiring already covered by typecheck or lint and duplicate happy paths need no test plan.
 
-Select and record only methods with a concrete trigger:
+### Composition
 
-- `api-and-interface-design` — public API or module interface contract.
-- `domain-modeling` — vocabulary, ownership, or boundary changes.
-- `security-and-hardening` — untrusted input, auth, storage, tenant boundaries, or third-party integration.
-- `deprecation-and-migration` — removal, user migration, or schema/data migration.
-- `ci-cd-and-automation` — build, deployment, quality-gate, or CI pipeline changes.
-- `frontend-ui-engineering`, `hallmark`, or `impeccable` — settled UI work.
+Before a unit introduces or grows a domain's primary persistence or business-logic home, check the repository's own governing architecture documentation for that area (an architecture doc, ADRs — the repo-owned reading step 1 now names, distinct from external framework/library docs).
 
-### Output format
+- **Governed** — the documentation already covers this area: adhere to it, and record the citation (`file:line`) as the unit's existing workspace pattern. If satisfying the Brief would erode the documented pattern, or repository evidence surfaces a concrete improvement to it, that is a blocker — name it rather than silently comply or silently deviate.
+- **Frontier** — the documentation is silent on this area: this is the novel-architecture case step 5 already names, unresolved until its owner approves it. Once resolved, propose the decision back into the governing documentation so the next candidate here finds it governed, not a frontier again.
 
-For the execution-unit contract template and execution-mode vocabulary, load [references/unit-contract.md](references/unit-contract.md).
+Below that check, treat a local factory, type choice, or non-domain package seam as implementation mechanics — reuse it, cite it, and do not turn it into an architecture stop.
+
+### Candidate output
+
+Load [references/unit-contract.md](references/unit-contract.md) for unit vocabulary.
 
 ```md
 ---
 wf-artifact/v1: true
 work_id: <work-id>
-artifact_role: plan-draft
-artifact_id: draft-<candidate-key>
+artifact_role: plan-candidate
+artifact_id: <candidate-key>-run-<n>-candidate-<n>
 upstream_artifacts:
   - <brief-id>
 observed_target: <target>
 created_at: <ISO-8601 timestamp>
 brief_id: brief-<n>
+brief_revision: <active Brief revision, or `0` when omitted>
 candidate_key: <descriptive-kebab-case>
-readiness: draft
+planning_run: run-<n>
+planner_profile: <profile combination, or `general`>
 revision: <integer, starting at 1>
 revised_at: <ISO-8601 timestamp>
-revision_summary: <initial draft, or concise description of the latest revision>
+revision_summary: <initial candidate, or concise change>
 ---
 
 ## Slice Outcome
-<one paragraph describing the observable result delivered by this slice>
+<observable result>
+
+## Context
+- Current behavior: <what is missing or wrong, with repository evidence>
+- Existing path: <entry point → affected owner → observable outcome, with file:line references>
+- Why this slice: <why this is the smallest useful increment>
+
+## Settled Decisions
+- <decision> — <repository evidence, Brief decision, or cited public pattern>
+
+## Compatibility Context
+- <development-only | shared-applied | released>: <data, migration, encryption format, or caller state that must be preserved; omit when no compatibility boundary changes>
 
 ## Brief Coverage
-
 - AC1: advanced — expected evidence: <evidence>
-- AC2: out-of-slice
-- AC3: advanced — expected evidence: <evidence>
-- AC4: already-met — accepted verification: <verify artifact ID>
-- AC5: cumulative-only
+
+## Minimum Route
+- Chosen route: <first sufficient route and concrete decision home>
+- Reuse: <existing owner/pattern/platform behavior, or `none — new capability`>
+- Extension threshold: <observable condition requiring more structure, or `none — no credible next rung`>
+
+## Public Seams
+- <producer> → <consumer> (lifecycle: <owner>): `<narrowest project-native signature>`; proof: <server-only subpath absent from shared/browser exports and reachable only from server composition, or other declaration-boundary check>; rationale: <existing composition pattern, or boundary leak prevented>
+
+## Change Map
+- `<path>`: <concrete responsibility changed; existing pattern or caller reference>
 
 ## Implementation Units
-
 ### U1: <unit name>
 <execution-unit contract>
 
 ## Patterns and Foundations
-- Existing workspace pattern: <file:line, or `none — greenfield workspace`>
+- Existing workspace pattern: <file:line into the governing architecture doc/ADR (Governed); the frontier resolution and where it was written back (Frontier); or `none — greenfield workspace` when the repository itself has no code yet>
 - Settled foundation: <Brief decision or authoritative source>
 
 ## Verification Checklist
 - [ ] <typecheck/lint/test/runtime check>
 
 ## Escalation Notes
-- <why extra rigor may be needed>
+- <route-determining uncertainty, or `none`>
 
-## Directional Roadmap
-- <likely next slice, or `none — this slice is expected to complete Brief coverage`>
+## Risks
+- <material pre-existing or introduced risk, consequence, and why it is in or out of this slice; `none`>
+
+## Out of Scope
+- <excluded work, or `none`>
 ```
 
-**Brief Coverage rules:** enumerate every Brief AC exactly once using a closed status (`advanced`, `out-of-slice`, `already-met`, `cumulative-only`). Every AC ID must exist in the governing Brief.
+**Candidate authority:** a candidate is complete enough to compare, but cannot authorize implementation or verification alone. A published Plan authorizes execution through its pinned candidate revision. It is a complete proposed Plan, never a summary or outline. Its Context, Settled Decisions, Change Map, Risks, and Out of Scope sections resolve the operator's route rather than restating repository code. When encryption, schema/data history, public contracts, rollout, or migration files change, Compatibility Context states whether the affected state is `development-only`, `shared-applied`, or `released`, with supporting evidence. It must use a descriptive `candidate_key` for the observable slice, not its current terminology; state its profile; and keep every new file, export, dependency, fixture, and test tied to a unique present obligation. A new port, adapter, or factory needs a present boundary obligation; framework types in a deliberately narrow server-only composition seam are not alone a reason to add one. The conductor confirms key reuse against the existing slice outcome before persistence.
 
-**Draft authority:** return a `plan-draft` only. It is reviewable and recoverable, but does not authorize implementation or verification. Use a descriptive `candidate_key` (e.g. `agent-chat-foundation`) rather than a sequence number. The conductor persists it, applies the planning gate, and sets `readiness: ready` when it passes. The conductor resolves which draft to publish through intent-based resolution and writes a separate `plan-<n>` artifact.
+## Graft mode
 
-**Draft revisions:** revisions update the same `candidate_key` in place and increment `revision`. Create a new draft ID only for a distinct candidate slice or alternative.
+Read only the declared Brief, selected base candidate or governing draft, judge disposition, cited candidate evidence, and any failed structural-readiness checklist items. Preserve the selected route and every prior graft unless a newly cited graft proves they cannot satisfy a Brief constraint, safeguard, or required proof. Adopt only decisions identified by candidate and section; do not form a new route from uncited ideas. A supplied checklist failure authorizes only the smallest repair needed to satisfy that item; it cannot alter the selected route or reopen candidate decisions.
 
-**Implementation Units:** ordered parts of the current slice executing in one Operator invocation. If a unit can be independently implemented and verified as observable behavior, it should be a separate slice Plan.
+Completion criterion: the draft realizes every cited graft, retains the base's unchallenged decisions, and leaves the operator no material route, boundary, invariant, safety, or proof decision to invent.
 
-**Directional Roadmap:** orientation only. Does not authorize work, promise ordering, or establish verification obligations. The next slice is selected from current repository state and accepted evidence. May be omitted when the current slice is expected to complete the Brief.
-
-## Adversarial mode
-
-### Process
-
-1. Independently inspect the Brief and relevant repository evidence. Read declared artifacts at their declared `workspace_root`-relative paths; resolve repository evidence only under the declared `repository_root`, never `$HOME`, `/`, or parent directories. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
-2. Pressure-test route assumptions, tracer-bullet shape, and each unit's evidence and safeguards.
-3. Surface edge cases, error paths, coupling, complexity creep, and regression risk.
-
-Completion criterion: every credible route, unit-shape, evidence, or safeguard defect is cited, or explicitly assessed as holding.
-
-### Output format
-
-```md
-## Failure modes
-- <failure> — <why it matters>
-
-## Tradeoffs
-- <tradeoff> — <what's gained, what's lost>
-
-## Hidden risk
-- <risk> — <likelihood and impact>
-
-## Slice-shape concerns
-- <unit or area> — <why the slice is too horizontal, broad, or unverifiable>
-
-## Execution-contract concerns
-- <unit> — <missing or unsafe execution mode, design context, evidence strategy, or operational safeguard>
-
-## Assumptions to verify
-- <assumption>
-
-## What's missing
-- <gap> — <why it matters>
-```
-
-If no significant issue exists, say `No adversarial concerns found` and explain why briefly.
-
-When used as a **final gate** in elevated planning (the conductor marks input `[FINAL GATE]`), end the report with an explicit disposition:
-
-```md
-## Gate: <no-actionable-concerns | actionable-concerns>
-<one sentence naming the result>
-```
-
-The conductor changes the persisted draft to `readiness: ready` only on `no-actionable-concerns`.
+Return a complete candidate with the cited grafts applied; the planner never persists it and never copies a candidate into a draft.

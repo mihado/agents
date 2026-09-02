@@ -23,10 +23,11 @@ work_status: active
 current_artifact_path: work/<work-id>/<canonical-artifact-path>
 current_artifact_id: <artifact-id>
 latest_attempt: <work/<work-id>/execution/attempt-<n> | work/<work-id>/execution/final-<n> | null>
+delivery_mode: <approval-required | autonomous>
 ---
 ```
 
-Closure adds: `work_status: completed|abandoned`, `closed_at`, `closure_reason`.
+`delivery_mode` is durable work authority. It defaults to `approval-required`. A direct autonomous-delivery instruction sets it to `autonomous`; an explicit pause or mode change updates it. Closure adds: `work_status: completed|abandoned`, `closed_at`, `closure_reason`, and resets `delivery_mode` to `approval-required`.
 
 Body: `# Active Work` with `<work-id>`, Markdown link to artifact, and `(<artifact-id>)`.
 
@@ -48,7 +49,7 @@ Body: `# Active Work` with `<work-id>`, Markdown link to artifact, and `(<artifa
 
 ## Canonical paths
 
-All paths relative to `.agent-contexts/`:
+Artifact identifiers below are `invocation_dir`-relative metadata. Before any filesystem read or write, resolve them to canonical absolute paths beneath `<invocation_dir>/.agent-contexts/`; relative identifiers are never filesystem targets.
 
 | Artifact | Path | `artifact_role` |
 | --- | --- | --- |
@@ -56,9 +57,9 @@ All paths relative to `.agent-contexts/`:
 | Constructive research | `work/<work-id>/research/research-<n>/planner.md` | `research-report` |
 | Adversarial research | `work/<work-id>/research/research-<n>/planner-adversarial.md` | `research-report` |
 | Research synthesis | `work/<work-id>/research/research-<n>/synthesis.md` | `research-synthesis` |
+| Plan candidate | `work/<work-id>/planning/<candidate-key>/run-<n>/candidate-<n>.md` | `plan-candidate` |
 | Plan draft | `work/<work-id>/plans/<candidate-key>.draft.md` | `plan-draft` |
-| Adversarial plan report | `work/<work-id>/plans/<candidate-key>.adversarial-<n>.md` | `plan-adversarial` |
-| Plan adjudication | `work/<work-id>/plans/<candidate-key>.adjudication-<n>.md` | `plan-adjudication` |
+| Plan adjudication | `work/<work-id>/planning/<candidate-key>/run-<n>/adjudication-<n>.md` | `plan-adjudication` |
 | Execution plan | `work/<work-id>/plans/plan-<n>.md` | `plan` |
 | Operator result | `work/<work-id>/execution/attempt-<n>/operator.md` | `operator-result` |
 | Verification (slice) | `work/<work-id>/execution/attempt-<n>/verify.md` | `verification` |
@@ -75,12 +76,12 @@ All paths relative to `.agent-contexts/`:
 
 ## Dispatch inputs
 
-The dispatch envelope (see [SKILL.md](../SKILL.md) § Dispatch envelope) carries the minimal envelope — shared `dispatch_id`, canonical `workspace_root`, declared `repository_root`, and `observed_target` — plus, for artifact-consuming dispatches, one compact, complete, ordered `inputs` list of the project inputs the worker consumes. Each entry declares:
+The dispatch envelope (see [SKILL.md](../SKILL.md) § Dispatch envelope) carries the minimal envelope — shared `dispatch_id`, canonical `invocation_dir`, declared `repository_root`, and `observed_target` — plus, for artifact-consuming dispatches, one compact, complete, ordered `inputs` list of the project inputs the worker consumes. Each entry declares:
 
-- `path` — root-relative to `workspace_root` (no absolute paths, no `..`)
+- `path` — relative to `invocation_dir` (no absolute paths, no `..`); this is conductor-owned artifact state, not a repository-relative path
 - expected identity where applicable: `work_id`, `artifact_role`, `artifact_id`, `revision`
 
-Before dispatch, the conductor validates each entry: the path resolves under `workspace_root` with lexical containment and resolved-path/symlink containment, and declared identity fields match the artifact's frontmatter exactly. Repository evidence (diffs, source, commands) resolves under the declared `repository_root`, never under `workspace_root` alone.
+Before dispatch, the conductor validates each entry: the path resolves under `invocation_dir` with lexical containment and resolved-path/symlink containment, and declared identity fields match the artifact's frontmatter exactly. Repository evidence (diffs, source, commands) resolves under the separately declared `repository_root`, never under `invocation_dir` alone.
 
 The first pass sends no bodies. A retry may attach only the matching validated bodies for declared inputs — never substitute, reorder, or extend the list. The list is complete: every project artifact the worker must consume is declared in it, and workers that find a required artifact missing from the list report the gap instead of reading undeclared files.
 
@@ -106,13 +107,14 @@ created_at: <ISO-8601 timestamp>
 
 | Role | `artifact_id` pattern | `upstream_artifacts` | Extra fields |
 | --- | --- | --- | --- |
-| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only) |
+| `delegated-work` | `delegated-01` | `[]` | `repository_root`, `target_invocation_dir` (equals `repository_root`), non-empty `context_paths`, `status: pending|activated`, `activated_at` (activated only) |
+| `brief` | `brief-<n>` | `[]` for first; `[brief-<prev>, research-<m>-synthesis]` for supersession | `supersedes`, `supersession_reason` (supersession only); `revision`, `revised_at`, `revision_summary` (user-directed in-place revision only); `source_contexts` (required when delegated work informs the Brief; see think.md) |
 | `research-report` | `research-<n>-planner` or `research-<n>-planner-adversarial` | `[brief-<n>]` | — |
 | `research-synthesis` | `research-<n>-synthesis` | `[research-<n>-planner, research-<n>-planner-adversarial]` | — |
-| `plan-draft` | `draft-<candidate-key>` | `[brief-<n>]` | `brief_id`, `candidate_key`, `readiness: draft|ready`, `revision`, `revised_at`, `revision_summary` (elevated revision-loop revisions append the per-concern progress record), `readiness_revision` + `readiness_gate` + `readiness_evidence` + `ready_at` (when ready) |
-| `plan-adversarial` | `<candidate-key>-adversarial-<n>` | `[brief-<n>, draft-<candidate-key>]` | — |
-| `plan-adjudication` | `<candidate-key>-adjudication-<n>` | `[draft-<candidate-key>, <candidate-key>-adversarial-<n>]` | — |
-| `plan` | `plan-<n>` | Ordinary first: `[brief-<n>]`. Ordinary successor: `[brief-<n>, plan-<prev>, attempt-<m>-verify, attempt-<m>-review]`. Superseding: `[brief-<n>, plan-<prev>, <evidence motivating replacement>]`. Human-approved: `[brief-<n>]` plus any known prior Plan or evidence IDs; accepted predecessor Verify/Review evidence is not required. | `brief_id`, `revision`, `revised_at`, `revision_summary`, `readiness: implementation-ready|human-approved`, `approval` (human-approved only), `supersedes` + `supersession_reason` (supersession only) |
+| `plan-candidate` | `<candidate-key>-run-<n>-candidate-<n>` | `[brief-<n>]` | `brief_revision`, `planning_run`, `planner_profile`, `revision`, `revised_at`, `revision_summary` |
+| `plan-draft` | `draft-<candidate-key>` | `[brief-<n>, <governing plan-candidate ID>, <plan-adjudication ID>]` | `brief_id`, `candidate_key`, `current_run`, `governing_candidate` (ID, path, revision), `adjudication` (ID, path, revision), `readiness: draft|ready`, `revision`, `revised_at`, `revision_summary`, `readiness_revision` + `readiness_gate` + `readiness_evidence` + `ready_at` (when ready) |
+| `plan-adjudication` | `<candidate-key>-run-<n>-adjudication-<n>` | `[<plan-candidate IDs>]`, plus `[draft-<candidate-key>]` for re-adjudication | `planning_run`, `revision`, `revised_at`, `revision_summary` |
+| `plan` | `plan-<n>` | Ordinary first: `[brief-<n>, <governing plan-candidate ID>, <plan-adjudication ID>]`. Ordinary successor: `[brief-<n>, <governing plan-candidate ID>, <plan-adjudication ID>, plan-<prev>, attempt-<m>-verify, attempt-<m>-review]`. Superseding: `[brief-<n>, <governing plan-candidate ID>, <plan-adjudication ID>, plan-<prev>, <evidence motivating replacement>]`. Human-approved: `[brief-<n>, <governing plan-candidate ID>, <plan-adjudication ID>]` plus any known prior Plan or evidence IDs. | `brief_id`, `governing_candidate` (ID, path, revision), `adjudication` (ID, path, revision), `revision`, `revised_at`, `revision_summary`, `readiness: implementation-ready|human-approved`, `approval` (human-approved only), `supersedes` + `supersession_reason` (supersession only) |
 | `operator-result` | `attempt-<n>-operator` | `[plan-<n>]` | — |
 | `verification` | `attempt-<n>-verify` | `[plan-<n>, attempt-<n>-operator]`. Standalone: `[plan-<n>]` | `verification_mode: standalone` (standalone only) |
 | `review` | `attempt-<n>-review` (in-loop elevated reports: `attempt-<n>-review-standards` / `attempt-<n>-review-adversarial`) | `[plan-<n>, attempt-<n>-verify]`; the synthesized two-reviewer result adds both elevated report IDs | — |
@@ -132,6 +134,8 @@ created_at: <ISO-8601 timestamp>
 
 At every consuming gate, compare declared work, inputs, scope, and target with current state. Material mismatch (unrelated to Plan-authorized changes) is `STALE`. Preserve original unchanged; record mismatch downstream.
 
+A `source_contexts` entry that cannot be read at its declared absolute path is recorded as a mismatch, never silently dropped — the Brief's own text is unaffected, but the broken link is surfaced.
+
 ### Immutability and supersession
 
 Completed artifacts are immutable evidence. Drafts are working artifacts and follow their own revision rule below.
@@ -142,22 +146,25 @@ Completed artifacts are immutable evidence. Drafts are working artifacts and fol
 
 An in-place Brief revision starts at `revision: 1` and increments on each subsequent user-directed revision. It updates `revised_at` and `revision_summary`. A Brief without a user-directed revision omits these fields.
 
-**Plan drafts:** working artifacts representing candidate slices. Schema constraints:
+**Planning runs:** current candidate and adjudication working papers for one proposed slice live at `planning/<candidate-key>/run-<n>/`, named by the governing draft's `current_run`. `candidate_key` identifies the observable slice, not its current wording. Before reuse, confirm the existing key has the same observable outcome; otherwise use a distinct key. A graft's output is either **expand** (before selection: a new `candidate-<n+1>`/`adjudication-<n+1>` pair joins the still-open set) or **rework** (after selection, on a structural-readiness failure: the pinned candidate and its adjudication revise in place, incrementing `revision` and updating `revised_at`/`revision_summary`) — see [plan.md](plan.md) § Candidate panel and bounded graft for the branch condition. Every consuming dispatch pins the expected revision in its input list either way. Start `run-<n+1>` only when the active Brief ID changes, the slice's own observable outcome changes, or the prior run stopped; delete the superseded run once the new run's first candidate is persisted. Draft revisions remain in `plans/` and do not create another run. On publication, delete every candidate and adjudication in `current_run` except the pinned pair — the rest is never read again.
+
+**Plan drafts:** working artifacts that select one complete candidate. Schema constraints:
 
 - `artifact_id`: `draft-<candidate-key>` where `candidate_key` is descriptive kebab-case (e.g. `agent-chat-foundation`).
+- `governing_candidate` pins one persisted `plan-candidate` by artifact ID, invocation-relative path, and revision. Its `brief_id` and `brief_revision` must match the active Brief. `adjudication` pins the persisted `plan-adjudication` selecting that revision. A newer candidate never changes the draft without a new adjudication and draft revision.
 - `readiness`: `draft` or `ready`. Any revision resets `readiness` to `draft` and clears the readiness record.
 - When `readiness: ready`:
   - `readiness_revision`: the `revision` value that passed the gate. Ordinary publication requires `readiness_revision == revision`.
-  - `readiness_gate`: `standard-validation` or `elevated-final-adversarial`.
+  - `readiness_gate`: `standard-validation` or `panel-adjudication`.
   - `readiness_evidence`: structured list. Each entry is one of:
     - A gate attestation: `{ gate: "<gate-name>", result: "passed" }` — records that the named gate's checklist was satisfied for this revision.
     - An artifact ID or persisted report path: `"<artifact-id-or-path>"` — references durable evidence consumed or produced by the gate.
   - `ready_at`: ISO-8601 timestamp of gate passage.
 - `revision`: integer starting at 1. Incremented on each in-place revision; `revised_at` and `revision_summary` updated alongside.
-- Elevated revision-loop revisions append a compact progress record to `revision_summary` for every cited concern — the concern identifier or short statement, `concern_origin` (the persisted report path/ID plus finding identifier for the first report raising that concern; later reports raising the same unresolved concern retain that `concern_origin` and record their current source path/ID alongside), the route attempted, and the evidence-backed outcome (`resolved`, `narrowed`, `disproved`, or `no-progress`) — preserving prior entries. A structural readiness concern's `concern_origin` combines the persisted draft artifact ID and revision with the checklist item number instead of a report path/ID. The record lives inside `revision_summary`; ordinary drafts and lightweight revisions keep a concise `revision_summary`, and no separate progress artifact is created.
+- Panel revisions append a compact progress record to `revision_summary` for every cited concern — the concern identifier or short statement, `concern_origin` (the persisted adjudication path/ID plus finding identifier for the first report raising that concern; later reports raising the same unresolved concern retain that `concern_origin` and record their current source path/ID alongside), the route attempted, and the evidence-backed outcome (`resolved`, `narrowed`, `disproved`, or `no-progress`) — preserving prior entries. A structural readiness concern's `concern_origin` combines the persisted draft artifact ID and revision with the checklist item number instead of a report path/ID. The record lives inside `revision_summary`; ordinary drafts and lightweight revisions keep a concise `revision_summary`, and no separate progress artifact is created.
 - Multiple drafts may coexist. Revisions update the same `candidate_key` in place; do not use `supersedes` or draft-to-draft lineage.
-- Drafts are discovered from `plans/`; they are not recorded in `active.md`.
-- Publishing renames the named draft at its current revision to `plan-<n>.md` and changes its envelope to `artifact_role: plan` with `artifact_id: plan-<n>`. It is no longer a draft. Ordinary publication requires `readiness: ready` with matching `readiness_revision` and normal Plan lineage. Explicit human approval may publish the current matching draft without ordinary readiness, completeness, or lineage requirements (see human-approved Plans below).
+- `plans/` contains only drafts and published execution Plans. Planning working papers are discovered from `planning/`; neither is recorded in `active.md`.
+- Publishing renames the named draft at its current revision to `plan-<n>.md` and changes its envelope to `artifact_role: plan` with `artifact_id: plan-<n>`. It retains the draft's pinned candidate and adjudication, and is no longer a draft. Ordinary publication requires `readiness: ready` with matching `readiness_revision` and normal Plan lineage. Explicit human approval may publish the current matching draft without ordinary readiness, completeness, or lineage requirements (see human-approved Plans below).
 
 **Human-approved Plans:** `readiness: human-approved` authorizes a human-directed co-development starting point. It requires a valid draft envelope, matching active Brief, explicit human affirmation, and `approval` with unresolved items, accepted concerns, and an execution escalation boundary. It may bypass ordinary readiness, completeness, and successor-lineage gates. The operator returns `NEEDS_CONTEXT` when discovery crosses that boundary.
 

@@ -48,8 +48,8 @@ Three rules keep the design lightweight without making it loose:
 - A Brief owns the full objective and its acceptance criteria; one executable Plan owns only the next bounded vertical slice.
 - A draft is durable collaboration state, while an executable Plan is the sole authority for Act and Verify.
 - Evidence is role-specific: an operator reports work, a verifier issues verdicts, and a reviewer raises findings. No positive result silently substitutes for another role's evidence.
-- Dispatches are addressed: the conductor resolves the canonical workspace root from the `pwd -P`-canonicalized invocation directory as `workspace_root` — the workspace need not be a Git worktree — and workers resolve project artifacts only under it — never `$HOME`, `/`, or unrelated roots. Each dispatch also declares a contained `repository_root`; repository evidence resolves only under it. Every worker dispatch carries a minimal dispatch envelope — shared `dispatch_id`/`workspace_root`/`repository_root`/`observed_target`; artifact-consuming workers (the read-only workers plus the verifier) additionally receive an ordered `inputs` list declaring each root-relative path and expected identity instead of inlined bodies, and one retry may attach only the matching validated bodies for declared inputs. Path, input, transport, and report-envelope failures are `DISPATCH_FAILURE` with no domain, gate, readiness, lineage, acceptance, or revision-budget authority; operator and verifier dispatch failures are `BLOCKED`.
-- Multi-repo workspaces delegate through an explicit tally: the manager is the sole writer of the tally and its published artifacts, concurrent delegations open unique `(repository_root, repository_work_id)` rows with distinct stable work IDs, the manager publishes normal Brief/Plan artifacts into the target repository's stable work directory, adoption completes through the repository's local `active.md` pointer — set only by the repository's conductor — and status requests update the tally at `.agent-contexts/delegations.md` from each nonterminal row's exact repository child work dir — never the repository's `active.md`. See [`references/workspace-delegation.md`](../.agents/skills/workflow/wf-conductor/references/workspace-delegation.md).
+- Dispatches are addressed: the `pwd -P`-canonicalized `invocation_dir` re-orients the conductor. Workflow state resolves only from its absolute `<invocation_dir>/.agent-contexts/` path; every conductor filesystem operation uses that absolute path. Each dispatch separately declares an explicit `repository_root` for source and commands; it may differ from or sit outside `invocation_dir`. Every worker dispatch carries a minimal dispatch envelope — shared `dispatch_id`/`invocation_dir`/`repository_root`/`observed_target`; artifact-consuming workers (the read-only workers plus the verifier) additionally receive an ordered `inputs` list declaring each invocation-relative path and expected identity instead of inlined bodies, and one retry may attach only the matching validated bodies for declared inputs. Path, input, transport, and report-envelope failures are `DISPATCH_FAILURE` with no domain, gate, readiness, lineage, acceptance, or revision-budget authority; operator and verifier dispatch failures are `BLOCKED`.
+- A root conductor can defer settled intent with `wf-handoff`: it writes one pending delegated-work request at an explicit absolute path under the target repository's `.agent-contexts/work/` and records it in its own `delegations.md`; it does not change the target `active.md`. The repository conductor activates that request only on user instruction, then reads its declared absolute context paths. See [`wf-handoff`](../.agents/skills/workflow/wf-handoff/SKILL.md).
 
 Planning and review rigor scale with uncertainty and risk. The normal path uses one planner and a closed readiness gate. Elevated planning runs an adjudication and revision loop, shared across adjudication and final-gate feedback, that continues while each persisted planner revision makes evidence-backed progress on the cited concerns and stops as `BLOCKED — planning loop` once the loop turns circular; dispatch failures never count as revisions or progress. Material route, safety, contract, or acceptance uncertainty elevates through research, adversarial planning, or human decision rather than being concealed inside implementation.
 
@@ -102,7 +102,9 @@ Any active state → Abandoned (user decision)
 
 ### Pointer semantics
 
-`active.md` selects the one active work. Its `current_artifact_path` tracks the governing Brief or executable Plan. Drafts remain outside that pointer in `plans/`, so other conductors may prepare and review future slices without changing execution authority. `@<candidate-key>.draft.md` focuses one draft for the current conversation without changing the pointer. A reviewed draft may be `ready`, but readiness means eligible rather than selected; readiness is per revision, and any subsequent revision resets it to `draft`. The conductor resolves which draft to publish through intent-based resolution (explicit name in the current request, focused `@` draft, or the sole unambiguous ready draft) and re-reads the current revision before writing the Plan. During execution, the pointer stays on the governing Plan; `latest_attempt` tracks execution progress separately.
+`active.md` selects the one active work. Its `current_artifact_path` tracks the governing Brief or executable Plan. `plans/` contains only drafts and published Plans; current candidate and adjudication working papers live in `planning/<slice-key>/run-<n>/` and revise in place. Every consuming dispatch pins its expected revision. `@<candidate-key>.draft.md` focuses one draft for the current conversation without changing the pointer. A reviewed draft may be `ready`, but readiness means eligible rather than selected; readiness is per revision, and any subsequent revision resets it to `draft`. The conductor resolves which draft to publish through intent-based resolution (explicit name in the current request, focused `@` draft, or the sole unambiguous ready draft) and re-reads the current revision before writing the Plan. During execution, the pointer stays on the governing Plan; `latest_attempt` tracks execution progress separately.
+
+A candidate is a complete proposed Plan, never a summary. Its key identifies the observable slice, not a current label; Brief revisions open a new planning run under the same key.
 
 | Event | Pointer moves to | `latest_attempt` |
 | --- | --- | --- |
@@ -128,6 +130,11 @@ Any active state → Abandoned (user decision)
           synthesis.md               ← judge reconciliation
       dispatch/
         dispatch-<id>-attempt-<n>.md ← conductor diagnostic for a failed dispatch
+      planning/
+        <slice-key>/
+          run-<n>/
+            candidate-<n>.md         ← current complete candidate
+            adjudication-<n>.md      ← current panel decision
       plans/
         agent-chat-foundation.draft.md ← reviewable candidate; revised in place
         plan-<n>.md                  ← executable route
@@ -163,10 +170,18 @@ For full artifact schemas, lineage templates, and transition rules, see [`refere
 
 The kernel defines lane authority, artifact state machine, evidence floors, and escalation. It is owned by this repository and the skills below.
 
+### Workflow maintenance
+
+Bounded edits to workflow-owned documentation, skills, provider wrappers, or contract tests that do not create or modify a user work package stay outside the kernel lifecycle. Read the authority and direct consumers once, make the smallest coherent change, run one focused proof and `git diff --check`, and add adversarial review only for routing, authority, safety, or artifact-semantics changes. They create no Brief, Plan, Act, Verify, or workflow artifacts.
+
+### Package seams
+
+When a planned value crosses a package boundary, the Plan traces the direct consumer and existing composition path before selecting the narrowest project-native seam. It names producer, consumer, lifecycle owner, signature, and declaration-boundary proof. A deliberately narrow server-only composition subpath may accept the concrete runtime types already used by its direct consumer only when the proof shows it is absent from shared/browser exports and reachable only from the server composition graph; a plain port or adapter earns its cost only when it prevents a real policy or consumer-boundary leak. “Private” never removes the value a consumer needs.
+
 | Skill | Lane | Mode / boundary |
 | --- | --- | --- |
 | [`wf-conductor`](../.agents/skills/workflow/wf-conductor/SKILL.md) | all | Lane routing, artifact authority, recovery, bounded retries. |
-| [`wf-planning`](../.agents/skills/workflow/wf-planning/SKILL.md) | Plan | `execution` returns a durable draft; `adversarial` pressure-tests it before conductor publication. |
+| [`wf-planning`](../.agents/skills/workflow/wf-planning/SKILL.md) | Plan | `candidate` returns one complete Plan from a conductor-selected composite profile set; `graft` applies judge-cited decisions to its selected base. Independent candidates are added only when comparison changes the Plan. |
 | [`wf-research`](../.agents/skills/workflow/wf-research/SKILL.md) | evidence method | `research` gathers evidence; `adversarial` seeks contrary evidence. |
 | [`wf-execution`](../.agents/skills/workflow/wf-execution/SKILL.md) | Act | Applies approved units; returns operator result. |
 | [`wf-verification`](../.agents/skills/workflow/wf-verification/SKILL.md) | Verify | Sole owner of verdicts. Independent command safety classification. |

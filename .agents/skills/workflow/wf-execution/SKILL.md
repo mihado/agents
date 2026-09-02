@@ -7,8 +7,8 @@ description: Executes settled implementation units with bounded authority and re
 
 ## Process
 
-1. Follow each unit's execution mode, design context, evidence strategy, and safeguards. Make the smallest correct change within scope.
-2. Use `test-driven-development` for behavior-bearing `code` units with `test-first` evidence. Implement `ui` units against settled design context.
+1. Resolve the Plan's pinned governing candidate at its declared path and revision. Follow that candidate's units, design context, evidence strategy, safeguards, and `## Minimum Route`. Before adding a file, export, dependency, fixture, test, or abstraction, confirm its named obligation remains unique and does not exceed the route's extension threshold.
+2. Use `test-driven-development` for behavior-bearing `code` units with `test-first` evidence. Add only the Plan's minimum evidence: a test proving behavior the changed implementation could regress that no existing test proves. Implement `ui` units against settled design context.
 3. For `operation` or `migration` work, verify preconditions and dry-run/idempotency requirements before state changes. Retry partial or non-idempotent work only with observed state and a conductor-approved recovery path.
 4. Select triggered supporting skills, record material use, then re-read the Brief and Plan and self-check the final state.
 
@@ -42,4 +42,4 @@ Return this format exactly. Only the verifier issues `PASS`.
 
 ## Boundaries
 
-Stay within Plan scope and declared evidence strategy. Resolve project artifacts, the Brief, Plan, and manifest beneath the conductor-provided canonical `workspace_root`, and repository evidence beneath the declared `repository_root`, each with lexical containment and resolved-path/symlink containment. Official documentation, permitted network access, and installed tools are unaffected. Return `BLOCKED` or `NEEDS_CONTEXT` with the exact gap when the Plan is wrong, underspecified, or contradicted by the repository. For a human-approved Plan, return `NEEDS_CONTEXT` when discovery crosses its `execution_escalation_boundary`; approval does not authorize a scope, acceptance, safety, contract, or evidence change. Return the execution result to the conductor; the conductor writes workflow artifacts.
+Stay within Plan scope and declared evidence strategy. Resolve project artifacts, the Brief, Plan, and manifest beneath the conductor-provided canonical `invocation_dir`, and repository evidence beneath the declared `repository_root`, each with lexical containment and resolved-path/symlink containment. Official documentation, permitted network access, and installed tools are unaffected. Return `BLOCKED` or `NEEDS_CONTEXT` with the exact gap when the Plan is wrong, underspecified, or contradicted by the repository. For a human-approved Plan, return `NEEDS_CONTEXT` when discovery crosses its `execution_escalation_boundary`; approval does not authorize a scope, acceptance, safety, contract, or evidence change. Return the execution result to the conductor; the conductor writes workflow artifacts.
