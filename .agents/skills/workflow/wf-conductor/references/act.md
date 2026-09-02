@@ -20,7 +20,7 @@ Each operator invocation starts a fresh attempt. Attempts are immutable once the
    - `BLOCKED`: stop. Persist the operator result and return the dependency or safety disposition to the user.
    - `NEEDS_CONTEXT`: stop. Persist the operator result and return the missing decision to Plan, Think, or the named decision owner.
 
-6. **Dispatch verifier.** Send the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the dispatch envelope, and validated ordered declared inputs — the Brief, Plan, and operator result — plus the Plan evidence profile. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs (path containment and expected frontmatter identity). Write its result to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md` path with metadata binding it to the Brief, Plan, attempt, observed target, and evidence scope.
+6. **Dispatch verifier.** Send the configured `verifier` with `Required skill: wf-verification`, `Mode: slice`, the dispatch envelope, and validated ordered declared inputs — the Brief, Plan, and operator result — plus the Plan evidence profile, scoped to only the AC evidence this unit's own Execution Slices row names as its contribution. An AC the Plan splits across multiple named slices is not checked against its full evidence until every contributing slice has landed — a later slice's evidence being absent here is expected, not `INCOMPLETE`. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs (path containment and expected frontmatter identity). Write its result to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/verify.md` path with metadata binding it to the Brief, Plan, attempt, observed target, and evidence scope.
 
 7. **Route on verdict:**
     - `PASS`: dispatch Review.
@@ -99,7 +99,7 @@ A slice is accepted when all of the following hold for the same Plan and attempt
 
 1. **Plan binding:** The Verify and Review artifacts both reference the same `plan-<n>` in `upstream_artifacts`.
 2. **Attempt binding:** The Verify and Review artifacts both reference the same `attempt-<n>` and were produced against the same `observed_target`.
-3. **AC results:** Every AC ID listed as `advanced` in the Plan's `## Brief Coverage` has an explicit `MET` verdict in a Verify artifact for this Plan — the current attempt's own, or an earlier attempt's that the current one names by ID when the repair between them could not have affected that AC's evidence. A narrow inline repair's Verify artifact names the carried-forward attempt rather than re-deriving verdicts it never re-examined.
+3. **AC results:** Every AC ID listed as `advanced` in the Plan's `## Brief Coverage` has an explicit `MET` verdict in a Verify artifact for this Plan — the current attempt's own, or an earlier attempt's that the current one names by ID when the repair between them could not have affected that AC's evidence. A narrow inline repair's Verify artifact names the carried-forward attempt rather than re-deriving verdicts it never re-examined. An AC naming multiple contributing slices is `MET` only once every named slice's own Verify has confirmed its declared portion — already guaranteed by `Completion candidate` not evaluating this binding until every unit is complete.
 4. **Verify verdict:** `PASS`.
 5. **Review disposition:** `no-actionable-findings`.
 6. **Diff binding:** The Review's `observed_target` is consistent with the Verify's (the same workspace state was reviewed as was verified).
