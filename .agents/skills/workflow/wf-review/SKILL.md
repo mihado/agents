@@ -38,6 +38,14 @@ End every report with exactly one:
 
 The reviewer remains report-only. The conductor alone decides whether a disposition returns work to Operator.
 
+## Reporting discipline
+
+Applies across every mode.
+
+- **Merge by root cause.** When multiple findings trace to one underlying defect, report the root cause once with its fix and name the symptom findings it explains, rather than listing each separately.
+- **Mark uncertainty, not certainty.** A finding directly confirmed by the diff, a test, or other cited evidence needs no tag. Mark `likely` (strong inference, not yet exercised) or `speculative` (plausible but unverified) only when it is not — never reuse `P0`–`P3` for this axis.
+- **Stop padding once routing escalates.** Once a finding requires `replan-required` or `human-decision-required`, report it plus any other `P0`/`P1` findings already found, then stop — do not keep cataloging lower-severity findings in scope that is about to be superseded.
+
 ## Mode selection
 
 - **standards-spec:** constructive review for correctness, regressions, conventions, and Brief/Plan conformance.
@@ -50,7 +58,7 @@ The conductor selects the mode.
 
 1. **Establish review surface** — identify changed behavior, stated scope, and available evidence.
 2. **Review Standards** — check correctness, regressions, and repository conventions. Use Fowler smells only when repository standards are silent.
-3. **Review Spec** — check whether the change matches the Brief, Plan, or stated scope, including whether the diff lands where the Plan's Composition citation (`wf-planning`) declared: a Governed placement silently abandoned, or a Frontier resolution silently reopened, is a spec-conformance finding, not a judgment call.
+3. **Review Spec** — check whether the change matches the Brief, Plan, or stated scope, including whether the diff lands where the Plan's Composition citation (`wf-planning`) declared: a Governed placement silently abandoned, or a Frontier resolution silently reopened, is a spec-conformance finding, not a judgment call. Then re-derive that citation independently against the same governing documentation, rather than trusting it was correct — a citation that doesn't actually support the placement it's used for, or a Frontier resolution a fresh read would settle differently, is a review-time finding even though the Plan's own gate already passed it. This is deliberately a second, independent pass on the question `wf-planning` already answered, not a restatement of it — planning's judgment and review's judgment each catch what the other can miss.
 4. **Check unique obligations** — for every new production line and test, ask: “What unique obligation does this carry?” Report code or tests with no unique obligation as an overbuild finding.
 5. **Return only findings that matter** — every reported issue changes a merge, follow-up, or risk decision.
 
@@ -66,7 +74,7 @@ Completion criterion: every material standards or conformance issue is cited wit
 <findings or "No spec-conformance issues found.">
 ```
 
-Finding format: `**P<N>** — \`<file>:<line>\`` followed by what is wrong and why.
+Finding format: `**P<N>** [likely|speculative]` — \`<file>:<line>\`` followed by what is wrong and why; omit the bracketed tag when directly confirmed (see Reporting discipline).
 
 If no findings, return `No review issues found.` then `## Review Disposition: no-actionable-findings`.
 
@@ -82,7 +90,7 @@ Completion criterion: every credible hidden-risk issue is cited with `file:line`
 
 ### Output format
 
-Finding format: `**P<N>** — \`<file>:<line>\`` followed by what breaks and why.
+Finding format: `**P<N>** [likely|speculative]` — \`<file>:<line>\`` followed by what breaks and why; omit the bracketed tag when directly confirmed (see Reporting discipline).
 
 If no findings:
 
