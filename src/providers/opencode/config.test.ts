@@ -212,6 +212,39 @@ describe("integration: apm providers", () => {
     }
   });
 
+  it("syncs permission config from the manifest", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
+    ) as { permission?: Record<string, unknown> };
+    expect(manifest.permission, "manifest should declare a permission block").toBeTruthy();
+
+    const config = read();
+    expect(config.permission).toEqual(manifest.permission);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).toBe(0);
+  });
+
+  it("fails check when local permission config drifts from the manifest", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const config = read();
+    config.permission = { ...(config.permission as Record<string, unknown>), bash: "deny" };
+    write(config);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).not.toBe(0);
+    expect(check.stderr).toContain("permission config differs");
+
+    // restore for subsequent tests
+    const reinstall = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(reinstall.status).toBe(0);
+  });
+
   it("modalities field structure is valid per OpenCode schema", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);

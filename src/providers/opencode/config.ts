@@ -26,25 +26,61 @@ export function writeOpenCodeConfig(config: Record<string, unknown>): void {
 }
 
 function parseJSONC(content: string): Record<string, unknown> {
-  const lines = content.split("\n");
-  const cleaned = lines.map((line) => {
-    let inString = false;
-    let result = "";
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      const next = line[i + 1];
-      if (!inString && ch === "/" && next === "/") {
-        break;
+  let result = "";
+  let inString = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    const next = content[i + 1];
+
+    if (inLineComment) {
+      if (ch === "\n") {
+        inLineComment = false;
+        result += ch;
       }
-      if (ch === '"' && (i === 0 || line[i - 1] !== "\\")) {
-        inString = !inString;
-      }
-      result += ch;
+      continue;
     }
-    return result;
-  }).join("\n");
-  const withoutMultiLine = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
-  return JSON.parse(withoutMultiLine);
+
+    if (inBlockComment) {
+      if (ch === "*" && next === "/") {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+
+    if (inString) {
+      result += ch;
+      if (ch === "\\" && next !== undefined) {
+        result += next;
+        i++;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      result += ch;
+      continue;
+    }
+    if (ch === "/" && next === "/") {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+    result += ch;
+  }
+
+  return JSON.parse(result);
 }
 
 export interface McpServerDef {
@@ -167,6 +203,9 @@ function validateProviderManifest(manifest: ProviderManifest): void {
   if (manifest.plugin !== undefined && (!Array.isArray(manifest.plugin) || !manifest.plugin.every((plugin) => typeof plugin === "string" && plugin))) {
     fail("providers.json plugin must be an array of non-empty strings");
   }
+  if (manifest.permission !== undefined && !isObject(manifest.permission)) {
+    fail("providers.json permission must be an object");
+  }
 
   for (const [id, def] of Object.entries(manifest.provider)) {
     if (!id || typeof def !== "object") {
@@ -238,6 +277,15 @@ export function checkProviders(root: string): boolean {
     }
   }
 
+  if (manifest.permission) {
+    if (JSON.stringify(config.permission) === JSON.stringify(manifest.permission)) {
+      console.log("PASS  permission config");
+    } else {
+      console.error(`FAIL  permission config differs from providers.json (config: ${getOpenCodeConfigPath()})`);
+      failures++;
+    }
+  }
+
   return failures === 0;
 }
 
@@ -268,6 +316,12 @@ export function installProviders(root: string): void {
     config.plugin = plugins;
     changed = true;
     console.log(`linked  plugin ${expectedPlugins.join(", ")}`);
+  }
+
+  if (manifest.permission && JSON.stringify(config.permission) !== JSON.stringify(manifest.permission)) {
+    config.permission = manifest.permission;
+    changed = true;
+    console.log("linked  permission config");
   }
 
   if (changed && failures === 0) {

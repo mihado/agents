@@ -2,6 +2,37 @@
   "plugin": [
     "@dietrichgebert/ponytail"
   ],
+  "permission": {
+    "external_directory": {
+      "~/.claude/**": "allow",
+      "~/.agents/**": "allow",
+      "~/Repos/**": "allow",
+      "~/Work/**": "allow"
+    },
+    "read": {
+      "~/.claude/**": "allow",
+      "~/.agents/**": "allow",
+      "~/Repos/**": "allow",
+      "~/Work/**": "allow",
+      "*.env.test*": "allow",
+      "*.env.example*": "allow"
+    },
+    "edit": {
+      "~/.claude/**": "allow",
+      "~/.agents/**": "allow",
+      "~/Repos/**": "allow",
+      "~/Work/**": "allow"
+    },
+    "bash": {
+      "*": "allow",
+      "sudo *": "deny",
+      "rm -rf *": "ask",
+      "git push --force*": "ask",
+      "git push -f*": "ask",
+      "git reset --hard*": "ask",
+      "git clean -f*": "ask"
+    }
+  },
   "provider": {
     "c9": {
       "name": "c9.rter.cc",
