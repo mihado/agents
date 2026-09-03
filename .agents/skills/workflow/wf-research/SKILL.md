@@ -7,7 +7,7 @@ description: Owns bounded evidence decisions before execution planning is approp
 
 ## Core contract
 
-Research answers a bounded decision question. The conductor dispatches research only after Idea/Think has established the decision question, scope boundary, and decision owner. Return unresolved intent or an unbounded question to Think.
+Research answers a bounded decision question. The conductor dispatches research only after Idea/Think has established the decision question, scope boundary, and decision owner. For Plan rework, the question is a proof question: name the missing implementation fact, candidate decision, evidence locations to inspect, and result needed to continue. Return unresolved intent or an unbounded question to Think.
 
 ## Workspace boundary
 

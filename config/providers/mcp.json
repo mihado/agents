@@ -11,6 +11,15 @@
       "env": [
         "CONTEXT7_API_KEY"
       ]
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated"
+      ]
     }
   }
 }

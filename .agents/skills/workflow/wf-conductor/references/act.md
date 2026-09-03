@@ -28,14 +28,14 @@ Each operator invocation starts a fresh attempt. Attempts are immutable once the
     - `FAIL` without a concrete hypothesis or with unsafe retry conditions: stop for human disposition.
     - `INCOMPLETE`: route by the verifier's evidence routing record:
       - `implementation` with `Ownership: owned`, a concrete repair hypothesis, and safe retry conditions: persist verify.md, then apply the repair gate.
-      - `plan`: return to Plan. Missing materially applicable commands, evidence contracts, command classifications, target scope, preconditions, cleanup/recovery, or stop conditions are Plan defects. Publish a superseding Plan with the Verify artifact as evidence before another execution attempt; this does not consume the repair budget.
+      - `plan`: return to Plan. Missing materially applicable commands, evidence contracts, command classifications, target scope, preconditions, cleanup/recovery, or stop conditions are Plan defects. Dispatch bounded proof research for the implementation fact needed to repair the cited Plan defect, persist it, then revise the candidate or replacement Plan with the Verify artifact and that proof as declared validated planner inputs. Publish a superseding Plan before another execution attempt; this does not consume the repair budget.
       - `external`, `manual`, or ambiguous ownership: stop for the named owner.
     - `BLOCKED`: stop for the stated dependency, safety boundary, or owner.
 
 8. **Persist and route on review:** Persist the Review result to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/attempt-<n>/review.md` path, then route on disposition:
    - `no-actionable-findings`: slice complete (see below).
    - `repair-change`: apply repair gate (see below) with the bounded finding as input.
-   - `replan-required`: classify the finding under the user blocker classifier in [SKILL.md](../SKILL.md) — route implementation mechanics through Research or Plan, return boundary-changing evidence to Think, and stop only for a genuine user-owned decision.
+    - `replan-required`: classify the finding under the user blocker classifier in [SKILL.md](../SKILL.md). For implementation mechanics, dispatch proof research, persist it, then return to Plan with the proof as a declared planner input; return boundary-changing evidence to Think; stop only for a genuine user-owned decision.
    - `human-decision-required`: stop for the stated decision.
 
 ## Dispatch failure
@@ -132,7 +132,7 @@ When eligibility is satisfied:
 3. **Final Verify:** dispatch the verifier with `Required skill: wf-verification`, `Mode: final`, the dispatch envelope, and validated ordered declared inputs — the Brief and the final manifest — so final verification can assess full AC bodies and contracts, not only the manifest's enumeration. Validate them under [references/artifacts.md](artifacts.md) § Dispatch inputs. No retry: a final Verify `DISPATCH_FAILURE` blocks under the dispatch-failure contract in [SKILL.md](../SKILL.md). Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/final-<n>/verify.md` path with `artifact_role: final-verification`.
 4. On `PASS`: dispatch **final Review** with `Mode: final`, the dispatch envelope, and a closed ordered declared input set — the Brief, the final manifest, the final verification, and the Plan, Verify, and Review artifacts enumerated in the manifest's `accepted_slices`; nothing else is declared. The cumulative diff remains command/source context computed from `repository_root` and the manifest's `diff_base`, not an artifact input. One read-only retry per the dispatch-failure contract; a final Review `DISPATCH_FAILURE` after that retry blocks under the same rule. Write to the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/execution/final-<n>/review.md` path with `artifact_role: final-review`.
 5. On final Review `no-actionable-findings`: the work is a **completion candidate**.
-6. On final Verify `FAIL`, `INCOMPLETE`, `BLOCKED`, or final Review `repair-change` / `replan-required` / `human-decision-required`: stop for human disposition. Final gate failures are not auto-repaired.
+6. On final Verify `INCOMPLETE` with `Locus: plan`, dispatch bounded proof research for the implementation fact needed to repair the cited Plan defect, persist it, then revise the candidate or replacement Plan with the final Verify artifact and that proof as declared validated planner inputs. On final Verify `FAIL` or `BLOCKED`, final Verify `INCOMPLETE` with another locus, final Review `repair-change`, or `human-decision-required`: stop for human disposition. For final Review `replan-required`, classify the finding under the user blocker classifier: implementation mechanics dispatch proof research, persist it, then return to Plan with that proof as a declared planner input; boundary-changing evidence returns to Think; a genuine user-owned decision stops. Final gate failures are otherwise not auto-repaired.
 
 The conductor:
 1. Reports the successful outcome to the user with evidence references.

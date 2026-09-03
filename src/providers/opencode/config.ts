@@ -131,7 +131,7 @@ export function resolveTools(): { codex: string | null; claude: string | null; o
   };
 }
 
-export function toOpenCodeRemote(server: McpServerDef): { type: string; url: string; headers: Record<string, string> } | null {
+export function toOpenCodeMcp(server: McpServerDef): Record<string, unknown> {
   if (server.command === "npx" && server.args.includes("@upstash/context7-mcp")) {
     return {
       type: "remote",
@@ -141,15 +141,15 @@ export function toOpenCodeRemote(server: McpServerDef): { type: string; url: str
         : {},
     };
   }
-  return null;
+  return {
+    type: "local",
+    command: [server.command, ...server.args],
+    enabled: true,
+  };
 }
 
 export function installOpenCodeMcp(name: string, server: McpServerDef, config: Record<string, unknown>): boolean {
-  const expected = toOpenCodeRemote(server);
-  if (!expected) {
-    console.error(`error   ${name} cannot be configured for OpenCode (no remote mapping)`);
-    return false;
-  }
+  const expected = toOpenCodeMcp(server);
 
   const mcpSection = (config.mcp ?? {}) as Record<string, unknown>;
   const current = mcpSection[name] as Record<string, unknown> | undefined;
@@ -172,16 +172,8 @@ export function checkOpenCodeMcp(name: string, server: McpServerDef): boolean {
     console.error(`FAIL  OpenCode ${name} is not configured`);
     return false;
   }
-  const expected = toOpenCodeRemote(server);
-  if (!expected) {
-    console.error(`FAIL  OpenCode ${name} unsupported`);
-    return false;
-  }
-  if (
-    (current as Record<string, unknown>).type === expected.type &&
-    (current as Record<string, unknown>).url === expected.url &&
-    JSON.stringify((current as Record<string, unknown>).headers || {}) === JSON.stringify(expected.headers || {})
-  ) {
+  const expected = toOpenCodeMcp(server);
+  if (JSON.stringify(current) === JSON.stringify(expected)) {
     console.log(`PASS  OpenCode ${name} configured`);
     return true;
   }

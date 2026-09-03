@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { getPath, read, write } from "./config.js";
+import { getPath, read, write, toOpenCodeMcp } from "./config.js";
 
 const root = path.resolve(fileURLToPath(import.meta.url), "../../../..");
 
@@ -104,6 +104,20 @@ describe("roundtrip", () => {
     write(config);
     const raw = fs.readFileSync(configPath, "utf8");
     expect(raw).not.toContain("will be lost");
+  });
+});
+
+describe("toOpenCodeMcp()", () => {
+  it("maps Chrome DevTools to an isolated local server", () => {
+    expect(toOpenCodeMcp({
+      type: "stdio",
+      command: "npx",
+      args: ["-y", "chrome-devtools-mcp@latest", "--isolated"],
+    })).toEqual({
+      type: "local",
+      command: ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated"],
+      enabled: true,
+    });
   });
 });
 
