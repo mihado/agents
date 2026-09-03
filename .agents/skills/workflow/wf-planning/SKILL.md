@@ -7,8 +7,8 @@ description: Produces a complete candidate Plan from one conductor-selected comp
 
 ## Modes
 
-- **candidate:** produce one complete candidate Plan through the declared composite profile set. Load [`references/panels.md`](references/panels.md) and every profile reference it declares.
-- **graft:** revise the selected base candidate with only the judge-cited decisions from declared candidates.
+- **candidate:** produce one complete candidate Plan through the declared composite profile set. Load [`references/panels.md`](references/panels.md) and every profile reference it declares. When supplied, treat declared proof research as the evidence resolving its named route question.
+- **graft:** revise the selected base candidate with only the judge-cited decisions from declared candidates and any declared proof research.
 
 The conductor selects the mode and supplies a closed input set.
 
@@ -25,7 +25,7 @@ Completion criterion: the candidate covers every material decision its profile c
 
 ### Minimum evidence
 
-Plan one test only when it proves behavior the change could regress and existing evidence does not already prove it. Choose the lowest adequate level: unit for isolated logic, integration for a crossed boundary, or runtime for a critical user path. Static wiring already covered by typecheck or lint and duplicate happy paths need no test plan.
+Plan one test only when it proves behavior the change could regress and existing evidence does not already prove it. A test that would still break under a behavior-preserving refactor is proving implementation, not behavior — do not plan it. Choose the lowest adequate level: unit for isolated logic, integration for a crossed boundary, or runtime for a critical user path. Static wiring already covered by typecheck or lint and duplicate happy paths need no test plan.
 
 ### Composition
 
@@ -113,7 +113,7 @@ revision_summary: <initial candidate, or concise change>
 
 ## Graft mode
 
-Read only the declared Brief, selected base candidate or governing draft, judge disposition, cited candidate evidence, and any failed structural-readiness checklist items. Preserve the selected route and every prior graft unless a newly cited graft proves they cannot satisfy a Brief constraint, safeguard, or required proof. Adopt only decisions identified by candidate and section; do not form a new route from uncited ideas. A supplied checklist failure authorizes only the smallest repair needed to satisfy that item; it cannot alter the selected route or reopen candidate decisions.
+Read only the declared Brief, selected base candidate or governing draft, judge disposition, cited candidate evidence, declared proof research, and any failed structural-readiness checklist items. Preserve the selected route and every prior graft unless a newly cited graft or proof proves they cannot satisfy a Brief constraint, safeguard, or required proof. Adopt only decisions identified by candidate, proof, and section; do not form a new route from uncited ideas. A supplied checklist failure authorizes only the smallest repair needed to satisfy that item; it cannot alter the selected route or reopen candidate decisions.
 
 Completion criterion: the draft realizes every cited graft, retains the base's unchallenged decisions, and leaves the operator no material route, boundary, invariant, safety, or proof decision to invent.
 

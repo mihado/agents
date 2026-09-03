@@ -24,7 +24,7 @@ Classify what prevents safe continuation before interpreting delivery verbs:
 | 5 | A bounded factual question blocks the current lane | Invoke `wf-research`, then resume that lane |
 | 6 | Destination exceeds one session of dependent decisions | Suggest `wayfinder` |
 | 7 | Bounded workflow-maintenance edit | Direct maintenance route |
-| 8 | User supplies a delegated-work path to activate | Load `wf-handoff` Receive, then Think |
+| 8 | User supplies a delegated-work path to activate | Load `wf-handoff` Receive, then Think; no non-active Brief route exists |
 | 9 | Settled intent without a Brief | Load [references/think.md](references/think.md) |
 | 10 | Settled Brief needing next executable slice | Load [references/plan.md](references/plan.md) |
 | 11 | Active Plan + delivery request | Load [references/act.md](references/act.md) |
@@ -68,9 +68,11 @@ Subagents return analysis only; judge receives worker outputs only, never raw co
 
 ### State and repository roots
 
-The conductor canonicalizes its own `$PWD` as `invocation_dir` for re-orientation. It resolves state only from that directory: `state_root` is the canonical absolute path `<invocation_dir>/.agent-contexts/`. First use creates that directory. Never climb from `invocation_dir` to discover another `.agent-contexts/`; a parent or nested conductor's state is excluded from source evidence. To defer settled work to another repository, load `wf-handoff`; it writes one explicit pending request and never activates target work.
+The conductor canonicalizes its own `$PWD` as `invocation_dir` for re-orientation. It resolves state only from that directory: `state_root` is the canonical absolute path `<invocation_dir>/.agent-contexts/`. First use creates that directory. Never climb from `invocation_dir` to discover another `.agent-contexts/`; a parent or nested conductor's state is excluded from source evidence. To defer settled work to another repository, load `wf-handoff`; publishing cross-repository work writes only one explicit pending request and never writes the target Brief or `active.md`.
 
 Every conductor filesystem read or write uses a canonical absolute path beneath `state_root`; never pass a relative path to a filesystem tool. Artifact paths may be `invocation_dir`-relative in metadata and dispatch inputs, but they are identifiers, not write targets.
+
+A Brief is an activation artifact. Write `brief-01.md` only while creating or activating this conductor's own active work, and update this conductor's absolute `active.md` in the same lifecycle transition. There is no non-active Brief publication. Work for another repository is always one pending `delegated-01.md` request, even when that repository is nested under or accessible from `invocation_dir`.
 
 Every dispatch carries `invocation_dir` as its artifact root and one explicit canonical `repository_root` for source, commands, and runtime evidence. `repository_root` may differ from or sit outside `invocation_dir`. Artifact lookup resolves only under `invocation_dir`; repository evidence resolves only under `repository_root`. Both roots use lexical and resolved-path containment for paths beneath them. Workers must not search parent directories or unrelated roots to discover artifacts or source. Official documentation URLs, permitted network access, and installed executable/tool paths are unaffected.
 
@@ -130,7 +132,7 @@ Historical execution evidence remains immutable. The active Brief, Plan, and une
 - Run the final Brief-wide gate only when accepted slice evidence covers every Brief AC (closed eligibility rule in [references/act.md](references/act.md)).
 - A Brief created from delegated work records its request and consulted context in `source_contexts`. The link is required and remains on later revisions.
 - A conductor reads cross-root context only at an explicit absolute path. Ordinary dispatches never target, need, or reason about another conductor's root.
-- `repair-change` returns bounded work to the operator. Classify `replan-required` under the user blocker classifier: route implementation mechanics through research or planner revision, return boundary-changing evidence to Think, and stop only for a genuine user-owned decision. `human-decision-required` stops for the stated decision.
+- `repair-change` returns bounded work to the operator. Classify `replan-required` under the user blocker classifier: for implementation mechanics, dispatch proof research, persist it, then revise the Plan with that declared proof input; return boundary-changing evidence to Think; stop only for a genuine user-owned decision. `human-decision-required` stops for the stated decision.
 
 Load [references/act.md](references/act.md) for attempt lifecycle, repair budget, slice acceptance, and final-gate mechanics.
 

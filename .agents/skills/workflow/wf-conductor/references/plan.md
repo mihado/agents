@@ -12,7 +12,7 @@ Execution planning is eligible when:
 - The Brief has a settled outcome, acceptance criteria, hard constraints, decision owner, and required safety/non-functional commitments.
 - Remaining unknowns are confined to implementation mechanics (including a project-native package seam, local API shape, naming, file layout, and test-harness specifics) that cannot change the approved outcome, ownership, deployment topology, external integration, or acceptance evidence.
 
-If a bounded factual question blocks route selection, invoke `wf-research`. Persist evidence under the active work. Resume Plan when the evidence remains within Brief authority; return to Think when it changes outcome, ACs, hard constraints, or settled decisions.
+If a bounded factual question blocks route selection, invoke `wf-research` with a **proof question**: the exact implementation fact to establish, the route decision it unlocks, the local source/tests/configuration or authoritative external evidence to inspect, and the required result shape. Persist evidence under the active work. Resume Plan when the evidence remains within Brief authority; return to Think when it changes outcome, ACs, hard constraints, or settled decisions.
 
 ## Panel selection
 
@@ -28,9 +28,9 @@ Every planner dispatch below is artifact-consuming: its dispatch envelope declar
 
 `@<candidate-key>.draft.md` focuses one draft for the current conversation. It is conversational context only — it never changes `active.md`. While focused, the conductor re-reads the current revision before revising, reviewing, marking ready, or publishing it.
 
-For batch planning requests, the conductor reviews all active-Brief drafts, makes safe in-authority revisions, runs readiness gates, and marks eligible drafts ready. In `delivery_mode: autonomous`, publish and execute one unambiguous ready draft; return only a genuine user-owned decision or stop condition. In `delivery_mode: approval-required`, do not publish a Plan unless the user expresses publication intent; return only decisions requiring human authority, including which ready slice to publish when multiple candidates remain.
+For batch planning requests, the conductor reviews all active-Brief drafts, makes safe in-authority revisions, runs readiness gates, and marks eligible drafts ready. In `delivery_mode: autonomous`, publish and execute one unambiguous ready draft while `active.md` governs the matching Brief, or after the governing Plan has accepted predecessor evidence and the draft passes the successor-lineage gate; an active Plan needing correction follows the explicit superseding replacement gate. In `delivery_mode: approval-required`, do not publish a Plan unless the user expresses publication intent; return only decisions requiring human authority, including which ready slice to publish when multiple candidates remain.
 
-In `delivery_mode: approval-required`, complete this lane after persisting the draft unless the user explicitly requests publication. In `delivery_mode: autonomous`, publish and execute one unambiguous ready draft after its gate passes.
+In `delivery_mode: approval-required`, complete this lane only after persisting the selected draft and its readiness result, unless the user explicitly requests publication. In `delivery_mode: autonomous`, publish and execute one unambiguous ready draft after its gate passes.
 
 ### Candidate panel and bounded graft
 
@@ -39,10 +39,10 @@ A graft's output is either **expand** — before selection, a new `candidate-<n+
 1. Reuse the `candidate_key` for the same proposed slice; names, terminology, and Brief changes do not create another key. Before reuse, confirm the existing key has the same observable outcome; on a different outcome, choose a distinct key. Default to reworking the current run in place across ordinary Brief revisions. Open a new `run-<n+1>` only when the active Brief ID changes, the slice's own observable outcome changes, or the prior run stopped; when one does supersede the current run, delete the superseded run's absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/` directory once the new run's first candidate is persisted, and retarget the draft's `current_run` to it. Dispatch `planner` with `Required skill: wf-planning`, `Mode: candidate`, the active Brief, and the selected composite profile set. Before persistence, reject a summary or outline: the result must satisfy the candidate-completeness gate below. Persist it at the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/candidate-<n>.md` path with `artifact_role: plan-candidate` before another worker consumes it. When panel selection requires an independent risk candidate, dispatch `planner-adversarial` with the same Brief and its declared risk profile set; dispatch other independent candidates only when a distinct competing route needs comparison.
 2. Dispatch `judge` with `Required skill: wf-judge`, the closed persisted candidate set, and `[PLAN PANEL]`. Persist the disposition at the absolute `<invocation_dir>/.agent-contexts/work/<work-id>/planning/<candidate-key>/run-<n>/adjudication-<n>.md` path with `artifact_role: plan-adjudication`.
 3. **Route on disposition:**
-   - `select`: write or retarget the governing draft to the selected candidate revision and adjudication, run the structural readiness gate against that pinned candidate, then set `readiness: ready` with `readiness_gate: panel-adjudication`.
+    - `select`: in the same Plan transition, write or retarget the governing draft to the selected candidate revision and adjudication, run the structural readiness gate against that pinned candidate, and set `readiness: ready` with `readiness_gate: panel-adjudication` on pass. An adjudication alone never completes Plan or authorizes ordinary publication; persist the draft and run readiness before returning, publishing, or dispatching another worker. Explicit human-approved publication remains the documented user-directed exception.
    - `graft` (expand): dispatch `planner` with `Mode: graft`, the base candidate or current governing draft, the judge disposition, and only cited candidate evidence. Persist the returned complete candidate as a new candidate slot, expand and close the candidate set with it, then re-adjudicate that set as a new adjudication. Retarget the governing draft and run readiness only after the re-adjudication selects it.
    - `add-planner`: dispatch only the named profile, then re-run panel adjudication with the expanded set.
-   - `replan-required`: classify the Brief-level defect under the user blocker classifier and route it to Research or Think.
+    - `replan-required`: classify the cited defect under the user blocker classifier. For implementation mechanics, dispatch bounded Research immediately with a proof question that names the missing fact, candidate decision, evidence locations, and result needed to continue; persist its result; then resume this Plan route and dispatch the candidate or graft planner with that exact research artifact as a validated declared input. Revise or replace the candidate from the proof. Return to Think only when evidence changes the Brief outcome, ACs, hard constraints, or settled decisions. Stop only for a genuine user-owned decision or another declared stop condition; an incomplete candidate or research need is not a response boundary.
 
 The judge selects a base and cites existing candidate decisions. It never invents a hybrid route. A re-adjudication preserves the governing draft unless it identifies a cited defect or a missing planner; it cannot discard a completed graft for an earlier candidate.
 
@@ -67,7 +67,7 @@ Every execution-planning request produces complete candidate papers under the ab
 
 Persist with `artifact_role: plan-draft`, the active `brief_id`, current observed target, `current_run`, `governing_candidate` (candidate ID, path, and revision), `adjudication` (ID, path, and revision), `readiness: draft`, `revision`, `revised_at`, and a concise `revision_summary`. Increment `revision` when retargeting or recording a readiness repair. A newer candidate never changes a draft without adjudication.
 
-Drafts are not recorded in `active.md`. Keep `current_artifact_path` unchanged.
+Drafts are not recorded in `active.md`. Keep `current_artifact_path` unchanged. A selected candidate without its persisted governing draft and readiness result is an incomplete ordinary Plan transition, not a reportable completion state. Explicit human-approved publication remains the documented user-directed exception.
 
 ### Revision conflict
 
@@ -102,7 +102,7 @@ Panel planning uses adjudication as its gate (`readiness_gate: panel-adjudicatio
 
 ### Default completion
 
-In `delivery_mode: approval-required` without explicit publication intent, return:
+In `delivery_mode: approval-required` without explicit publication intent, return only after the selected candidate has a persisted draft and readiness result:
 
 ```md
 ## Plan Draft Persisted
@@ -136,7 +136,7 @@ A superseding Plan does *not* require accepted predecessor PASS/Review. It reset
 3. In `delivery_mode: autonomous`, one unambiguous eligible (`readiness: ready`) draft for the active Brief.
 4. A clarification prompt if more than one candidate remains plausible.
 
-Clear intent — "implement this," "proceed with this plan," "make this the next slice" — or `delivery_mode: autonomous` — publishes the resolved draft's current re-read revision.
+Clear intent — "implement this," "proceed with this plan," "make this the next slice" — publishes the resolved draft's current re-read revision. `delivery_mode: autonomous` publishes without another prompt while `active.md` governs the matching Brief, or for the next slice after the governing Plan has accepted predecessor evidence and the successor-lineage gate passes; when a Plan needs correction, publication requires the superseding replacement gate.
 
 Before writing either Plan, re-read the resolved draft and confirm it is the current revision, has a valid `plan-draft` envelope, and its pinned candidate's `brief_id` and `brief_revision` match the active Brief.
 
@@ -166,7 +166,7 @@ All artifacts include `wf-artifact/v1` metadata.
 After a successful slice (accepted Operator → Verify → Review), the conductor compares slice evidence with the Brief:
 
 - **Work remains:** plan the next slice from the current repository state and accepted evidence. Return to Plan dispatch.
-- **Work remains in `delivery_mode: autonomous`:** plan, publish, and execute the next unambiguous ready slice.
+- **Work remains in `delivery_mode: autonomous`:** plan, publish, and execute the next unambiguous ready slice after its successor-lineage gate passes.
 - **Route, acceptance, or safety boundary changed:** return to Research or Think.
 - **All Brief AC IDs covered:** run final Brief-wide Verify and Review (see [references/act.md](act.md)).
 
