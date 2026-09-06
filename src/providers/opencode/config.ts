@@ -83,12 +83,19 @@ function parseJSONC(content: string): Record<string, unknown> {
   return JSON.parse(result);
 }
 
-export interface McpServerDef {
-  type: string;
+export interface McpStdioServerDef {
+  type: "stdio";
   command: string;
   args: string[];
   env?: string[];
 }
+
+export interface McpRemoteServerDef {
+  type: "remote";
+  url: string;
+}
+
+export type McpServerDef = McpStdioServerDef | McpRemoteServerDef;
 
 export interface McpManifest {
   version: number;
@@ -109,17 +116,23 @@ function validateMcpManifest(manifest: McpManifest): void {
   }
 
   for (const [name, server] of Object.entries(manifest.servers)) {
-    if (
-      !name ||
-      server.type !== "stdio" ||
-      typeof server.command !== "string" || !server.command ||
-      !Array.isArray(server.args) ||
-      !server.args.every((arg) => typeof arg === "string") ||
-      !Array.isArray(server.env || []) ||
-      !(server.env || []).every((key) => typeof key === "string")
-    ) {
+    const validStdio = server.type === "stdio" &&
+      typeof server.command === "string" && !!server.command &&
+      Array.isArray(server.args) && server.args.every((arg) => typeof arg === "string") &&
+      Array.isArray(server.env || []) && (server.env || []).every((key) => typeof key === "string");
+    const validRemote = server.type === "remote" && isHttpsUrl(server.url);
+    if (!name || (!validStdio && !validRemote)) {
       fail(`invalid MCP server definition: ${name}`);
     }
+  }
+}
+
+function isHttpsUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
   }
 }
 
@@ -132,6 +145,7 @@ export function resolveTools(): { codex: string | null; claude: string | null; o
 }
 
 export function toOpenCodeMcp(server: McpServerDef): Record<string, unknown> {
+  if (server.type === "remote") return { type: "remote", url: server.url, enabled: true };
   if (server.command === "npx" && server.args.includes("@upstash/context7-mcp")) {
     return {
       type: "remote",

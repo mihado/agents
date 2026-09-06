@@ -92,7 +92,7 @@ export function installClaudeMcp(claudePath: string, name: string, command: stri
   const result = spawnSync(claudePath, ["mcp", "add", "--scope", "user", name, "--", command, ...args], { encoding: "utf8" });
   if (result.status !== 0) {
     const msg = result.stderr.trim();
-    if (msg.includes("already exists")) return false;
+    if (msg.includes("already exists") && checkClaudeMcp(name, command, args)) return false;
     console.error(`error   ${claudePath} mcp add ${name} failed:\n${msg}`);
     process.exit(1);
   }
@@ -115,6 +115,32 @@ export function checkClaudeMcp(name: string, command: string, args: string[]): b
   const match = cur.type === "stdio" && cur.command === command &&
     JSON.stringify(cur.args || []) === JSON.stringify(args);
   if (match) {
+    console.log(`PASS  Claude ${name} configured`);
+    return true;
+  }
+  console.error(`FAIL  Claude ${name} configuration conflicts with mcp.json`);
+  return false;
+}
+
+export function installClaudeRemoteMcp(claudePath: string, name: string, url: string): boolean {
+  const result = spawnSync(claudePath, ["mcp", "add", "--scope", "user", "--transport", "http", name, url], { encoding: "utf8" });
+  if (result.status !== 0) {
+    const msg = result.stderr.trim();
+    if (msg.includes("already exists") && checkClaudeRemoteMcp(name, url)) return false;
+    console.error(`error   ${claudePath} mcp add ${name} failed:\n${msg}`);
+    process.exit(1);
+  }
+  return true;
+}
+
+export function checkClaudeRemoteMcp(name: string, url: string): boolean {
+  const claudeConfig = process.env.CLAUDE_CONFIG || path.join(os.homedir(), ".claude.json");
+  if (!fs.existsSync(claudeConfig)) {
+    console.error(`FAIL  Claude ${name} is not configured`);
+    return false;
+  }
+  const current = readJson<{ mcpServers?: Record<string, unknown> }>(claudeConfig).mcpServers?.[name] as Record<string, unknown> | undefined;
+  if (current?.type === "http" && current.url === url) {
     console.log(`PASS  Claude ${name} configured`);
     return true;
   }

@@ -119,6 +119,17 @@ describe("toOpenCodeMcp()", () => {
       enabled: true,
     });
   });
+
+  it("maps Better Auth to its remote documentation server", () => {
+    expect(toOpenCodeMcp({
+      type: "remote",
+      url: "https://mcp.better-auth.com/mcp",
+    })).toEqual({
+      type: "remote",
+      url: "https://mcp.better-auth.com/mcp",
+      enabled: true,
+    });
+  });
 });
 
 describe("integration: apm providers", () => {

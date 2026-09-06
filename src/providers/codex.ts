@@ -45,6 +45,7 @@ export function resolveCodex(): string | null {
 export function installCodexMcp(codexPath: string, name: string, command: string, args: string[]): boolean {
   const result = spawnSync(codexPath, ["mcp", "add", name, "--", command, ...args], { encoding: "utf8" });
   if (result.status !== 0) {
+    if (checkCodexMcp(codexPath, name, command, args)) return false;
     console.error(`error   ${codexPath} mcp add ${name} failed:\n${result.stderr.trim()}`);
     process.exit(1);
   }
@@ -61,6 +62,31 @@ export function checkCodexMcp(codexPath: string, name: string, command: string, 
   const argStr = args.join(" ");
   const match = details.transport === "stdio" && details.command === command && details.args === (argStr || "-");
   if (match) {
+    console.log(`PASS  Codex ${name} configured`);
+    return true;
+  }
+  console.error(`FAIL  Codex ${name} configuration conflicts with mcp.json`);
+  return false;
+}
+
+export function installCodexRemoteMcp(codexPath: string, name: string, url: string): boolean {
+  const result = spawnSync(codexPath, ["mcp", "add", name, "--url", url], { encoding: "utf8" });
+  if (result.status !== 0) {
+    if (checkCodexRemoteMcp(codexPath, name, url)) return false;
+    console.error(`error   ${codexPath} mcp add ${name} failed:\n${result.stderr.trim()}`);
+    process.exit(1);
+  }
+  return true;
+}
+
+export function checkCodexRemoteMcp(codexPath: string, name: string, url: string): boolean {
+  const result = spawnSync(codexPath, ["mcp", "get", name], { encoding: "utf8" });
+  if (result.status !== 0) {
+    console.error(`FAIL  Codex ${name} is not configured`);
+    return false;
+  }
+  const details = parseKeyValueOutput(result.stdout);
+  if (details.transport !== "stdio" && details.url === url) {
     console.log(`PASS  Codex ${name} configured`);
     return true;
   }

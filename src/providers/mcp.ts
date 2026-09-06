@@ -1,6 +1,6 @@
 import { loadMcpManifest, resolveTools } from "./opencode/config.js";
-import { installCodexMcp, checkCodexMcp } from "./codex.js";
-import { installClaudeMcp, checkClaudeMcp } from "./claude.js";
+import { installCodexMcp, checkCodexMcp, installCodexRemoteMcp, checkCodexRemoteMcp } from "./codex.js";
+import { installClaudeMcp, checkClaudeMcp, installClaudeRemoteMcp, checkClaudeRemoteMcp } from "./claude.js";
 import { fail } from "../core/commands.js";
 
 export function installMcp(root: string): void {
@@ -12,7 +12,12 @@ export function installMcp(root: string): void {
   }
 
   for (const [name, server] of Object.entries(manifest.servers)) {
-    if (tools.codex && server.command) {
+    if (server.type === "remote") {
+      if (tools.codex) installCodexRemoteMcp(tools.codex, name, server.url);
+      if (tools.claude) installClaudeRemoteMcp(tools.claude, name, server.url);
+      continue;
+    }
+    if (tools.codex) {
       installCodexMcp(tools.codex, name, server.command, server.args);
       console.log(`linked  Codex ${name}`);
     }
@@ -33,6 +38,11 @@ export function checkMcp(root: string): void {
   }
 
   for (const [name, server] of Object.entries(manifest.servers)) {
+    if (server.type === "remote") {
+      if (tools.codex && !checkCodexRemoteMcp(tools.codex, name, server.url)) failures++;
+      if (tools.claude && !checkClaudeRemoteMcp(name, server.url)) failures++;
+      continue;
+    }
     if (tools.codex && !checkCodexMcp(tools.codex, name, server.command, server.args)) failures++;
     if (tools.claude && !checkClaudeMcp(name, server.command, server.args)) failures++;
   }

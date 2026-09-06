@@ -20,6 +20,10 @@
         "chrome-devtools-mcp@latest",
         "--isolated"
       ]
+    },
+    "better-auth": {
+      "type": "remote",
+      "url": "https://mcp.better-auth.com/mcp"
     }
   }
 }
