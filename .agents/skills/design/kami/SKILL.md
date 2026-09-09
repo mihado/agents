@@ -1,17 +1,17 @@
 ---
 name: kami
-description: 'Typeset professional documents and product landing pages: resumes, one-pagers, white papers, letters, portfolios, slide decks, landing pages. Warm parchment, ink-blue accent, serif-led hierarchy. CN uses TsangerJinKai02, EN uses Charter, JA uses YuMincho (best-effort). Triggers on "做 PDF / 排版 / 一页纸 / 白皮书 / 作品集 / 简历 / PPT / slides / Marp / markdown slides / マークダウンのスライド / 落地页 / 官网 / landing page / product page", or "build me a resume / make a one-pager / design a slide deck / turn this into a PDF / make this presentable / create a landing page".'
+description: 'Typeset professional documents and product landing pages: resumes, one-pagers, white papers, letters, portfolios, slide decks, landing pages. Templates use warm backgrounds, ink-blue accents, and serif fonts. CN uses TsangerJinKai02, EN uses Charter, JA uses YuMincho (best-effort). Triggers on "做 PDF / 排版 / 一页纸 / 白皮书 / 作品集 / 简历 / PPT / slides / Marp / markdown slides / マークダウンのスライド / 落地页 / 官网 / landing page / product page", or "build me a resume / make a one-pager / design a slide deck / turn this into a PDF / make this presentable / create a landing page".'
 ---
 
 # kami · 紙
 
-**紙 · かみ** - the paper your deliverables land on.
+**紙 · かみ** means paper in Japanese.
 
-Good content deserves good paper. One design language across documents and landing pages: warm parchment canvas, ink-blue accent, serif-led hierarchy, tight editorial rhythm.
+Good content deserves good paper. Use Kami’s templates and layout rules to create documents and landing pages with serif fonts, warm backgrounds, and ink-blue accents.
 
 Part of `Kaku · Waza · Kami` - Kaku writes code, Waza drills habits, **Kami delivers documents**.
 
-**Update check (non-blocking).** At the start of a task, run `bash scripts/check-update.sh`. It does a read-only version check at most once per day and prints one line when a newer kami is available; relay that line to the user, then continue. It sends no data, and fails silently when offline, sandboxed, or without `curl`. Never let it block the work.
+**Update check (non-blocking).** At the start of a task, run `bash scripts/check-update.sh`. On the first run each calendar day, it writes a marker under the local XDG cache directory and then resolves Kami's latest published GitHub Release. It uploads no user document or task content. When a newer Kami is available it prints one line; relay that line to the user, then continue. It fails silently when offline, sandboxed, or without `curl`, and must never block the work.
 
 ## Step 0 · Load brand profile (if exists)
 
@@ -47,6 +47,8 @@ Design, writing, production, and diagram guidance live in `CHEATSHEET.md` and `r
 
 Code blocks with `class="language-*"` are highlighted only when optional `Pygments` is installed in the build environment. Without it, PDFs still render and code blocks stay monochrome.
 
+**Mathematics is strict LaTeX, never pseudo-math.** When a document contains mathematics, author formulas only as standard LaTeX delimiters in rendered body text: inline `\( ... \)` and display `\[ ... \]`. Delimiters inside title metadata, form options, literal/code, script, style, SVG, template, and MathML regions are treated as text. Do not replace formulas with Unicode approximations, ASCII fractions, screenshots, or raw TeX printed on the page. The renderer requires Node.js 20 or Node.js 22 and newer. Before shipping HTML/PDF, run `bash scripts/ensure_mathjax.sh`, then `python3 scripts/math_render.py --in-place filled.html`; this converts every formula into MathJax SVG. `render_pdf` also performs this conversion in memory as a hard fallback and fails if MathJax or the TeX is invalid. Finish with `python3 scripts/math_render.py --check filled.html`; a completed HTML must contain no raw TeX delimiters in rendered body text.
+
 ## Step 1.5 · Intent extraction (silent)
 
 Before picking a template, silently confirm purpose, audience, hard constraints, and what outcome counts as success. Skip any dimension the conversation or the document type already answers (a resume's purpose is always "get an interview").
@@ -59,7 +61,7 @@ Before creating or modifying an output, lock the contract: language, template, o
 
 Use the nearest existing template and verification path. Do not add a new template, shared CSS layer, dependency, script flag, or optional mode unless the current request cannot be satisfied without it.
 
-If a change touches `SKILL.md`, templates, scripts, references, or package inputs, decide whether `dist/kami.zip` must be refreshed before handoff. Shipped behavior is not ready until the package contains the changed files.
+A change to `SKILL.md`, templates, scripts, or references reaches `npx skills add` and plugin installs on the next push to `main`; Claude Desktop users get it only when the next release rebuilds `kami.zip`. Name the channel that carries the change before calling it shipped.
 
 ### Work mode
 
@@ -112,7 +114,7 @@ Ask only when two cells genuinely both fit.
 
 | Signal | Document |
 |---|---|
-| Length target unknown | Ask "how many pages" before classifying |
+| Length target unknown | Infer from the content and document type; ask only if the choice materially changes the deliverable, within the question budget |
 | ≤ 1 page + investor / recruiter / exec summary audience | one-pager |
 | ≤ 1 page + formal correspondence (sales, hiring, resignation, memo) | letter |
 | 1.5-2 pages + career narrative + project bullets | resume |
@@ -250,7 +252,7 @@ Values longer than 80 characters are treated as prose you may rephrase; short at
 
 Slides only. Every other doc type skips to Step 2.7.
 
-Load `references/deck-preflight.md` and work it before drafting: path selection (WeasyPrint HTML by default), page size, the six pre-flight questions to ask in one batch, and the slide content rules.
+Load `references/deck-preflight.md` before drafting for path selection (WeasyPrint HTML by default), page size, unresolved delivery choices, and slide content rules. Its intake follows the shared question budget.
 
 ## Step 2.7 · Layout note (transparent, non-blocking)
 
@@ -258,7 +260,7 @@ Before loading specs and filling the template, write a short editor-style note s
 
 Example (CN):
 
-> 排版意图：Equity Report 中文版，2 页 A4。先立论与目标价，进入估值 (DCF 与可比公司)，落于催化剂与风险。中段嵌一张营收趋势折线和 FY26 收入桥瀑布。Logo 已就位，产品图暂缺，header 改走纯文字。输出 HTML 与 PDF。
+> 使用中文财报模板，制作 2 页 A4，输出 HTML 和 PDF。内容依次为投资判断、目标价、估值、催化剂与风险，加入营收趋势和 FY26 收入构成图，使用已有 Logo，缺少产品图的页眉采用文字。
 
 Example (EN):
 
@@ -343,10 +345,10 @@ Before finalizing, scan the draft. Any body page that would render under 50% ful
 
 1. Merge upward into the previous section.
 2. Merge downward into the next section.
-3. Promote a list to a small diagram or table that earns the space.
-4. Pin a `.co` callout to bottom (slides-weasy only). Whitespace above a pinned callout is intentional, not sparse.
+3. Remove the page and fold its one useful assertion or proof into a neighbor.
+4. Convert existing information to a small diagram or table only when that form is clearer even without the density problem.
 
-Forbidden ways to "fill" a sparse page: padding with filler prose, repeating the heading as a sentence, inventing statistics, restating the prior page in different words. If the merge options don't apply, the page itself shouldn't exist.
+Forbidden ways to "fill" a sparse page: padding with filler prose, repeating the heading as a sentence, inventing statistics, restating the prior page in different words, or adding a callout, chart, icon, or image whose only job is to occupy space. If the merge options don't apply, the page itself shouldn't exist.
 
 ### Last-page exemption
 
@@ -368,6 +370,29 @@ Fix a failing row by rewriting from the source material. If the source cannot su
 
 This pass is internal: run it silently; surface it only when a row cannot be fixed without new information from the user.
 
+## Step 4.3 · Table editorial pass (any table)
+
+Run this whenever the artifact contains a table. A Kami table should separate rows through alignment and breathing room first; rules are only quiet guides.
+
+- **One chromatic system:** keep table text in the neutral ink hierarchy and use `var(--border)` for header, body, and total-row rules. Do not color values by category, use `--brand` borders, add per-column hues, tint the header, or draw vertical rules. Use weight, signs, and labels for meaning instead.
+- **Hairline hierarchy:** header and total rules are `0.6pt`; body row rules are `0.25pt`. If the line is noticed before the values, it is too heavy. Total rows gain weight from typography plus the slightly stronger neutral rule, not from a blue line.
+- **Vertical padding floor:** normal tables target at least `6pt` on headers and `5pt` on cells. One-page and resume templates may step down once to `5pt` / `4pt` after a real render proves the page contract needs it. `.compact` still keeps at least `3pt` on headers and `2.5pt` on cells.
+- **Compact is earned:** use `.compact` for five or more columns, eight or more body rows, or a verified page-fit constraint. Do not use it by reflex, and do not reduce padding again before merging or re-authoring nearby content.
+- **Striping is exceptional:** start without `.striped`. Add its neutral fill only when a table has at least eight body rows and the normal-size render still makes row tracking difficult. Do not use striping merely to decorate the table.
+
+Verify the rendered page at normal viewing size. Each row must read as a separate unit without the rules forming a grid, the first and last lines of text must not crowd a rule, and changing the padding must re-pass neighboring pages plus the page-count contract.
+
+## Step 4.4 · Subtractive visual pass
+
+Before rendering, remove every visual primitive that does not encode data, state, grouping, or a relationship. Kami hierarchy should come from type, whitespace, labels, alignment, and restrained fills before it comes from a line.
+
+- Do not add decorative eyebrow ticks, short cover or contact rules, side-border accents on headings, quotations, or callouts, or fake dash bullets.
+- A filled callout or analyst box needs only its fill, padding, and typography. A quotation needs only indentation, olive text, and reading space. A section title needs only type scale and margin.
+- Keep rules that do real work: table hairlines, chart axes, diagram connectors, input boundaries, full-width separators between content regions, and current-state indicators.
+- Use the deletion test: hide the line. If meaning, state, grouping, and navigation remain clear, delete it. Restore spacing rather than replacing it with another ornament.
+
+Render every affected page after the pass. Confirm that the removed primitive did not collapse the intended pause, alter the page-count contract, or leave neighboring elements visually unanchored.
+
 ## Step 4.5 · Auto-select output format
 
 Do not ask the user which format to export. Decide from context:
@@ -375,12 +400,12 @@ Do not ask the user which format to export. Decide from context:
 | Signal | Output | Why |
 |---|---|---|
 | Any document request | HTML + PDF | PDF is the default deliverable, HTML is the source |
-| Slides / PPT / deck | HTML + PDF + PPTX | Presentations need a projectable format |
+| Slides / PPT / deck | HTML + PDF; add PPTX only when explicitly requested as editable output | PDF is the default presentation format |
 | "分享" / "发朋友圈" / "share" / "post" / "preview" | + PNG | Social platforms and messaging need images |
 | "嵌入" / "插图" / "embed in another doc" | PNG only | Used as material inside other documents |
 | User explicitly says a format | Follow the user | Explicit request overrides auto-selection |
 
-PDF always ships for document templates. Landing pages ship as a ready-to-serve static HTML file. PPTX follows slides. PNG follows sharing context.
+PDF is the default for document templates; an explicit format request takes precedence. Landing pages ship as a ready-to-serve static HTML file. Add PPTX only when the user explicitly needs an editable deck. PNG follows sharing context.
 
 ## Step 5 · Build & verify
 
@@ -391,6 +416,9 @@ python3 scripts/build.py landing-page        # screen-first static HTML template
 python3 scripts/build.py --verify slides    # single slide deck verification
 python3 scripts/build.py --check-placeholders path/to/filled.html
 python3 scripts/build.py --check-markdown path/to/filled.pdf
+bash scripts/ensure_mathjax.sh                            # strict TeX renderer dependency
+python3 scripts/math_render.py --in-place filled.html     # TeX -> MathJax SVG in delivered HTML
+python3 scripts/math_render.py --check filled.html        # fail on raw/unrendered TeX
 python3 scripts/build.py --check-content content.json path/to/filled.html
 python3 scripts/build.py --check-visual path/to/filled.pdf
 python3 scripts/build.py --check-fonts path/to/filled.pdf   # which family actually drew the CJK text
@@ -401,8 +429,9 @@ python3 scripts/build.py --check-density              # repo sweep (skips cover 
 python3 scripts/build.py --check-rhythm slides slides-en   # warn on monotonous slide sequences
 python3 scripts/build.py --doctor         # installed render/check/font capability report
 python3 scripts/build.py --check            # lint + token/theme + public-site fact checks
-python3 scripts/build_metadata.py --check   # Claude/Codex plugin mirror + marketplace drift check
 ```
+
+> **Strict LaTeX mathematics**: Use only `\( inline \)` / `\[ display \]` as formula source. The delivered HTML/PDF must contain MathJax SVG, not Unicode pseudo-formulas, raw TeX, or formula screenshots. Run `ensure_mathjax.sh`, `math_render.py --in-place`, and `math_render.py --check` before render/hand-off.
 
 > **Screen verify**: `--check-density` is a print gate. For ANY browser-delivered surface (landing page, docs page, dashboard, testimonial wall, article index), screenshotting the rendered page at 375px and 1280px in every locale is a hard step before declaring done, not an on-request extra: scan for line widows, sparse blocks, and single-line-surface wraps, and report the result. Do not wait for the user to ask "does it work on mobile". See `references/design.md` Section 12 «Responsive screenshot verification».
 
@@ -426,6 +455,7 @@ A task is done when the user receives, in the closing message:
 2. Which checks ran and their results, including the page-count contract.
 3. Every remaining `[DATA NEEDED]` gap, listed explicitly. Never declare done with an unreported gap.
 4. The visual verdict, stated honestly by surface: for PDFs the `--check-visual` pass status (which includes the font gate); for screen surfaces the 375px/1280px screenshot result; when rendering could not be inspected, say "build verified, visuals unconfirmed", not "done".
+5. For documents containing mathematics, the strict LaTeX result: MathJax SVG rendering and `scripts/math_render.py --check` both passed.
 
 ## Fonts
 

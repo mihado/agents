@@ -38,6 +38,7 @@ from checks import (
     check_placeholders,
 )
 from content import check_content
+from math_render import check_latex_file
 from optional_deps import MissingDepError, doctor_report
 from render import render_pdf
 from shared import (
@@ -56,7 +57,7 @@ from verify import check_fonts
 PROTOCOL_VERSION = "2025-06-18"
 SUPPORTED_PROTOCOL_VERSIONS = {"2024-11-05", "2025-03-26", "2025-06-18"}
 
-CHECK_RULESET_VERSION = 2
+CHECK_RULESET_VERSION = 3
 CHECK_REGISTRY = {
     "html.placeholders": {
         "scope": "html", "severity": "error", "required_engine": "stdlib",
@@ -65,6 +66,10 @@ CHECK_REGISTRY = {
     "html.markdown-residue": {
         "scope": "html", "severity": "error", "required_engine": "stdlib",
         "explanation": "Rendered audience copy must not expose raw Markdown syntax.",
+    },
+    "html.math": {
+        "scope": "html", "severity": "error", "required_engine": "stdlib",
+        "explanation": "Completed HTML must not expose raw or invalid LaTeX source.",
     },
     "content.contract": {
         "scope": "content-ir", "severity": "error", "required_engine": "stdlib",
@@ -129,7 +134,7 @@ TOOLS = [
         "name": "kami_check",
         "description": (
             "Run Kami's deterministic checks for a file. HTML: placeholders + "
-            "markdown residue (+ content coverage when a content IR JSON is "
+            "strict mathematics + markdown residue (+ content coverage when a content IR JSON is "
             "given). PDF: markdown residue + orphans + density. JSON: content "
             "IR schema validation. Returns the legacy report plus stable rule "
             "IDs, findings, coverage status, and explicit degraded checks."
@@ -236,6 +241,7 @@ def _check_plan(path: Path, content: str | None) -> list[tuple[str, object, list
     if suffix in {".html", ".htm"}:
         checks: list[tuple[str, object, list[str]]] = [
             ("html.placeholders", check_placeholders, [str(path)]),
+            ("html.math", check_latex_file, [str(path)]),
             ("html.markdown-residue", check_markdown_residue, [str(path)]),
         ]
         if content:
@@ -362,9 +368,11 @@ def _tool_result(msg_id, payload: dict, *, is_error: bool = False) -> None:
 
 def handle(msg: dict) -> None:
     method = msg.get("method")
+    has_id = "id" in msg
     msg_id = msg.get("id")
     if msg.get("jsonrpc") != "2.0" or not isinstance(method, str):
-        _reply_error(msg_id, -32600, "invalid request")
+        if has_id:
+            _reply_error(msg_id, -32600, "invalid request")
         return
     raw_params = msg.get("params")
     if raw_params is None:
@@ -372,11 +380,13 @@ def handle(msg: dict) -> None:
     elif isinstance(raw_params, dict):
         params = raw_params
     else:
-        if msg_id is not None:
+        if has_id:
             _reply_error(msg_id, -32602, "params must be an object")
         return
 
     if method == "initialize":
+        if not has_id:
+            return
         client_version = params.get("protocolVersion")
         agreed = client_version if client_version in SUPPORTED_PROTOCOL_VERSIONS else PROTOCOL_VERSION
         _reply(msg_id, {
@@ -385,7 +395,7 @@ def handle(msg: dict) -> None:
             "serverInfo": {"name": "kami", "version": kami_version()},
         })
         return
-    if msg_id is None:
+    if not has_id:
         return  # notifications (initialized, cancelled, ...) need no reply
     if method == "ping":
         _reply(msg_id, {})

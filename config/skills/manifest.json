@@ -72,6 +72,14 @@
         "name": "MIT",
         "path": "thermos/LICENSE"
       }
+    },
+    "humanlayer/skills": {
+      "repository": "https://github.com/humanlayer/skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -374,6 +382,11 @@
       "source": "lguz/humanize-writing-skill",
       "srcPath": "skills/humanize-writing",
       "path": "skills/productivity/humanize-writing"
+    },
+    "show-me": {
+      "source": "humanlayer/skills",
+      "srcPath": "plugins/show-me/skills/show-me",
+      "path": "skills/productivity/show-me"
     }
   }
 }

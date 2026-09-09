@@ -9,6 +9,7 @@ Thin CLI shell. Implementation lives in:
   - verify.py  (verify_all, show_fonts, font checks)
   - checks.py  (check_placeholders, check_markdown_residue, check_orphans, check_density, check_resume_balance, check_rhythm)
   - content.py (check_content)
+  - html_visibility.py (shared HTML/CSS evidence for content and residue checks)
   - visual.py  (check_visual)
 
 Usage:
@@ -59,6 +60,7 @@ from lint import (
     check_style,
     scan_file,
 )
+from math_render import MathRenderError
 from optional_deps import MissingDepError, run_doctor
 from render import build_slides, render_pdf
 from shared import (
@@ -94,7 +96,7 @@ def build_html(name: str, source: str, max_pages: int,
 
     try:
         n = render_pdf(src, EXAMPLES / f"{name}.pdf")
-    except MissingDepError as exc:
+    except (MissingDepError, MathRenderError) as exc:
         print(f"ERROR: {exc}")
         return False
 

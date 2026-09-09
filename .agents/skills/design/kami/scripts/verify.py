@@ -13,8 +13,9 @@ import re
 import subprocess
 from pathlib import Path
 
-from checks import scan_density
+from checks import _resume_balance_issues, scan_density
 from lint import scan_file
+from math_render import MathRenderError
 from optional_deps import MissingDepError, require_pymupdf, require_pypdf_reader
 from render import build_slides, render_pdf
 from shared import (
@@ -332,19 +333,31 @@ def verify_target(name: str, source: str, max_pages: int, src_dir: Path) -> list
     if missing_fonts:
         for mf in missing_fonts:
             print(f"  [FONT MISS] {name}: {mf} not found")
-        print(f"  [FONT MISS] Repo fix: git checkout -- assets/fonts (commercial TTFs are tracked)")
+        print(f"  [FONT MISS] Repo checkout fix: bash scripts/ensure-fonts.sh (copies the tracked fonts from the repository root into assets/fonts)")
         print(f"  [FONT MISS] Skill recovery (downloads to the user font dir, not the skill): bash scripts/ensure-fonts.sh")
         print(f"  [FONT MISS] Fallback: brew install --cask font-source-han-serif-sc")
 
     out = EXAMPLES / f"{name}.pdf"
     try:
         n = render_pdf(src, out)
-    except MissingDepError as exc:
+    except (MissingDepError, MathRenderError) as exc:
         issues.append(str(exc))
         return issues
 
-    # page count check
-    if max_pages and n > max_pages:
+    # Resume templates share the balance gate's exact two-page contract. Keep
+    # fill and gap checks in the filled-document flow: source templates contain
+    # placeholder copy, so their rendered density is not an authoring signal.
+    if "resume" in name:
+        cfg = load_checks_thresholds()["resume_balance"]
+        page_issues = _resume_balance_issues(
+            [],
+            n,
+            float(cfg["min_fill_pct"]),
+            float(cfg["max_fill_pct"]),
+            float(cfg["max_gap_pct"]),
+        )
+        issues.extend(f"page count: {issue}" for issue in page_issues)
+    elif max_pages and n > max_pages:
         over = n - max_pages
         hint = ""
         if "resume" in name and over == 1:

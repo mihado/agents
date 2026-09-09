@@ -10,8 +10,6 @@ verification and debugging, and the known pitfalls gathered from production use.
 
 ### Install
 
-> **MANUAL ONLY — do not execute.** The user installs these dependencies themselves. If unavailable at runtime, report the missing dependency and stop.
-
 ```bash
 pip install weasyprint pypdf --break-system-packages --quiet
 ```
@@ -106,7 +104,7 @@ Remove the `../fonts/` prefix that templates use when fonts are in the project t
 Parchment is the default and keeps shipping. Override to white only when a single
 document is **headed for a home / office printer**: a full-page `#f5f4ed` tint
 bands unevenly and burns toner, where white paper prints clean. This is the one
-sanctioned exception to design.md invariant #1 ("never pure white"), and it is
+sanctioned print exception to design.md invariant #1, and it is
 opt-in per document, never the default render.
 
 White is not a one-line background swap. Parchment also serves as the surface that
@@ -178,6 +176,23 @@ different element for chapter titles, add `.running-title` to that element.
 | `target-counter(attr(href), page)` for rendered TOC page numbers | | |
 | `::before` / `::after` | | |
 
+### Strict LaTeX mathematics
+
+WeasyPrint has no JavaScript runtime, so MathJax/KaTeX script tags do **not** render mathematics. Kami therefore uses a local MathJax SVG path backed by Node.js 20 or Node.js 22 and newer. Author source formulas strictly as inline `\( ... \)` or display `\[ ... \]` in rendered body text. Delimiters inside title metadata, form options, literal/code/script/style/SVG/template/MathML regions are ignored. Do not ship Unicode approximations, raw TeX, or screenshot formulas.
+
+```bash
+# One-time dependency check/install
+bash scripts/ensure_mathjax.sh
+
+# Convert every standard LaTeX delimiter pair in delivered HTML to MathJax SVG
+python3 scripts/math_render.py --in-place filled.html
+
+# A completed HTML must have no raw TeX delimiters
+python3 scripts/math_render.py --check filled.html
+```
+
+`render_pdf` performs the same conversion in memory as a hard fallback and fails on unmatched delimiters, invalid TeX, author-controlled color/HTML/link commands, unsafe MathJax markup, or a missing locked runtime. Formulas inherit the document's text color. The in-place command writes atomically and remains required when HTML itself is delivered, reviewed, or reused. MathJax SVG is vector output and prints sharply in WeasyPrint PDFs.
+
 ### PDF metadata
 
 WeasyPrint reads standard meta tags in `<head>` and writes them into the PDF (Title / Author / Subject / Keywords). All templates have pre-built placeholders:
@@ -215,8 +230,6 @@ pdfinfo assets/examples/one-pager-en.pdf   # shows Title / Author / Subject
 PPT shares the same design language but the medium (screen, 16:9, one-idea-per-slide) changes the details: fonts larger, layouts more rigid.
 
 ### Install
-
-> **MANUAL ONLY — do not execute.** The user installs these dependencies themselves. If unavailable at runtime, report the missing dependency and stop.
 
 ```bash
 pip install python-pptx --break-system-packages --quiet
@@ -349,8 +362,6 @@ One rule covers most adjustments: **macro spacing x1.6, micro details x0.5** (le
 Marp is the third rendering path, used only when the user explicitly asks for Marp / markdown slides / a deck that lives in a `.md` file. The repo does **not** declare `marp-cli` as a dependency; install it on the user's machine.
 
 ### Install
-
-> **MANUAL ONLY — do not execute.** The user installs marp-cli themselves. If unavailable at runtime, report the missing dependency and stop.
 
 Use the `npx @marp-team/marp-cli@latest ...` form below for zero-install. For repeat use, install via `npm i -g @marp-team/marp-cli` or `brew install marp-cli` (see [marp-cli docs](https://github.com/marp-team/marp-cli)). Kami's build pipeline (`build.py` / `package-skill.sh`) does not call `marp`.
 
@@ -593,14 +604,14 @@ Resume templates use section-title bottom rules and borderless project rows. Do 
 ```bash
 # Preferred: multi-source download script (retries, size validation).
 # Lands fonts in ${XDG_DATA_HOME:-~/.local/share}/fonts/kami (fontconfig-scanned,
-# outside the skill dir), then runs fc-cache. Inside a repo checkout it is a
-# no-op because the committed TTFs already satisfy the templates' relative path.
+# outside the skill dir), then runs fc-cache. A repository checkout first copies
+# missing or truncated fonts from root assets/fonts into the skill's ignored assets/fonts;
+# downloads are needed only when usable fonts remain missing.
 bash scripts/ensure-fonts.sh
 
 # Or put .ttf alongside the HTML
 cp TsangerJinKai02-W04.ttf workspace/
 
-# MANUAL ONLY — do not execute. User installs fonts themselves.
 # macOS fallback font
 brew install --cask font-source-han-serif-sc
 
@@ -846,7 +857,7 @@ col 3': 66 chars (2 lines)   <- fixed by trimming "general intelligence" -> "AGI
 
 **Root cause**: An `<img src="../../../sibling-project/asset.jpg">` reaches outside the kami repo. The path resolves on the maintainer's laptop where the sibling project happens to be checked out, but breaks for every other user, breaks the packaged skill ZIP, and breaks any CI that doesn't recreate the maintainer's working tree.
 
-**Fix**: Every image referenced by a demo or template must live under `assets/demos/images/` or `assets/illustrations/`. Copy the source into the kami repo, then reference it with a relative path inside the repo.
+**Fix**: Every image referenced by a demo or template must live under the demo's `images/` folder (`site/assets/demos/images/` in this repository) or `site/assets/illustrations/`. Copy the source into the kami repo, then reference it with a relative path inside the repo.
 
 ```html
 <!-- avoid -->
@@ -856,7 +867,7 @@ col 3': 66 chars (2 lines)   <- fixed by trimming "general intelligence" -> "AGI
 <img src="images/kaku-hero.jpg" alt="...">
 ```
 
-Quick check before building any demo: `rg 'src="(\.\./|/Users/|file://)' assets/demos/` should return zero matches.
+Quick check before building any demo: `rg 'src="(\.\./|/Users/|file://)' site/assets/demos/` should return zero matches.
 
 ### 20. (P1) Metric row baseline-align breaks when labels wrap
 
@@ -936,8 +947,6 @@ PDF is the delivery format; DOCX is the collaboration format. For proposal / rep
 `pandoc input.html -o output.docx` looks straightforward, but inline `<svg>` blocks fail Word's OOXML validation. Word treats them as unknown content and either drops them or refuses to open the file. The fix is to bake every SVG to PNG first, swap the `<svg>` blocks for `<img>` tags, then run pandoc.
 
 ### Install
-
-> **MANUAL ONLY — do not execute.** The user installs these dependencies themselves. If unavailable at runtime, report the missing dependency and stop.
 
 ```bash
 # macOS
