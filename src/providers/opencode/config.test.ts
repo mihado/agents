@@ -167,6 +167,27 @@ describe("integration: apm providers", () => {
     expect(check.status).toBe(0);
   });
 
+  it("installs shorthand commands for managed skills", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const commandsDir = path.join(tempConfigHome, "opencode", "commands");
+    for (const name of [
+      "show-me",
+      "thermos",
+      "thermo-nuclear-review",
+      "thermo-nuclear-code-quality-review",
+      "browser-testing-with-devtools",
+      "improve",
+      "code-simplification",
+    ]) {
+      const commandPath = path.join(commandsDir, `${name}.md`);
+      expect(fs.lstatSync(commandPath).isSymbolicLink()).toBe(true);
+      expect(fs.readFileSync(commandPath, "utf8")).toContain(`Use the \`${name}\` skill`);
+      expect(fs.readFileSync(commandPath, "utf8")).not.toContain("agent:");
+    }
+  });
+
   it("provider check fails when a non-managed typist file remains", () => {
     const agentsDir = path.join(tempConfigHome, "opencode", "agents");
     fs.mkdirSync(agentsDir, { recursive: true });
