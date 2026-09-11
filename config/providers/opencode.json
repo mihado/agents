@@ -204,6 +204,14 @@
           "temperature": true,
           "limit": { "context": 1048576, "output": 131072 },
           "modalities": { "input": ["text", "image", "video", "pdf", "audio"], "output": ["text"] }
+        },
+        "deepseek/deepseek-v4.1-flash": {
+          "name": "DeepSeek V4.1 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 384000 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
         }
       }
     }
