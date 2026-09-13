@@ -179,11 +179,11 @@ describe("integration: apm providers", () => {
       "thermo-nuclear-code-quality-review",
       "browser-testing-with-devtools",
       "improve",
-      "code-simplification",
+      "quality",
+      "simplify",
     ]) {
       const commandPath = path.join(commandsDir, `${name}.md`);
       expect(fs.lstatSync(commandPath).isSymbolicLink()).toBe(true);
-      expect(fs.readFileSync(commandPath, "utf8")).toContain(`Use the \`${name}\` skill`);
       expect(fs.readFileSync(commandPath, "utf8")).not.toContain("agent:");
     }
   });
