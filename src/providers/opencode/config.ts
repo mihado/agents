@@ -144,7 +144,10 @@ export function resolveTools(): { codex: string | null; claude: string | null; o
   };
 }
 
-export function toOpenCodeMcp(server: McpServerDef): Record<string, unknown> {
+export function toOpenCodeMcp(
+  server: McpServerDef,
+  platform: NodeJS.Platform = process.platform,
+): Record<string, unknown> {
   if (server.type === "remote") return { type: "remote", url: server.url, enabled: true };
   if (server.command === "npx" && server.args.includes("@upstash/context7-mcp")) {
     return {
@@ -155,9 +158,22 @@ export function toOpenCodeMcp(server: McpServerDef): Record<string, unknown> {
         : {},
     };
   }
+
+  // Chrome DevTools needs a desktop session to run headed. macOS is the only
+  // host we run headed; on Linux VMs and SSH sessions force --headless or
+  // Chrome exits immediately with "Target closed".
+  const args = [...server.args];
+  if (
+    platform !== "darwin" &&
+    args.some((arg) => arg.startsWith("chrome-devtools-mcp")) &&
+    !args.includes("--headless")
+  ) {
+    args.push("--headless");
+  }
+
   return {
     type: "local",
-    command: [server.command, ...server.args],
+    command: [server.command, ...args],
     enabled: true,
   };
 }

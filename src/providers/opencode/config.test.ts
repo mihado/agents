@@ -108,14 +108,24 @@ describe("roundtrip", () => {
 });
 
 describe("toOpenCodeMcp()", () => {
-  it("maps Chrome DevTools to an isolated local server", () => {
-    expect(toOpenCodeMcp({
-      type: "stdio",
-      command: "npx",
-      args: ["-y", "chrome-devtools-mcp@latest", "--isolated"],
-    })).toEqual({
+  const chrome = {
+    type: "stdio" as const,
+    command: "npx",
+    args: ["-y", "chrome-devtools-mcp@latest", "--isolated"],
+  };
+
+  it("keeps Chrome DevTools headed on macOS", () => {
+    expect(toOpenCodeMcp(chrome, "darwin")).toEqual({
       type: "local",
       command: ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated"],
+      enabled: true,
+    });
+  });
+
+  it("forces Chrome DevTools headless on non-macOS hosts", () => {
+    expect(toOpenCodeMcp(chrome, "linux")).toEqual({
+      type: "local",
+      command: ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"],
       enabled: true,
     });
   });
