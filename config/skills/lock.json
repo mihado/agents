@@ -169,6 +169,13 @@
       "commit": "be4e44a9fbc5e8df0beaefadbb28bd22ee61cc39",
       "sha256": "523a64a4b18bb74d76570339d91cd687f9a7be6f9826b9015e0a1f3d7b76dce2"
     },
+    "clean-code": {
+      "source": "cskwork/clean-code-skill",
+      "srcPath": ".",
+      "path": "skills/engineering/clean-code",
+      "commit": "8476ba6f4f6146095d653d9ee09c53fe970f599e",
+      "sha256": "4fab1c097c2afe9f189df6d2358c301c808aee200ab4e5bddf3f8fad5c1fa0b9"
+    },
     "thermo-nuclear-code-quality-review": {
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermo-nuclear-code-quality-review",
@@ -436,6 +443,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/addyosmani-agent-skills-LICENSE",
       "licenseSha256": "f877a8366ac7fcbe83485940745bc6018bc884db812585ecf52af44233590095"
+    },
+    "cskwork/clean-code-skill": {
+      "repository": "https://github.com/cskwork/clean-code-skill.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/cskwork-clean-code-skill-LICENSE",
+      "licenseSha256": "4a88c0ce062559b1696671f260a4aaf06096f0c76454535349f516ece1ada0c0"
     },
     "cursor/plugins": {
       "repository": "https://github.com/cursor/plugins.git",

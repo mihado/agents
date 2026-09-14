@@ -80,6 +80,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "cskwork/clean-code-skill": {
+      "repository": "https://github.com/cskwork/clean-code-skill.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -387,6 +395,11 @@
       "source": "humanlayer/skills",
       "srcPath": "plugins/show-me/skills/show-me",
       "path": "skills/productivity/show-me"
+    },
+    "clean-code": {
+      "source": "cskwork/clean-code-skill",
+      "srcPath": ".",
+      "path": "skills/engineering/clean-code"
     }
   }
 }
