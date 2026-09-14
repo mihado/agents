@@ -1,7 +1,7 @@
 ---
 description: Execute one approved implementation slice by changing files and running commands within its Plan.
 mode: subagent
-model: c9/glm-5.3-flash
+model: commandcode/deepseek-v4.1-flash
 permission:
   edit: allow
   bash: allow

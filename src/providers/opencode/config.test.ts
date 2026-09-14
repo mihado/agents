@@ -262,7 +262,10 @@ describe("integration: apm providers", () => {
     const c9 = config.provider as Record<string, { models?: Record<string, Record<string, unknown>> }> | undefined;
     const models = c9?.c9?.models ?? {};
     const allIds = Object.keys(models);
-    expect(allIds.length).toBeGreaterThanOrEqual(9);
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
+    ) as { provider: Record<string, { models?: Record<string, unknown> }> };
+    expect(new Set(allIds)).toEqual(new Set(Object.keys(manifest.provider.c9?.models ?? {})));
 
     for (const id of allIds) {
       expect((models[id] as Record<string, unknown>).tool_call, `${id} should have tool_call: true`).toBe(true);

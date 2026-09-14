@@ -1,7 +1,7 @@
 ---
 description: Produce a risk-focused planning candidate or pressure-test a research decision for failure modes, weak evidence, and hidden risk.
 mode: subagent
-model: c9/cx/gpt-5.6-terra
+model: opencode-go/deepseek-v4.1-flash
 permission:
   edit: deny
   bash: allow

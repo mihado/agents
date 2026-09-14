@@ -1,7 +1,7 @@
 ---
 description: Plan an execution slice or research a bounded decision from repository and authoritative-source evidence.
 mode: subagent
-model: c9/cx/gpt-5.6-terra
+model: opencode-go/deepseek-v4.1-flash
 permission:
   edit: deny
   bash: allow

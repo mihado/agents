@@ -1,7 +1,7 @@
 ---
 description: Pressure-test a diff for invariant, authorization, data-integrity, concurrency, and operational failures.
 mode: subagent
-model: c9/cx/gpt-5.6-terra
+model: opencode-go/deepseek-v4.1-flash
 permission:
   edit: deny
   bash: allow

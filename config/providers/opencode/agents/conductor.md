@@ -1,7 +1,7 @@
 ---
 description: Conduct workflow routing, artifact transitions, worker dispatch, recovery, and bounded retries.
 mode: primary
-model: c9/cx/gpt-5.6-terra
+model: opencode-go/deepseek-v4.1-flash
 permission:
   edit: allow
   bash: allow

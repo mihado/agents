@@ -260,14 +260,14 @@ The conductor knows stable agent and workflow-skill names, not provider model or
 
 | Role | Agent | Model | Permissions |
 | --- | --- | --- | --- |
-| Conductor | `conductor` | `c9/cx/gpt-5.6-terra` | edit + bash + task |
-| Planner | `planner` | `c9/deepseek-v4-pro-fusion` | read-only + bash |
-| Adversarial planner | `planner-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash |
-| Operator | `operator` | `c9/minimax-m3` | edit + bash |
-| Verifier | `verifier` | `c9/mimo-v2.5` | read-only + bash |
-| Reviewer | `reviewer` | `c9/deepseek-v4-pro-fusion` | read-only + bash |
-| Adversarial reviewer | `reviewer-adversarial` | `c9/cx/gpt-5.6-terra` | read-only + bash |
-| Judge | `judge` | `c9/cx/gpt-5.6-sol` | read-only + bash |
+| Conductor | `conductor` | `opencode-go/deepseek-v4.1-flash` | edit + bash + task |
+| Planner | `planner` | `opencode-go/deepseek-v4.1-flash` | read-only + bash |
+| Adversarial planner | `planner-adversarial` | `opencode-go/deepseek-v4.1-flash` | read-only + bash |
+| Operator | `operator` | `commandcode/deepseek-v4.1-flash` | edit + bash |
+| Verifier | `verifier` | `commandcode/deepseek-v4.1-flash` | read-only + bash |
+| Reviewer | `reviewer` | `opencode-go/deepseek-v4.1-flash` | read-only + bash |
+| Adversarial reviewer | `reviewer-adversarial` | `opencode-go/deepseek-v4.1-flash` | read-only + bash |
+| Judge | `judge` | `commandcode/gpt-5.6-sol` | read-only + bash |
 
 Model IDs are provider-qualified so subagents cannot silently inherit the parent model. Models may evolve; lane authority and evidence boundaries do not.
 
