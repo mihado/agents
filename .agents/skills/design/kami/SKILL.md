@@ -433,7 +433,7 @@ python3 scripts/build.py --check            # lint + token/theme + public-site f
 
 > **Strict LaTeX mathematics**: Use only `\( inline \)` / `\[ display \]` as formula source. The delivered HTML/PDF must contain MathJax SVG, not Unicode pseudo-formulas, raw TeX, or formula screenshots. Run `ensure_mathjax.sh`, `math_render.py --in-place`, and `math_render.py --check` before render/hand-off.
 
-> **Screen verify**: `--check-density` is a print gate. For ANY browser-delivered surface (landing page, docs page, dashboard, testimonial wall, article index), screenshotting the rendered page at 375px and 1280px in every locale is a hard step before declaring done, not an on-request extra: scan for line widows, sparse blocks, and single-line-surface wraps, and report the result. Do not wait for the user to ask "does it work on mobile". See `references/design.md` Section 12 «Responsive screenshot verification».
+> **Screen verify**: `--check-density` is a print gate. For ANY browser-delivered surface (landing page, docs page, dashboard, testimonial wall, article index), screenshotting the rendered page across the responsive matrix in every locale is a hard step before declaring done, not an on-request extra: scan for line widows, sparse blocks, and single-line-surface wraps, and report the result. Do not wait for the user to ask "does it work on mobile". See `references/design.md` Section 12 «Responsive screenshot verification».
 
 > **Perceptual verify (PDF deliverables)**: geometry checks cannot see a fallback glyph or an arrow crossing a label. Before shipping a filled PDF, run `python3 scripts/build.py --check-visual path/to/filled.pdf`, then view every exported page image against the printed checklist. One hit means a whole-document sweep for that class of issue. If your host cannot view images, send the image paths and checklist to the user instead of skipping the pass. `--check-visual` runs the font gate for you and prints its verdict above the checklist.
 
@@ -454,7 +454,7 @@ A task is done when the user receives, in the closing message:
 1. The path of every deliverable, in every promised format (Step 4.5).
 2. Which checks ran and their results, including the page-count contract.
 3. Every remaining `[DATA NEEDED]` gap, listed explicitly. Never declare done with an unreported gap.
-4. The visual verdict, stated honestly by surface: for PDFs the `--check-visual` pass status (which includes the font gate); for screen surfaces the 375px/1280px screenshot result; when rendering could not be inspected, say "build verified, visuals unconfirmed", not "done".
+4. The visual verdict, stated honestly by surface: for PDFs the `--check-visual` pass status (which includes the font gate); for screen surfaces the responsive-matrix screenshot result; when rendering could not be inspected, say "build verified, visuals unconfirmed", not "done".
 5. For documents containing mathematics, the strict LaTeX result: MathJax SVG rendering and `scripts/math_render.py --check` both passed.
 
 ## Fonts
@@ -472,13 +472,13 @@ When the user gives visual feedback ("looks off", "太挤了", "not elegant"), i
 3. Make the smallest content, geometry, spacing, typography, crop, or token change that fixes the defect. Never hide a content problem by shrinking type first.
 4. Verify the affected matrix rather than one screenshot:
    - PDF: target page, neighboring pages, total page count, font result, and every locale or template variant reached by a shared token.
-   - Screen: 1280px and 375px, plus 320px when CTA or nav width is involved; every shipped locale; affected default, focus/selected, loading, empty/error, and transition state only when the surface actually has them.
+   - Screen: the breakpoint, tablet, and baseline matrix in `references/design.md` «Responsive screenshot verification»; every shipped locale; affected default, focus/selected, loading, empty/error, and transition state only when the surface actually has them.
    - PPTX: editable source plus a rendered PDF or opened-deck inspection.
    - Generated asset: target slot at its smallest display size plus sibling assets in the same deliverable.
 
 If no rendered evidence exists and the feedback still leaves two materially different fixes, ask once by naming the current property and offering two in-spec alternatives. Never say "I'll adjust the spacing" without naming the exact property and its new value.
 
-**Escalate after two rounds.** If the same element is still not approved after two adjustment rounds, stop nudging values: produce one comparison artifact instead: the current state plus 2-3 labeled variants (A/B/C) of the same content in the same frame, and let the user pick. For choices with no objective criterion (typeface, accent color, logo), skip the nudging entirely and start with a specimen sheet: up to 5 candidates, each a labeled half-page block of identical title-plus-paragraph content. One round of "pick one" converges where five rounds of "try again" do not; after the pick, apply it everywhere and rebuild affected demos in the same round.
+**Escalate after two rounds.** If the same element is still not approved after two adjustment rounds, stop nudging values: produce one comparison artifact instead: the current state plus 2-3 labeled variants (A/B/C) of the same content in the product’s actual frame and background, retaining neighboring components and changing only the compared property, and let the user pick. For choices with no objective criterion (typeface, accent color, logo), skip the nudging entirely and start with a specimen sheet: up to 5 candidates, each a labeled half-page block of identical title-plus-paragraph content. One round of "pick one" converges where five rounds of "try again" do not; after the pick, apply it everywhere and rebuild affected demos in the same round.
 
 ---
 
