@@ -1,6 +1,19 @@
 {
   "version": 1,
   "servers": {
+    "better-auth": {
+      "type": "remote",
+      "url": "https://mcp.better-auth.com/mcp"
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated"
+      ]
+    },
     "context7": {
       "type": "stdio",
       "command": "npx",
@@ -12,22 +25,26 @@
         "CONTEXT7_API_KEY"
       ]
     },
-    "chrome-devtools": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp@latest",
-        "--isolated"
-      ]
-    },
-    "better-auth": {
+    "deepwiki": {
       "type": "remote",
-      "url": "https://mcp.better-auth.com/mcp"
+      "url": "https://mcp.deepwiki.com/mcp"
+    },
+    "inspo": {
+      "type": "remote",
+      "url": "https://inspomcp.dev/api/mcp"
     },
     "langfuse-docs": {
       "type": "remote",
       "url": "https://langfuse.com/api/mcp"
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "shadcn@latest",
+        "mcp"
+      ]
     }
   }
 }
