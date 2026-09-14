@@ -24,6 +24,10 @@
     "better-auth": {
       "type": "remote",
       "url": "https://mcp.better-auth.com/mcp"
+    },
+    "langfuse-docs": {
+      "type": "remote",
+      "url": "https://langfuse.com/api/mcp"
     }
   }
 }
