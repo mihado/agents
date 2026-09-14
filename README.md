@@ -130,7 +130,7 @@ Reject operates on individual skills: if you approve three out of four staged sk
 
 ## Baseline MCP
 
-`config/providers/mcp.json` declares shared MCP servers (currently Context7). The installer configures whichever of OpenCode, Claude Code, and Codex are present on your machine.
+`config/providers/mcp.json` declares shared MCP servers (Context7, Chrome DevTools, Better Auth). The installer configures whichever of OpenCode, Claude Code, and Codex are present on your machine.
 
 ```bash
 ./apm mcp install    # install all MCP config
@@ -138,6 +138,19 @@ Reject operates on individual skills: if you approve three out of four staged sk
 ```
 
 Environment variable names may be documented in `config/providers/mcp.json`; values stay in the machine environment and are never stored here.
+
+### Chrome DevTools: headed vs headless
+
+`chrome-devtools` drives a real Chrome session. The installer renders it headed on macOS and appends `--headless` on every other platform (Linux VMs, SSH sessions), where there is no display for Chrome to attach to. The platform check lives in `src/providers/opencode/config.ts`; a Linux desktop with a real display that wants a visible browser would need to gate it there.
+
+Chrome must be installed on the machine before OpenCode starts the MCP server. On headless Linux:
+
+```bash
+wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt-get update && sudo apt-get install -y /tmp/chrome.deb
+```
+
+Restart OpenCode after installing so the MCP server picks up the change.
 
 
 ## Vendored Skills
