@@ -24,12 +24,14 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function validateUpstreamPath(upstreamPath: string, label: string): void {
+  // "." is the only exception: some skills are the repository root itself
+  // (SKILL.md at top level). fetch copies everything except .git in that case.
+  if (upstreamPath === ".") return;
   if (
     path.isAbsolute(upstreamPath) ||
     path.posix.normalize(upstreamPath) !== upstreamPath ||
     upstreamPath.startsWith("../") ||
-    upstreamPath === ".." ||
-    upstreamPath === "."
+    upstreamPath === ".."
   ) {
     fail(`unsafe upstream path in ${label}: ${upstreamPath}`);
   }

@@ -245,7 +245,9 @@ describe("integration: apm providers", () => {
       });
     }
 
-    const textOnlyModels = ["cmc-ds-v4-pro-fusion"];
+    const textOnlyModels = Object.entries(manifest.provider.c9?.models ?? {})
+      .filter(([, model]) => model.modalities === undefined)
+      .map(([id]) => id);
     for (const id of textOnlyModels) {
       expect(models[id], `model ${id} should exist`).toBeTruthy();
       expect((models[id] as Record<string, unknown>).modalities, `${id} should not have modalities`).toBeUndefined();

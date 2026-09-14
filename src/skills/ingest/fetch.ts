@@ -64,7 +64,7 @@ export function fetchSkills(root: string): void {
         }
 
         const relPath = skill.path.replace(/^skills\//, "");
-        copyPath(upstream, path.join(tempStage, relPath));
+        copySkillSource(cloneDir, skill.srcPath, path.join(tempStage, relPath));
         nextLock.skills[skillName] = {
           source: sourceName,
           srcPath: skill.srcPath,
@@ -94,4 +94,19 @@ function copyPath(source: string, target: string): void {
   if (!fs.existsSync(source)) fail(`missing path: ${source}`);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.cpSync(source, target, { recursive: true, preserveTimestamps: false });
+}
+
+function copySkillSource(cloneDir: string, srcPath: string, target: string): void {
+  if (srcPath !== ".") {
+    copyPath(path.join(cloneDir, srcPath), target);
+    return;
+  }
+  // Repo-root skill: copy everything except the clone's .git directory.
+  const gitDir = path.join(cloneDir, ".git");
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.cpSync(cloneDir, target, {
+    recursive: true,
+    preserveTimestamps: false,
+    filter: (src) => src !== gitDir && !src.startsWith(`${gitDir}${path.sep}`),
+  });
 }
