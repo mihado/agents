@@ -105,6 +105,14 @@
           "temperature": true,
           "limit": { "context": 1050000, "output": 128000 },
           "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "z-ai/glm-5.3-flash": {
+          "name": "GLM-5.3 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 1000000, "output": 131072 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
         }
       }
     }
