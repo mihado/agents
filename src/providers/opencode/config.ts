@@ -236,6 +236,9 @@ function validateProviderManifest(manifest: ProviderManifest): void {
     if (!def.baseURL || typeof def.baseURL !== "string") {
       fail(`providers.json: "${id}" must have a "baseURL" string`);
     }
+    if (def.headers !== undefined && (!isObject(def.headers) || !Object.values(def.headers).every((v) => typeof v === "string"))) {
+      fail(`providers.json: "${id}" headers must be a string map`);
+    }
     if (!def.models || Object.keys(def.models).length === 0) {
       fail(`providers.json: "${id}" must have at least one model`);
     }
@@ -254,6 +257,7 @@ export function toOpenCodeProvider(providerId: string, def: ProviderManifestEntr
     options: {
       baseURL: def.baseURL,
       ...(def.apiKeyEnv ? { apiKey: `{env:${def.apiKeyEnv}}` } : (def.apiKey ? { apiKey: def.apiKey } : {})),
+      ...(def.headers ? { headers: def.headers } : {}),
     },
     models: Object.fromEntries(
       Object.entries(def.models || {}).map(([modelId, model]) => [

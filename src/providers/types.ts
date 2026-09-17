@@ -19,6 +19,7 @@ export interface ProviderManifestEntry {
   npm?: string;
   apiKeyEnv?: string;
   apiKey?: string;
+  headers?: Record<string, string>;
   models: Record<string, ProviderManifestModel>;
 }
 
