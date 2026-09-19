@@ -1,0 +1,24 @@
+{
+  "kind": "skills-review",
+  "timestamp": "2026-09-19T06:06:38.735Z",
+  "command": "skills-review",
+  "skills": [
+    "design/impeccable",
+    "design/kami",
+    "productivity/show-me"
+  ],
+  "findings": [],
+  "scanners": [
+    "prose-scanner",
+    "semgrep"
+  ],
+  "changedFiles": [
+    ".agents/skills/design/impeccable/scripts/live-browser.js",
+    ".agents/skills/design/kami/scripts/diagram_geometry.py",
+    ".agents/skills/design/kami/scripts/lint.py"
+  ],
+  "summary": {
+    "total": 0,
+    "bySkill": {}
+  }
+}
