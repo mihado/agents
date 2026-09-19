@@ -88,6 +88,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "typesafe-ai/skills": {
+      "repository": "https://github.com/typesafe-ai/skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -400,6 +408,11 @@
       "source": "cskwork/clean-code-skill",
       "srcPath": ".",
       "path": "skills/engineering/clean-code"
+    },
+    "typesafe-ai": {
+      "source": "typesafe-ai/skills",
+      "srcPath": "skills/typesafe-ai",
+      "path": "skills/engineering/typesafe-ai"
     }
   }
 }

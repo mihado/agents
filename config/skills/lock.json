@@ -434,6 +434,13 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
+    },
+    "typesafe-ai": {
+      "source": "typesafe-ai/skills",
+      "srcPath": "skills/typesafe-ai",
+      "path": "skills/engineering/typesafe-ai",
+      "commit": "65a39f393687675ce170e6094757de20370365b9",
+      "sha256": "07d76735eed4b7e88e1d32c592ae6642f165bb9c004f337f3f90edc70ac7fbb9"
     }
   },
   "sources": {
@@ -513,6 +520,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
+    },
+    "typesafe-ai/skills": {
+      "repository": "https://github.com/typesafe-ai/skills.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/typesafe-ai-skills-LICENSE",
+      "licenseSha256": "9f8621a76a2f48c5834488b6459d63af5fd8d80add94431f82c8d6838a81ed1a"
     }
   }
 }
