@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { getPath, read, write, toOpenCodeMcp } from "./config.js";
+import { getOpenCodeConfigPath, readOpenCodeConfig, writeOpenCodeConfig, toOpenCodeMcp } from "./config.js";
 
 const root = path.resolve(fileURLToPath(import.meta.url), "../../../..");
 
@@ -32,49 +32,49 @@ function unseed(): void {
   } catch { /* ok */ }
 }
 
-describe("getPath()", () => {
+describe("getOpenCodeConfigPath()", () => {
   it("returns path under XDG_CONFIG_HOME", () => {
-    expect(getPath()).toBe(configPath);
+    expect(getOpenCodeConfigPath()).toBe(configPath);
   });
 });
 
-describe("read()", () => {
+describe("readOpenCodeConfig()", () => {
   it("returns {} when no config file exists", () => {
     unseed();
-    expect(read()).toEqual({});
+    expect(readOpenCodeConfig()).toEqual({});
   });
 
   it("parses valid JSON", () => {
     seed('{"key":"value"}');
-    expect(read()).toEqual({ key: "value" });
+    expect(readOpenCodeConfig()).toEqual({ key: "value" });
   });
 
   it("strips // single-line comments", () => {
     seed('{\n  // a comment\n  "key": "value"\n}');
-    expect(read()).toEqual({ key: "value" });
+    expect(readOpenCodeConfig()).toEqual({ key: "value" });
   });
 
   it("strips /* */ multi-line comments", () => {
     seed("{\n  /* block\n     comment */\n  \"key\": \"value\"\n}");
-    expect(read()).toEqual({ key: "value" });
+    expect(readOpenCodeConfig()).toEqual({ key: "value" });
   });
 
   it("preserves // inside strings (URLs)", () => {
     seed('{ "url": "https://example.com/path" }');
-    expect(read()).toEqual({ url: "https://example.com/path" });
+    expect(readOpenCodeConfig()).toEqual({ url: "https://example.com/path" });
   });
 
-  it("returns {} on malformed JSON", () => {
+  it("fails loudly on malformed JSON instead of discarding the config", () => {
     seed("not json");
-    expect(read()).toEqual({});
+    expect(() => readOpenCodeConfig()).toThrow();
   });
 
 });
 
-describe("write()", () => {
+describe("writeOpenCodeConfig()", () => {
   it("creates directory and writes valid JSON", () => {
     const data = { provider: { c9: { name: "test" } } };
-    write(data);
+    writeOpenCodeConfig(data);
     const raw = fs.readFileSync(configPath, "utf8");
     const parsed = JSON.parse(raw);
     expect(parsed).toEqual(data);
@@ -82,7 +82,7 @@ describe("write()", () => {
 
   it("overwrites existing config", () => {
     seed('{ "old": true }');
-    write({ fresh: true });
+    writeOpenCodeConfig({ fresh: true });
     const parsed = JSON.parse(fs.readFileSync(configPath, "utf8"));
     expect(parsed).toEqual({ fresh: true });
   });
@@ -94,14 +94,14 @@ describe("roundtrip", () => {
       provider: { c9: { models: { "cmc/deepseek": { reasoning: true } } } },
       mcp: { context7: { type: "remote", url: "https://example.com" } },
     };
-    write(config);
-    expect(read()).toEqual(config);
+    writeOpenCodeConfig(config);
+    expect(readOpenCodeConfig()).toEqual(config);
   });
 
   it("write does not persist JSONC comments", () => {
     seed('{ /* will be lost */ "key": "value" }');
-    const config = read();
-    write(config);
+    const config = readOpenCodeConfig();
+    writeOpenCodeConfig(config);
     const raw = fs.readFileSync(configPath, "utf8");
     expect(raw).not.toContain("will be lost");
   });
@@ -155,7 +155,7 @@ describe("integration: apm providers", () => {
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
-    const config = read();
+    const config = readOpenCodeConfig();
     expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
   });
 
@@ -165,7 +165,7 @@ describe("integration: apm providers", () => {
     expect(install.status).toBe(0);
     expect(install.stdout).toContain("removed plugin @dietrichgebert/ponytail");
 
-    const config = read();
+    const config = readOpenCodeConfig();
     expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
@@ -176,9 +176,9 @@ describe("integration: apm providers", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
-    const config = read();
+    const config = readOpenCodeConfig();
     config.plugin = [...((config.plugin as string[]) ?? []), "@dietrichgebert/ponytail"];
-    write(config);
+    writeOpenCodeConfig(config);
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).not.toBe(0);
@@ -254,7 +254,7 @@ describe("integration: apm providers", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
-    const config = read();
+    const config = readOpenCodeConfig();
     const c9 = config.provider as Record<string, { models?: Record<string, Record<string, unknown>> }> | undefined;
     const models = c9?.c9?.models ?? {};
 
@@ -288,7 +288,7 @@ describe("integration: apm providers", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
-    const config = read();
+    const config = readOpenCodeConfig();
     const c9 = config.provider as Record<string, { models?: Record<string, Record<string, unknown>> }> | undefined;
     const models = c9?.c9?.models ?? {};
     const allIds = Object.keys(models);
@@ -312,7 +312,7 @@ describe("integration: apm providers", () => {
     ) as { permission?: Record<string, unknown> };
     expect(manifest.permission, "manifest should declare a permission block").toBeTruthy();
 
-    const config = read();
+    const config = readOpenCodeConfig();
     expect(config.permission).toEqual(manifest.permission);
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
@@ -323,9 +323,9 @@ describe("integration: apm providers", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
-    const config = read();
+    const config = readOpenCodeConfig();
     config.permission = { ...(config.permission as Record<string, unknown>), bash: "deny" };
-    write(config);
+    writeOpenCodeConfig(config);
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).not.toBe(0);
@@ -340,7 +340,7 @@ describe("integration: apm providers", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
-    const config = read();
+    const config = readOpenCodeConfig();
     const c9 = config.provider as Record<string, { models?: Record<string, { modalities?: { input: string[]; output: string[] } }> }> | undefined;
     const models = c9?.c9?.models ?? {};
 

@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import type { Provider } from "./types.js";
 import { listSkills } from "../skills/inventory/discover.js";
 import { validateFile, linkTarget, installSkills, checkLink, pruneManagedSymlinks } from "./shared/symlinks.js";
-import { resolveExecutable, readJson } from "../core/commands.js";
+import { readJson } from "../core/commands.js";
 
 function getHome(): string {
   return process.env.CLAUDE_HOME || path.join(os.homedir(), ".claude");
@@ -83,10 +83,6 @@ export const claude: Provider = {
     return ok;
   },
 };
-
-export function resolveClaude(): string | null {
-  return resolveExecutable(process.env.CLAUDE_CLI_PATH, "claude");
-}
 
 export function installClaudeMcp(claudePath: string, name: string, command: string, args: string[]): boolean {
   const result = spawnSync(claudePath, ["mcp", "add", "--scope", "user", name, "--", command, ...args], { encoding: "utf8" });

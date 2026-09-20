@@ -1,5 +1,5 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { Command } from "commander";
 import { fetchSkills } from "../skills/ingest/fetch.js";
 import { promoteStagedContent } from "../skills/ingest/promote.js";
@@ -190,7 +190,8 @@ export function buildProgram(opts?: { root?: string }): Command {
   return program;
 }
 
-const isMain = import.meta.url === `file://${process.argv[1]}`;
+const isMain = typeof process.argv[1] === "string" &&
+  pathToFileURL(process.argv[1]).href === import.meta.url;
 if (isMain) {
   buildProgram().parseAsync(process.argv).catch((error: unknown) => {
     if (error instanceof Error) {

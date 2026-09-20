@@ -7,6 +7,8 @@ import {
   loadMcpManifest,
   resolveTools,
   getOpenCodeConfigPath,
+  readOpenCodeConfig,
+  writeOpenCodeConfig,
   installOpenCodeMcp,
   checkOpenCodeMcp,
   installProviders,
@@ -110,9 +112,7 @@ export const opencode: Provider = {
     const tools = resolveTools();
     if (!tools.opencode) return true;
 
-    const configPath = getOpenCodeConfigPath();
-    const config: Record<string, unknown> = fs.existsSync(configPath)
-      ? JSON.parse(fs.readFileSync(configPath, "utf8")) : {};
+    const config = readOpenCodeConfig();
     if (!config.mcp) config.mcp = {};
     let changed = false;
 
@@ -121,8 +121,8 @@ export const opencode: Provider = {
     }
 
     if (changed) {
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
-      console.log(`wrote: ${configPath}`);
+      writeOpenCodeConfig(config);
+      console.log(`wrote: ${getOpenCodeConfigPath()}`);
     }
 
     return true;

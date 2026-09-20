@@ -4,7 +4,6 @@ import { spawnSync } from "node:child_process";
 import type { Provider } from "./types.js";
 import { listSkills } from "../skills/inventory/discover.js";
 import { validateFile, linkTarget, installSkills, checkLink } from "./shared/symlinks.js";
-import { resolveExecutable } from "../core/commands.js";
 
 function getHome(): string {
   return process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
@@ -33,14 +32,6 @@ export const codex: Provider = {
     return ok;
   },
 };
-
-export function resolveCodex(): string | null {
-  return resolveExecutable(
-    process.env.CODEX_CLI_PATH,
-    "codex",
-    "/Applications/Codex.app/Contents/Resources/codex",
-  );
-}
 
 export function installCodexMcp(codexPath: string, name: string, command: string, args: string[]): boolean {
   const result = spawnSync(codexPath, ["mcp", "add", name, "--", command, ...args], { encoding: "utf8" });

@@ -19,8 +19,8 @@ export function installMcp(root: string): void {
       continue;
     }
     if (tools.codex) {
-      installCodexMcp(tools.codex, name, server.command, server.args);
-      console.log(`linked  Codex ${name}`);
+      const added = installCodexMcp(tools.codex, name, server.command, server.args);
+      console.log(added ? `linked  Codex ${name}` : `ok      Codex ${name}`);
     }
     if (tools.claude) {
       const added = installClaudeMcp(tools.claude, name, server.command, server.args);
