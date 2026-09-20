@@ -8,7 +8,8 @@ export function installMcp(root: string): void {
   const tools = resolveTools();
 
   if (!tools.codex && !tools.claude) {
-    fail("no supported tool installed (codex or claude)");
+    console.log("skip     MCP sync (codex and claude not installed)");
+    return;
   }
 
   for (const [name, server] of Object.entries(manifest.servers)) {
@@ -34,7 +35,8 @@ export function checkMcp(root: string): void {
   let failures = 0;
 
   if (!tools.codex && !tools.claude) {
-    fail("no supported tool installed (codex or claude)");
+    console.log("skip     MCP check (codex and claude not installed)");
+    return;
   }
 
   for (const [name, server] of Object.entries(manifest.servers)) {
