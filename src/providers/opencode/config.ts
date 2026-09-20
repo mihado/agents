@@ -302,6 +302,12 @@ export function checkProviders(root: string): boolean {
       failures++;
     }
   }
+  for (const plugin of configuredPlugins) {
+    if (!expectedPlugins.includes(plugin)) {
+      console.error(`FAIL  plugin ${plugin} not in providers.json`);
+      failures++;
+    }
+  }
 
   if (manifest.permission) {
     if (JSON.stringify(config.permission) === JSON.stringify(manifest.permission)) {
@@ -337,11 +343,12 @@ export function installProviders(root: string): void {
 
   const expectedPlugins = manifest.plugin ?? [];
   const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
-  const plugins = [...new Set([...configuredPlugins, ...expectedPlugins])];
-  if (plugins.length > 0 && JSON.stringify(configuredPlugins) !== JSON.stringify(plugins)) {
-    config.plugin = plugins;
+  if (JSON.stringify(configuredPlugins) !== JSON.stringify(expectedPlugins)) {
+    const removed = configuredPlugins.filter((plugin) => !expectedPlugins.includes(plugin));
+    config.plugin = expectedPlugins;
     changed = true;
-    console.log(`linked  plugin ${expectedPlugins.join(", ")}`);
+    if (removed.length > 0) console.log(`removed plugin ${removed.join(", ")}`);
+    if (expectedPlugins.length > 0) console.log(`linked  plugin ${expectedPlugins.join(", ")}`);
   }
 
   if (manifest.permission && JSON.stringify(config.permission) !== JSON.stringify(manifest.permission)) {
