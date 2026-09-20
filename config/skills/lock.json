@@ -441,6 +441,48 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail",
+      "path": "skills/engineering/ponytail",
+      "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+      "sha256": "388ec42c9551f47d12555b1723b1af67b8fe18a8afbea0a8db96cfb870eb3803"
+    },
+    "ponytail-audit": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-audit",
+      "path": "skills/engineering/ponytail-audit",
+      "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+      "sha256": "e3d9eddf58dd7b4dae504266d8a5eb7b306db1e69114710800d554ef386ccfd0"
+    },
+    "ponytail-debt": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-debt",
+      "path": "skills/engineering/ponytail-debt",
+      "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+      "sha256": "368db847eb919b0d841d253da745e8215e234cb217609b55b27528e8cb754c84"
+    },
+    "ponytail-gain": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-gain",
+      "path": "skills/engineering/ponytail-gain",
+      "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+      "sha256": "c6d2cc7d7af635acadb96571fd71d9922acb8d8d856d37dc678aafe76a06a7fb"
+    },
+    "ponytail-help": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-help",
+      "path": "skills/engineering/ponytail-help",
+      "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+      "sha256": "92f909eddf3b371e4737a85f60a8024cec6ae5cfb523561b8c56f86fcf3f52b0"
+    },
+    "ponytail-review": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-review",
+      "path": "skills/engineering/ponytail-review",
+      "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+      "sha256": "cd3715f0513d93e4caab8cc30ad09080ae62f763ed8b95304fd84efda5fbf0be"
     }
   },
   "sources": {
@@ -527,6 +569,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
+    },
+    "dietrichgebert/ponytail": {
+      "repository": "https://github.com/DietrichGebert/ponytail.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/dietrichgebert-ponytail-LICENSE",
+      "licenseSha256": "76349fbe5b30500cec89b2f7a55b2c12ef6e415811c3dc654113e3aef39771d7"
     }
   }
 }

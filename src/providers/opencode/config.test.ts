@@ -156,7 +156,7 @@ describe("integration: apm providers", () => {
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
     const config = read();
-    expect(config.plugin).toContain("@dietrichgebert/ponytail");
+    expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
   });
 
   it("installs operator and prunes the managed typist symlink", () => {

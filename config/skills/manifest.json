@@ -96,6 +96,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "dietrichgebert/ponytail": {
+      "repository": "https://github.com/DietrichGebert/ponytail.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -413,6 +421,36 @@
       "source": "typesafe-ai/skills",
       "srcPath": "skills/typesafe-ai",
       "path": "skills/engineering/typesafe-ai"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail",
+      "path": "skills/engineering/ponytail"
+    },
+    "ponytail-review": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-review",
+      "path": "skills/engineering/ponytail-review"
+    },
+    "ponytail-audit": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-audit",
+      "path": "skills/engineering/ponytail-audit"
+    },
+    "ponytail-debt": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-debt",
+      "path": "skills/engineering/ponytail-debt"
+    },
+    "ponytail-gain": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-gain",
+      "path": "skills/engineering/ponytail-gain"
+    },
+    "ponytail-help": {
+      "source": "dietrichgebert/ponytail",
+      "srcPath": "skills/ponytail-help",
+      "path": "skills/engineering/ponytail-help"
     }
   }
 }

@@ -1,7 +1,5 @@
 {
-  "plugin": [
-    "@dietrichgebert/ponytail"
-  ],
+  "plugin": [],
   "permission": {
     "external_directory": {
       "~/.claude/**": "allow",
