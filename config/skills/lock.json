@@ -483,6 +483,20 @@
       "path": "skills/engineering/ponytail-review",
       "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
       "sha256": "cd3715f0513d93e4caab8cc30ad09080ae62f763ed8b95304fd84efda5fbf0be"
+    },
+    "weaviate": {
+      "source": "weaviate/agent-skills",
+      "srcPath": "skills/weaviate",
+      "path": "skills/engineering/weaviate",
+      "commit": "2f62f9fb7784ce57cb182ad6e575310f280a6b63",
+      "sha256": "142f9a2abd18ccdc068f0b53ed03b9b689debce1cf3a435975818f29d52b042a"
+    },
+    "weaviate-cookbooks": {
+      "source": "weaviate/agent-skills",
+      "srcPath": "skills/weaviate-cookbooks",
+      "path": "skills/engineering/weaviate-cookbooks",
+      "commit": "2f62f9fb7784ce57cb182ad6e575310f280a6b63",
+      "sha256": "a13ce7f19935694e6508649d0d220bfa8a553bf643ba390e5ae21259a2d58c1a"
     }
   },
   "sources": {
@@ -576,6 +590,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/dietrichgebert-ponytail-LICENSE",
       "licenseSha256": "76349fbe5b30500cec89b2f7a55b2c12ef6e415811c3dc654113e3aef39771d7"
+    },
+    "weaviate/agent-skills": {
+      "repository": "https://github.com/weaviate/agent-skills.git",
+      "ref": "main",
+      "license": "BSD-3-Clause",
+      "licensePath": ".agents/licenses/weaviate-agent-skills-LICENSE",
+      "licenseSha256": "79ccff7c57ff21cd88dfb107baa28838734252cb3afb7faa70d99257368071bc"
     }
   }
 }

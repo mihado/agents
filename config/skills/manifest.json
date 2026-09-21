@@ -104,6 +104,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "weaviate/agent-skills": {
+      "repository": "https://github.com/weaviate/agent-skills.git",
+      "ref": "main",
+      "license": {
+        "name": "BSD-3-Clause",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -451,6 +459,16 @@
       "source": "dietrichgebert/ponytail",
       "srcPath": "skills/ponytail-help",
       "path": "skills/engineering/ponytail-help"
+    },
+    "weaviate": {
+      "source": "weaviate/agent-skills",
+      "srcPath": "skills/weaviate",
+      "path": "skills/engineering/weaviate"
+    },
+    "weaviate-cookbooks": {
+      "source": "weaviate/agent-skills",
+      "srcPath": "skills/weaviate-cookbooks",
+      "path": "skills/engineering/weaviate-cookbooks"
     }
   }
 }
