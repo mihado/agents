@@ -1,5 +1,5 @@
 import path from "node:path";
-import { readJson, fail } from "../../core/commands.js";
+import { fail } from "../../core/commands.js";
 
 export interface ManifestSource {
   repository: string;
@@ -51,13 +51,6 @@ function validateLocalPath(localPath: string, skillName: string): void {
 
 export function sortedKeys(value: Record<string, unknown>): string[] {
   return Object.keys(value).sort();
-}
-
-export function loadManifest(root: string): Manifest {
-  const manifestPath = path.join(root, "config", "skills", "manifest.json");
-  const manifest = readJson<Manifest>(manifestPath);
-  validateManifest(manifest);
-  return manifest;
 }
 
 export function validateManifest(raw: unknown): asserts raw is Manifest {

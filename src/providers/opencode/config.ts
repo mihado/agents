@@ -15,7 +15,7 @@ export function readOpenCodeConfig(): Record<string, unknown> {
   try {
     return parseJSONC(fs.readFileSync(configPath, "utf8"));
   } catch {
-    return {};
+    fail(`cannot parse ${configPath} (refusing to overwrite an unreadable config)`);
   }
 }
 
@@ -327,7 +327,6 @@ export function installProviders(root: string): void {
   if (!config.provider) config.provider = {};
 
   let changed = false;
-  const failures = 0;
 
   for (const [providerId, def] of Object.entries(manifest.provider)) {
     const expected = toOpenCodeProvider(providerId, def);
@@ -357,20 +356,12 @@ export function installProviders(root: string): void {
     console.log("linked  permission config");
   }
 
-  if (changed && failures === 0) {
+  if (changed) {
     writeOpenCodeConfig(config);
     console.log(`wrote: ${getOpenCodeConfigPath()}`);
   }
-
-  if (failures > 0) process.exit(1);
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
-
-export {
-  getOpenCodeConfigPath as getPath,
-  readOpenCodeConfig as read,
-  writeOpenCodeConfig as write,
-};

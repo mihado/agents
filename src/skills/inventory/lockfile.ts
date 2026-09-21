@@ -160,11 +160,6 @@ export function validateStageLock(raw: unknown): asserts raw is Lock {
   }
 }
 
-export function readLock(root: string): Lock {
-  const lockPath = path.join(root, "config", "skills", "lock.json");
-  return readJson<Lock>(lockPath);
-}
-
 export function checkLockFile(root: string): boolean {
   const lockPath = path.join(root, "config", "skills", "lock.json");
   if (!fs.existsSync(lockPath)) return false;
