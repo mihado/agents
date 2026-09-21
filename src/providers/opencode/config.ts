@@ -3,6 +3,7 @@ import path from "node:path";
 import { readJson, fail } from "../../core/commands.js";
 import { getConfigHome } from "../../core/paths.js";
 import { resolveExecutable } from "../../core/commands.js";
+import { platformMcpArgs } from "../shared/mcp-args.js";
 import type { ProviderManifest, ProviderManifestEntry } from "../types.js";
 
 export function getOpenCodeConfigPath(): string {
@@ -159,17 +160,9 @@ export function toOpenCodeMcp(
     };
   }
 
-  // Chrome DevTools needs a desktop session to run headed. macOS is the only
-  // host we run headed; on Linux VMs and SSH sessions force --headless or
-  // Chrome exits immediately with "Target closed".
-  const args = [...server.args];
-  if (
-    platform !== "darwin" &&
-    args.some((arg) => arg.startsWith("chrome-devtools-mcp")) &&
-    !args.includes("--headless")
-  ) {
-    args.push("--headless");
-  }
+  // Chrome DevTools needs a desktop session to run headed; --headless is
+  // forced off-macOS via platformMcpArgs (shared with Codex/Claude sync).
+  const args = platformMcpArgs(server, platform);
 
   return {
     type: "local",

@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { installMcp, checkMcp } from "./mcp.js";
+import { platformMcpArgs } from "./shared/mcp-args.js";
 
 const root = path.resolve(fileURLToPath(import.meta.url), "../../..");
 
@@ -31,6 +32,36 @@ function withoutTools(fn: () => void): void {
     fs.rmSync(emptyDir, { recursive: true, force: true });
   }
 }
+
+describe("platformMcpArgs", () => {
+  const chrome = {
+    type: "stdio" as const,
+    command: "npx",
+    args: ["-y", "chrome-devtools-mcp@latest", "--isolated"],
+  };
+
+  it("keeps Chrome headed on macOS", () => {
+    expect(platformMcpArgs(chrome, "darwin")).toEqual(["-y", "chrome-devtools-mcp@latest", "--isolated"]);
+  });
+
+  it("forces Chrome headless off macOS", () => {
+    expect(platformMcpArgs(chrome, "linux")).toEqual(["-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"]);
+  });
+
+  it("does not duplicate an explicit --headless", () => {
+    const headed = { ...chrome, args: [...chrome.args, "--headless"] };
+    expect(platformMcpArgs(headed, "linux")).toEqual(["-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"]);
+  });
+
+  it("leaves non-Chrome servers alone", () => {
+    const other = { type: "stdio" as const, command: "npx", args: ["-y", "something-else"] };
+    expect(platformMcpArgs(other, "linux")).toEqual(["-y", "something-else"]);
+  });
+
+  it("returns no args for remote servers", () => {
+    expect(platformMcpArgs({ type: "remote", url: "https://example.com/mcp" }, "linux")).toEqual([]);
+  });
+});
 
 describe("mcp without codex or claude", () => {
   it("installMcp skips instead of failing", () => {
