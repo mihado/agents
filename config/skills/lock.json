@@ -497,6 +497,34 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
+    },
+    "dbos-golang": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-golang",
+      "path": "skills/engineering/dbos-golang",
+      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
+      "sha256": "d90f0dd7fbdd16bd37f914234919b54f5af1817703cac7a5ad2d95c7e60bbd48"
+    },
+    "dbos-java": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-java",
+      "path": "skills/engineering/dbos-java",
+      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
+      "sha256": "c52bb574e9cf4510f1ded08c6121f11ab7db0467269858536e8622e2b385667f"
+    },
+    "dbos-python": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-python",
+      "path": "skills/engineering/dbos-python",
+      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
+      "sha256": "8c5fb2c77c7839d6ff28dea5650ac7d65175a6e73b98e8576a797791add693e7"
+    },
+    "dbos-typescript": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-typescript",
+      "path": "skills/engineering/dbos-typescript",
+      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
+      "sha256": "2a405250e835f2cbe80e99d6c59608bde21bee4a9b75210f1a4f8033c080ae84"
     }
   },
   "sources": {
@@ -597,6 +625,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
+    },
+    "dbos-inc/agent-skills": {
+      "repository": "https://github.com/dbos-inc/agent-skills.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/dbos-inc-agent-skills-LICENSE",
+      "licenseSha256": "d10ab09835388dd531d432a9e078ee76c491c0cdcd72955b2efaff323bd438d1"
     }
   }
 }

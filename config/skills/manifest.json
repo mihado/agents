@@ -112,6 +112,14 @@
         "name": "BSD-3-Clause",
         "path": "LICENSE"
       }
+    },
+    "dbos-inc/agent-skills": {
+      "repository": "https://github.com/dbos-inc/agent-skills.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -469,6 +477,26 @@
       "source": "weaviate/agent-skills",
       "srcPath": "skills/weaviate-cookbooks",
       "path": "skills/engineering/weaviate-cookbooks"
+    },
+    "dbos-typescript": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-typescript",
+      "path": "skills/engineering/dbos-typescript"
+    },
+    "dbos-python": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-python",
+      "path": "skills/engineering/dbos-python"
+    },
+    "dbos-golang": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-golang",
+      "path": "skills/engineering/dbos-golang"
+    },
+    "dbos-java": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-java",
+      "path": "skills/engineering/dbos-java"
     }
   }
 }
