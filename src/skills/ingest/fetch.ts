@@ -44,7 +44,7 @@ export function fetchSkills(root: string): void {
 
       const licenseFileName = `${safeName(sourceName)}-LICENSE`;
       const stagedLicense = path.join(tempStage, "licenses", licenseFileName);
-      copyPath(path.join(cloneDir, source.license.path), stagedLicense);
+      copyPath(path.join(cloneDir, source.license.path), stagedLicense, escapeGuard(cloneDir));
 
       nextLock.sources[sourceName] = {
         repository: source.repository,
@@ -90,15 +90,38 @@ export function fetchSkills(root: string): void {
   }
 }
 
-function copyPath(source: string, target: string): void {
+// Upstream skill trees may contain symlinks (e.g. CLAUDE.md -> AGENTS.md).
+// Dereference them so the vendored tree holds regular files only, but refuse
+// links that resolve outside the clone so a hostile repo cannot pull local
+// files into what we commit.
+function escapeGuard(cloneDir: string): (src: string) => boolean {
+  const root = fs.realpathSync(cloneDir);
+  return (src) => {
+    if (fs.lstatSync(src, { throwIfNoEntry: false })?.isSymbolicLink()) {
+      let resolved: string;
+      try {
+        resolved = fs.realpathSync(src);
+      } catch {
+        fail(`dangling symlink in vendored source: ${src}`);
+      }
+      if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+        fail(`symlink escapes vendored source: ${src} -> ${resolved}`);
+      }
+    }
+    return true;
+  };
+}
+
+function copyPath(source: string, target: string, filter?: (src: string) => boolean): void {
   if (!fs.existsSync(source)) fail(`missing path: ${source}`);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.cpSync(source, target, { recursive: true, preserveTimestamps: false });
+  fs.cpSync(source, target, { recursive: true, preserveTimestamps: false, dereference: true, filter });
 }
 
 function copySkillSource(cloneDir: string, srcPath: string, target: string): void {
+  const guard = escapeGuard(cloneDir);
   if (srcPath !== ".") {
-    copyPath(path.join(cloneDir, srcPath), target);
+    copyPath(path.join(cloneDir, srcPath), target, guard);
     return;
   }
   // Repo-root skill: copy everything except the clone's .git directory.
@@ -107,6 +130,8 @@ function copySkillSource(cloneDir: string, srcPath: string, target: string): voi
   fs.cpSync(cloneDir, target, {
     recursive: true,
     preserveTimestamps: false,
-    filter: (src) => src !== gitDir && !src.startsWith(`${gitDir}${path.sep}`),
+    dereference: true,
+    filter: (src) =>
+      src !== gitDir && !src.startsWith(`${gitDir}${path.sep}`) && guard(src),
   });
 }
