@@ -4,12 +4,14 @@
     "external_directory": {
       "~/.claude/**": "allow",
       "~/.agents/**": "allow",
+      "~/.local/share/opencode/**": "allow",
       "~/Repos/**": "allow",
       "~/Work/**": "allow"
     },
     "read": {
       "~/.claude/**": "allow",
       "~/.agents/**": "allow",
+      "~/.local/share/opencode/**": "allow",
       "~/Repos/**": "allow",
       "~/Work/**": "allow",
       "*.env.test*": "allow",
@@ -18,6 +20,7 @@
     "edit": {
       "~/.claude/**": "allow",
       "~/.agents/**": "allow",
+      "~/.local/share/opencode/**": "allow",
       "~/Repos/**": "allow",
       "~/Work/**": "allow"
     },
