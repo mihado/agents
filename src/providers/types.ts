@@ -27,4 +27,5 @@ export interface ProviderManifest {
   plugin?: string[];
   provider: Record<string, ProviderManifestEntry>;
   permission?: Record<string, unknown>;
+  websearch?: { provider: string } | false;
 }
