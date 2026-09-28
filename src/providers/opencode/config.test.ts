@@ -336,6 +336,39 @@ describe("integration: apm providers", () => {
     expect(reinstall.status).toBe(0);
   });
 
+  it("syncs websearch config from the manifest", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
+    ) as { websearch?: unknown };
+    expect(manifest.websearch, "manifest should declare a websearch block").toEqual({ provider: "parallel" });
+
+    const config = readOpenCodeConfig();
+    expect(config.websearch).toEqual(manifest.websearch);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).toBe(0);
+  });
+
+  it("fails check when local websearch config drifts from the manifest", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const config = readOpenCodeConfig();
+    config.websearch = { provider: "tavily" };
+    writeOpenCodeConfig(config);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).not.toBe(0);
+    expect(check.stderr).toContain("websearch config differs");
+
+    // restore for subsequent tests
+    const reinstall = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(reinstall.status).toBe(0);
+  });
+
   it("modalities field structure is valid per OpenCode schema", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);

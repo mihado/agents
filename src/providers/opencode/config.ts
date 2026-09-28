@@ -221,6 +221,12 @@ function validateProviderManifest(manifest: ProviderManifest): void {
   if (manifest.permission !== undefined && !isObject(manifest.permission)) {
     fail("providers.json permission must be an object");
   }
+  if (
+    manifest.websearch !== undefined && manifest.websearch !== false &&
+    (!isObject(manifest.websearch) || typeof manifest.websearch.provider !== "string" || !manifest.websearch.provider)
+  ) {
+    fail("providers.json websearch must be false or { provider: <non-empty string> }");
+  }
 
   for (const [id, def] of Object.entries(manifest.provider)) {
     if (!id || typeof def !== "object") {
@@ -311,6 +317,15 @@ export function checkProviders(root: string): boolean {
     }
   }
 
+  if (manifest.websearch !== undefined) {
+    if (JSON.stringify(config.websearch ?? null) === JSON.stringify(manifest.websearch)) {
+      console.log("PASS  websearch config");
+    } else {
+      console.error(`FAIL  websearch config differs from providers.json (config: ${getOpenCodeConfigPath()})`);
+      failures++;
+    }
+  }
+
   return failures === 0;
 }
 
@@ -347,6 +362,12 @@ export function installProviders(root: string): void {
     config.permission = manifest.permission;
     changed = true;
     console.log("linked  permission config");
+  }
+
+  if (manifest.websearch !== undefined && JSON.stringify(config.websearch ?? null) !== JSON.stringify(manifest.websearch)) {
+    config.websearch = manifest.websearch;
+    changed = true;
+    console.log("linked  websearch config");
   }
 
   if (changed) {

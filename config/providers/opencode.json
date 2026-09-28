@@ -1,5 +1,8 @@
 {
   "plugin": [],
+  "websearch": {
+    "provider": "parallel"
+  },
   "permission": {
     "external_directory": {
       "~/.claude/**": "allow",
