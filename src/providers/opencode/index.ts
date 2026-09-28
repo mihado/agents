@@ -14,6 +14,7 @@ import {
   installProviders,
   checkProviders,
 } from "./config.js";
+import { installCliConfig, checkCliConfig } from "./cli.js";
 
 function getOpenCodeHome(): string {
   return path.join(getConfigHome(), "opencode");
@@ -106,6 +107,7 @@ export const opencode: Provider = {
   name: "opencode",
   install(root: string): boolean {
     installProviders(root);
+    installCliConfig(root);
     installProviderFiles(root);
 
     const manifest = loadMcpManifest(root);
@@ -129,6 +131,7 @@ export const opencode: Provider = {
   },
   check(root: string): boolean {
     let ok = checkProviders(root);
+    if (!checkCliConfig(root)) ok = false;
     if (!checkProviderFiles(root)) ok = false;
 
     const manifest = loadMcpManifest(root);
