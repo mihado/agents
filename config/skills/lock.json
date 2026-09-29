@@ -5,168 +5,168 @@
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/api-and-interface-design",
       "path": "skills/engineering/api-and-interface-design",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "b2fa57f7326e3b17ce2a902e9f0e6ab7d581502411e4b063f68bf193690f901e"
     },
     "browser-testing-with-devtools": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/browser-testing-with-devtools",
       "path": "skills/engineering/browser-testing-with-devtools",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "73640726c8afa212289ca2fb1dfaa2f73eec968d717b1f78448a4fd74d717272"
     },
     "ci-cd-and-automation": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/ci-cd-and-automation",
       "path": "skills/engineering/ci-cd-and-automation",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "706d42c02e056cfd0509172fa294ecbdec8509aac9dc25862310800892709d9d"
     },
     "code-review-and-quality": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-review-and-quality",
       "path": "skills/engineering/code-review-and-quality",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
-      "sha256": "57574227c803c4a1a5132ff44ecd9c3110cfa96290e89204459b8f3441a0b463"
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
+      "sha256": "76e85d3922a799e05dd45c69db04407cc3dc19aa43ea4b9e998efb4426b1a71e"
     },
     "code-simplification": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/code-simplification",
       "path": "skills/engineering/code-simplification",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "a6d4aba8358a46634487e1c4b612cd021a41f3227fbe0b131270e2ebaaea8440"
     },
     "context-engineering": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/context-engineering",
       "path": "skills/engineering/context-engineering",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "0ce9bdcfee0821e72dee2aa44e0599bc28487f36e2b7f2b6ef5c14699f490450"
     },
     "debugging-and-error-recovery": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/debugging-and-error-recovery",
       "path": "skills/engineering/debugging-and-error-recovery",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "e5a35bfd5bf778a35554fad2294af5321512c14e596883170c546d88f4fd0074"
     },
     "deprecation-and-migration": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/deprecation-and-migration",
       "path": "skills/engineering/deprecation-and-migration",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "afdeb12863687806d0b72bf9ddba4bfc1aff759da233ef5b9aefa5241a895d4a"
     },
     "documentation-and-adrs": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/documentation-and-adrs",
       "path": "skills/engineering/documentation-and-adrs",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "cc6700698ab202afce8ac9a98ab4e691887ddd28bc9fedafb9640e111d9fdc08"
     },
     "doubt-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/doubt-driven-development",
       "path": "skills/engineering/doubt-driven-development",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "939cf884cb25b7669e00fa92502b8bb5d9fabcddba050e96c691e380168c6c7f"
     },
     "frontend-ui-engineering": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/frontend-ui-engineering",
       "path": "skills/engineering/frontend-ui-engineering",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "812aeb8839062d150e80c1b4f19c9ae0c569122c9f4da2467048cd936b0aabbf"
     },
     "git-workflow-and-versioning": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/git-workflow-and-versioning",
       "path": "skills/engineering/git-workflow-and-versioning",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "ecb9743ef86c45d117033f78b64f71bfe631d5a8e8e7198b7ac083fd91af7062"
     },
     "idea-refine": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/idea-refine",
       "path": "skills/engineering/idea-refine",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "c999f1db0b62f00962cd1028b66554614f27a33134ee84506df466b17dd27372"
     },
     "incremental-implementation": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/incremental-implementation",
       "path": "skills/engineering/incremental-implementation",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "037857b2d81c5e709cccafa850d8a394f3d6441407cd77bf9c18548847a9dab5"
     },
     "interview-me": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/interview-me",
       "path": "skills/engineering/interview-me",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "6b64430690d76fac95e23ef7c3945222a0f2f37b81d3a2daaa389459684a0f7c"
     },
     "observability-and-instrumentation": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/observability-and-instrumentation",
       "path": "skills/engineering/observability-and-instrumentation",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "3142826fae9514e544e9bc16508d2d5ee9f67d9cac62383c903949534b63411c"
     },
     "performance-optimization": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/performance-optimization",
       "path": "skills/engineering/performance-optimization",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "f82c7959bd2eaa908d645d1f4aec7507f897f1a7933abd58643f6b671e0b67b3"
     },
     "planning-and-task-breakdown": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/planning-and-task-breakdown",
       "path": "skills/engineering/planning-and-task-breakdown",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "34768342dbf3b84e2440fc8dd11fed23f099c605fdfd7edf57317ec9159ce82d"
     },
     "security-and-hardening": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/security-and-hardening",
       "path": "skills/engineering/security-and-hardening",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
-      "sha256": "545f9d004e8ec13b52e6ce5e683c7257379f5bfec9ec6b2148061b70aaeda93c"
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
+      "sha256": "b5ec48fcf5ff50c72c444942a37d8f5ccfcce6b8f3d01ab9df8bd7cda7707298"
     },
     "shipping-and-launch": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/shipping-and-launch",
       "path": "skills/engineering/shipping-and-launch",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "306b7754c365f2f9427903a7092f0dc7a54f3138ccd48d9a88b1413a71e60e87"
     },
     "source-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/source-driven-development",
       "path": "skills/engineering/source-driven-development",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "fb7c9eaabb0e3254d0e945dbbd2dd766c0eb3ed96de8b76a6763d1a5968bee68"
     },
     "spec-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/spec-driven-development",
       "path": "skills/engineering/spec-driven-development",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "9339fa902b2d616be0b409186304fb3e3e0334c2bcf0d00c583f35f00534f2b4"
     },
     "test-driven-development": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/test-driven-development",
       "path": "skills/engineering/test-driven-development",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "882558e001a33e968d1b48328457c97f2af34fd793777015157e906973e03715"
     },
     "using-agent-skills": {
       "source": "addyosmani/agent-skills",
       "srcPath": "skills/using-agent-skills",
       "path": "skills/engineering/using-agent-skills",
-      "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+      "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
       "sha256": "523a64a4b18bb74d76570339d91cd687f9a7be6f9826b9015e0a1f3d7b76dce2"
     },
     "clean-code": {
@@ -180,22 +180,50 @@
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermo-nuclear-code-quality-review",
       "path": "skills/engineering/thermo-nuclear-code-quality-review",
-      "commit": "6ed0f7a9504f577d7529064103cecce9be7dfc5e",
+      "commit": "adf3218ca2f5b9971eedc07a76bef22df7701539",
       "sha256": "1bb59994582195f4e209546efe5f9fc5d05d6f19c91d5b18048d0f2186a4fbd2"
     },
     "thermo-nuclear-review": {
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermo-nuclear-review",
       "path": "skills/engineering/thermo-nuclear-review",
-      "commit": "6ed0f7a9504f577d7529064103cecce9be7dfc5e",
+      "commit": "adf3218ca2f5b9971eedc07a76bef22df7701539",
       "sha256": "a859fab03b5adb8b673e852e8ad63b3f8648dcd239fbead8eca530c800c81ec4"
     },
     "thermos": {
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermos",
       "path": "skills/engineering/thermos",
-      "commit": "6ed0f7a9504f577d7529064103cecce9be7dfc5e",
+      "commit": "adf3218ca2f5b9971eedc07a76bef22df7701539",
       "sha256": "9cf3a0718e5996d63cae0b5c47fe8f5b18533003ebe8eea6f3c7b3ca34dcda15"
+    },
+    "dbos-golang": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-golang",
+      "path": "skills/engineering/dbos-golang",
+      "commit": "46ebebbb354a06f0c047b42b429ddee77f0c88f5",
+      "sha256": "d90f0dd7fbdd16bd37f914234919b54f5af1817703cac7a5ad2d95c7e60bbd48"
+    },
+    "dbos-java": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-java",
+      "path": "skills/engineering/dbos-java",
+      "commit": "46ebebbb354a06f0c047b42b429ddee77f0c88f5",
+      "sha256": "8f9f5ee2849493c5c04db7048b15f6920507197ac14d5e72905ba7b871ef75b6"
+    },
+    "dbos-python": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-python",
+      "path": "skills/engineering/dbos-python",
+      "commit": "46ebebbb354a06f0c047b42b429ddee77f0c88f5",
+      "sha256": "818a4c15c3d2ae0dd86e901acd64f5b9c98f301582f1b49635b0a979a9375f55"
+    },
+    "dbos-typescript": {
+      "source": "dbos-inc/agent-skills",
+      "srcPath": "skills/dbos-typescript",
+      "path": "skills/engineering/dbos-typescript",
+      "commit": "46ebebbb354a06f0c047b42b429ddee77f0c88f5",
+      "sha256": "d5aeb2a7ce079c1c36faa73d3b051a7a64a991ce76bf1078bb319a3a30ab1c11"
     },
     "ponytail": {
       "source": "dietrichgebert/ponytail",
@@ -320,8 +348,8 @@
       "source": "pbakaus/impeccable",
       "srcPath": ".agents/skills/impeccable",
       "path": "skills/design/impeccable",
-      "commit": "f2c7051853848826aac2f4646581d62a732155ad",
-      "sha256": "1832367a1d9f3f613ba37de8415e2f99b35da95b194c621fb98d49f3c13ddb7b"
+      "commit": "114ea1d3838fca73b253af45f873b9c4f5f213c8",
+      "sha256": "b0234fe8d211172d9200819462c4cf1a8d349b7746417b8a6571cfddbdc4595e"
     },
     "improve": {
       "source": "shadcn/improve",
@@ -334,8 +362,8 @@
       "source": "tw93/kami",
       "srcPath": "plugins/kami/skills/kami",
       "path": "skills/design/kami",
-      "commit": "a489e39633d1d6a044047bc9bf4452f7a65bb00a",
-      "sha256": "84b670dbafcd7041faef9350dfeabc5c70e5308fb9c29cb88c82714c67adf6d7"
+      "commit": "5a7fa34e3804199e6fa28eea1c16057ece2f8f0f",
+      "sha256": "6300e9bab702a09b57b468c44442d1402cd22d2f485de10e38527b50bf3c0e3a"
     },
     "typesafe-ai": {
       "source": "typesafe-ai/skills",
@@ -497,34 +525,6 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
-    },
-    "dbos-golang": {
-      "source": "dbos-inc/agent-skills",
-      "srcPath": "skills/dbos-golang",
-      "path": "skills/engineering/dbos-golang",
-      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
-      "sha256": "d90f0dd7fbdd16bd37f914234919b54f5af1817703cac7a5ad2d95c7e60bbd48"
-    },
-    "dbos-java": {
-      "source": "dbos-inc/agent-skills",
-      "srcPath": "skills/dbos-java",
-      "path": "skills/engineering/dbos-java",
-      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
-      "sha256": "c52bb574e9cf4510f1ded08c6121f11ab7db0467269858536e8622e2b385667f"
-    },
-    "dbos-python": {
-      "source": "dbos-inc/agent-skills",
-      "srcPath": "skills/dbos-python",
-      "path": "skills/engineering/dbos-python",
-      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
-      "sha256": "8c5fb2c77c7839d6ff28dea5650ac7d65175a6e73b98e8576a797791add693e7"
-    },
-    "dbos-typescript": {
-      "source": "dbos-inc/agent-skills",
-      "srcPath": "skills/dbos-typescript",
-      "path": "skills/engineering/dbos-typescript",
-      "commit": "f39687cb282334e6b14d3e9f79ebca4a5f9b93e8",
-      "sha256": "2a405250e835f2cbe80e99d6c59608bde21bee4a9b75210f1a4f8033c080ae84"
     }
   },
   "sources": {
@@ -548,6 +548,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/cursor-plugins-LICENSE",
       "licenseSha256": "472fe89b07ddab0ada7005fdca222b72f54f0ac89bb0ec83eadd80aa8a5f7138"
+    },
+    "dbos-inc/agent-skills": {
+      "repository": "https://github.com/dbos-inc/agent-skills.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/dbos-inc-agent-skills-LICENSE",
+      "licenseSha256": "d10ab09835388dd531d432a9e078ee76c491c0cdcd72955b2efaff323bd438d1"
     },
     "dietrichgebert/ponytail": {
       "repository": "https://github.com/DietrichGebert/ponytail.git",
@@ -625,13 +632,6 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
-    },
-    "dbos-inc/agent-skills": {
-      "repository": "https://github.com/dbos-inc/agent-skills.git",
-      "ref": "main",
-      "license": "MIT",
-      "licensePath": ".agents/licenses/dbos-inc-agent-skills-LICENSE",
-      "licenseSha256": "d10ab09835388dd531d432a9e078ee76c491c0cdcd72955b2efaff323bd438d1"
     }
   }
 }
