@@ -525,6 +525,48 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
+    },
+    "design-artifact": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/design-artifact",
+      "path": "skills/design/design-artifact",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "37f875d1f44d4d5ebc44478023e2d201b199682561243ba65c267b6ad22caa01"
+    },
+    "html": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html",
+      "path": "skills/design/html",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "10f2d3bfd9c6f5ef396942acbba0c94f9dd12b4d3317cc53c01376b96a4df580"
+    },
+    "html-diagram": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-diagram",
+      "path": "skills/design/html-diagram",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "3d60fe9efdb80c2e11c7c3a8ea137d18b7e153e2f9b85108a11b15520bb8e9cc"
+    },
+    "html-plan": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-plan",
+      "path": "skills/design/html-plan",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "255449ca6632eee8da2c28882054ffe85f8ff0e17d22570adfb31556d77afc68"
+    },
+    "html-prototype": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-prototype",
+      "path": "skills/design/html-prototype",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "9766c5dd565fcdb539ee13f3007c24eec68fa64950f192bd7b3d28f01335fa32"
+    },
+    "html-wireframe": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-wireframe",
+      "path": "skills/design/html-wireframe",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "858636e71b82631e576c5aef86594ff2b761bde9903c55f6a477b471c90c93a0"
     }
   },
   "sources": {
@@ -632,6 +674,13 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
+    },
+    "plannotator/effective-html": {
+      "repository": "https://github.com/plannotator/effective-html.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/plannotator-effective-html-LICENSE",
+      "licenseSha256": "f06967281c5febde63e8960e5e5060c4fc3f0da7f39b0c8f586da207e98f052e"
     }
   }
 }
