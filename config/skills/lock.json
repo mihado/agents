@@ -180,21 +180,21 @@
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermo-nuclear-code-quality-review",
       "path": "skills/engineering/thermo-nuclear-code-quality-review",
-      "commit": "adf3218ca2f5b9971eedc07a76bef22df7701539",
+      "commit": "69cf06fa253ba0761213669171198968e51fb9ff",
       "sha256": "1bb59994582195f4e209546efe5f9fc5d05d6f19c91d5b18048d0f2186a4fbd2"
     },
     "thermo-nuclear-review": {
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermo-nuclear-review",
       "path": "skills/engineering/thermo-nuclear-review",
-      "commit": "adf3218ca2f5b9971eedc07a76bef22df7701539",
+      "commit": "69cf06fa253ba0761213669171198968e51fb9ff",
       "sha256": "a859fab03b5adb8b673e852e8ad63b3f8648dcd239fbead8eca530c800c81ec4"
     },
     "thermos": {
       "source": "cursor/plugins",
       "srcPath": "thermos/skills/thermos",
       "path": "skills/engineering/thermos",
-      "commit": "adf3218ca2f5b9971eedc07a76bef22df7701539",
+      "commit": "69cf06fa253ba0761213669171198968e51fb9ff",
       "sha256": "9cf3a0718e5996d63cae0b5c47fe8f5b18533003ebe8eea6f3c7b3ca34dcda15"
     },
     "dbos-golang": {
@@ -285,56 +285,56 @@
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/codebase-design",
       "path": "skills/engineering/codebase-design",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
-      "sha256": "826e65f8d718794b0647dd50122d3c388c6e860c608d6aa313d7d716ff535933"
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
+      "sha256": "e91e18258598832efe27af7e3c423ab262c6f8b8ecb6262d8fbb80d626ef0e19"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/domain-modeling",
       "path": "skills/engineering/domain-modeling",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
-      "sha256": "2cc88b237a4704f9fe2057492024856a48ea803a5b9257b1c1e3174eb1f13a09"
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
+      "sha256": "18a9314d338b8135e4108d1d31d2fd57ad289cf8bf31d2acd6a6f3053ac22a38"
     },
     "handoff": {
       "source": "mattpocock/skills",
       "srcPath": "skills/productivity/handoff",
       "path": "skills/productivity/handoff",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
       "sha256": "fe287d0ae54ed66c99522e272af1020323ba4d4698ef60fe1fa63f042dffd313"
     },
     "improve-codebase-architecture": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/improve-codebase-architecture",
       "path": "skills/engineering/improve-codebase-architecture",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
-      "sha256": "86096700ab48a5fb3d8b8dd73b60b4474925d63e4b3585ec07e5979a04e9ce2d"
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
+      "sha256": "21e81aed6d25a2b16ad0e6b9ec65b398145a110d11fd76951263d13372822e9d"
     },
     "prototype": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/prototype",
       "path": "skills/engineering/prototype",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
       "sha256": "c4efd5e0f1c302b6225be83e8e42abdb05e13fde900484e4e2240e90b4e83eb6"
     },
     "teach": {
       "source": "mattpocock/skills",
       "srcPath": "skills/productivity/teach",
       "path": "skills/productivity/teach",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
       "sha256": "d9fbfb966d425f19cdbeb34cceab6ead62041ccacd00da29b55412333cf9748a"
     },
     "wayfinder": {
       "source": "mattpocock/skills",
       "srcPath": "skills/engineering/wayfinder",
       "path": "skills/engineering/wayfinder",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
       "sha256": "fa164901a041cab31d281288ea4b5af5aeb0a0d557b586cf6b341998a3fb3eb3"
     },
     "writing-for-agents": {
       "source": "mattpocock/skills",
       "srcPath": "skills/productivity/writing-for-agents",
       "path": "skills/productivity/writing-for-agents",
-      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "commit": "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
       "sha256": "dc53f07d1f662137317789b9b5d74cfcc26dbcfc15038a7faf676c844d8638e8"
     },
     "hallmark": {
@@ -348,8 +348,50 @@
       "source": "pbakaus/impeccable",
       "srcPath": ".agents/skills/impeccable",
       "path": "skills/design/impeccable",
-      "commit": "114ea1d3838fca73b253af45f873b9c4f5f213c8",
-      "sha256": "b0234fe8d211172d9200819462c4cf1a8d349b7746417b8a6571cfddbdc4595e"
+      "commit": "36034d4b846f040e09050d5e70e45f858fc37427",
+      "sha256": "b3f341d60e5193f990c511afccd019514ff38267de496cbba8ebce8c821ce9f3"
+    },
+    "design-artifact": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/design-artifact",
+      "path": "skills/design/design-artifact",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "37f875d1f44d4d5ebc44478023e2d201b199682561243ba65c267b6ad22caa01"
+    },
+    "html": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html",
+      "path": "skills/design/html",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "10f2d3bfd9c6f5ef396942acbba0c94f9dd12b4d3317cc53c01376b96a4df580"
+    },
+    "html-diagram": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-diagram",
+      "path": "skills/design/html-diagram",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "3d60fe9efdb80c2e11c7c3a8ea137d18b7e153e2f9b85108a11b15520bb8e9cc"
+    },
+    "html-plan": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-plan",
+      "path": "skills/design/html-plan",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "255449ca6632eee8da2c28882054ffe85f8ff0e17d22570adfb31556d77afc68"
+    },
+    "html-prototype": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-prototype",
+      "path": "skills/design/html-prototype",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "9766c5dd565fcdb539ee13f3007c24eec68fa64950f192bd7b3d28f01335fa32"
+    },
+    "html-wireframe": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-wireframe",
+      "path": "skills/design/html-wireframe",
+      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
+      "sha256": "858636e71b82631e576c5aef86594ff2b761bde9903c55f6a477b471c90c93a0"
     },
     "improve": {
       "source": "shadcn/improve",
@@ -525,48 +567,6 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
-    },
-    "design-artifact": {
-      "source": "plannotator/effective-html",
-      "srcPath": "skills/design-artifact",
-      "path": "skills/design/design-artifact",
-      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
-      "sha256": "37f875d1f44d4d5ebc44478023e2d201b199682561243ba65c267b6ad22caa01"
-    },
-    "html": {
-      "source": "plannotator/effective-html",
-      "srcPath": "skills/html",
-      "path": "skills/design/html",
-      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
-      "sha256": "10f2d3bfd9c6f5ef396942acbba0c94f9dd12b4d3317cc53c01376b96a4df580"
-    },
-    "html-diagram": {
-      "source": "plannotator/effective-html",
-      "srcPath": "skills/html-diagram",
-      "path": "skills/design/html-diagram",
-      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
-      "sha256": "3d60fe9efdb80c2e11c7c3a8ea137d18b7e153e2f9b85108a11b15520bb8e9cc"
-    },
-    "html-plan": {
-      "source": "plannotator/effective-html",
-      "srcPath": "skills/html-plan",
-      "path": "skills/design/html-plan",
-      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
-      "sha256": "255449ca6632eee8da2c28882054ffe85f8ff0e17d22570adfb31556d77afc68"
-    },
-    "html-prototype": {
-      "source": "plannotator/effective-html",
-      "srcPath": "skills/html-prototype",
-      "path": "skills/design/html-prototype",
-      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
-      "sha256": "9766c5dd565fcdb539ee13f3007c24eec68fa64950f192bd7b3d28f01335fa32"
-    },
-    "html-wireframe": {
-      "source": "plannotator/effective-html",
-      "srcPath": "skills/html-wireframe",
-      "path": "skills/design/html-wireframe",
-      "commit": "2ac1dfecb0f2474e75260cb6d3c9b9d6d9b5062e",
-      "sha256": "858636e71b82631e576c5aef86594ff2b761bde9903c55f6a477b471c90c93a0"
     }
   },
   "sources": {
@@ -640,6 +640,13 @@
       "licensePath": ".agents/licenses/pbakaus-impeccable-LICENSE",
       "licenseSha256": "f884b107a27cf03d14dd9f72d54fb2622a1f6d527e9ed416ea17f0662f0c7a3f"
     },
+    "plannotator/effective-html": {
+      "repository": "https://github.com/plannotator/effective-html.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/plannotator-effective-html-LICENSE",
+      "licenseSha256": "f06967281c5febde63e8960e5e5060c4fc3f0da7f39b0c8f586da207e98f052e"
+    },
     "shadcn/improve": {
       "repository": "https://github.com/shadcn/improve.git",
       "ref": "main",
@@ -674,13 +681,6 @@
       "license": "MIT",
       "licensePath": ".agents/licenses/wondelai-skills-LICENSE",
       "licenseSha256": "167349659ec08c9df1afcf6bf25adc6c791530a3534c8feb9cf15adc44ae1c8c"
-    },
-    "plannotator/effective-html": {
-      "repository": "https://github.com/plannotator/effective-html.git",
-      "ref": "main",
-      "license": "MIT",
-      "licensePath": ".agents/licenses/plannotator-effective-html-LICENSE",
-      "licenseSha256": "f06967281c5febde63e8960e5e5060c4fc3f0da7f39b0c8f586da207e98f052e"
     }
   }
 }
