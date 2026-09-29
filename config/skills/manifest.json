@@ -120,6 +120,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "plannotator/effective-html": {
+      "repository": "https://github.com/plannotator/effective-html.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -497,6 +505,36 @@
       "source": "dbos-inc/agent-skills",
       "srcPath": "skills/dbos-java",
       "path": "skills/engineering/dbos-java"
+    },
+    "html": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html",
+      "path": "skills/design/html"
+    },
+    "html-wireframe": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-wireframe",
+      "path": "skills/design/html-wireframe"
+    },
+    "html-prototype": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-prototype",
+      "path": "skills/design/html-prototype"
+    },
+    "html-plan": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-plan",
+      "path": "skills/design/html-plan"
+    },
+    "html-diagram": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/html-diagram",
+      "path": "skills/design/html-diagram"
+    },
+    "design-artifact": {
+      "source": "plannotator/effective-html",
+      "srcPath": "skills/design-artifact",
+      "path": "skills/design/design-artifact"
     }
   }
 }
