@@ -215,8 +215,8 @@ function validateProviderManifest(manifest: ProviderManifest): void {
   if (!isObject(manifest.provider) || Object.keys(manifest.provider).length === 0) {
     fail("providers.json must contain at least one provider");
   }
-  if (manifest.plugin !== undefined && (!Array.isArray(manifest.plugin) || !manifest.plugin.every((plugin) => typeof plugin === "string" && plugin))) {
-    fail("providers.json plugin must be an array of non-empty strings");
+  if (manifest.plugins !== undefined && (!Array.isArray(manifest.plugins) || !manifest.plugins.every((plugin) => typeof plugin === "string" && plugin))) {
+    fail("providers.json plugins must be an array of non-empty strings");
   }
   if (manifest.permission !== undefined && !isObject(manifest.permission)) {
     fail("providers.json permission must be an object");
@@ -293,17 +293,17 @@ export function checkProviders(root: string): boolean {
     }
   }
 
-  const expectedPlugins = manifest.plugin ?? [];
-  const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
-  for (const plugin of expectedPlugins) {
-    if (!configuredPlugins.includes(plugin)) {
-      console.error(`FAIL  plugin ${plugin} not configured`);
+  const expectedPluginsV2 = manifest.plugins ?? [];
+  const configuredPluginsV2 = Array.isArray(config.plugins) ? config.plugins : [];
+  for (const plugin of expectedPluginsV2) {
+    if (!configuredPluginsV2.includes(plugin)) {
+      console.error(`FAIL  plugins ${plugin} not configured`);
       failures++;
     }
   }
-  for (const plugin of configuredPlugins) {
-    if (!expectedPlugins.includes(plugin)) {
-      console.error(`FAIL  plugin ${plugin} not in providers.json`);
+  for (const plugin of configuredPluginsV2) {
+    if (!expectedPluginsV2.includes(plugin)) {
+      console.error(`FAIL  plugins ${plugin} not in providers.json`);
       failures++;
     }
   }
@@ -348,14 +348,14 @@ export function installProviders(root: string): void {
     console.log(`linked  provider ${providerId}`);
   }
 
-  const expectedPlugins = manifest.plugin ?? [];
-  const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
-  if (JSON.stringify(configuredPlugins) !== JSON.stringify(expectedPlugins)) {
-    const removed = configuredPlugins.filter((plugin) => !expectedPlugins.includes(plugin));
-    config.plugin = expectedPlugins;
+  const expectedPluginsV2 = manifest.plugins ?? [];
+  const configuredPluginsV2 = Array.isArray(config.plugins) ? config.plugins : [];
+  if (JSON.stringify(configuredPluginsV2) !== JSON.stringify(expectedPluginsV2)) {
+    const removed = configuredPluginsV2.filter((plugin) => !expectedPluginsV2.includes(plugin));
+    config.plugins = expectedPluginsV2;
     changed = true;
-    if (removed.length > 0) console.log(`removed plugin ${removed.join(", ")}`);
-    if (expectedPlugins.length > 0) console.log(`linked  plugin ${expectedPlugins.join(", ")}`);
+    if (removed.length > 0) console.log(`removed plugins ${removed.join(", ")}`);
+    if (expectedPluginsV2.length > 0) console.log(`linked  plugins ${expectedPluginsV2.join(", ")}`);
   }
 
   if (manifest.permission && JSON.stringify(config.permission) !== JSON.stringify(manifest.permission)) {

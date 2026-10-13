@@ -155,29 +155,28 @@ describe("integration: apm providers", () => {
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
-    const config = readOpenCodeConfig();
-    expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
   });
 
-  it("install prunes plugins removed from the manifest", () => {
-    seed(JSON.stringify({ plugin: ["@dietrichgebert/ponytail"] }));
+  it("install writes the manifest v2 plugins list and prunes removals", () => {
+    seed(JSON.stringify({ plugins: ["stale-plugin"] }));
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
-    expect(install.stdout).toContain("removed plugin @dietrichgebert/ponytail");
+    expect(install.stdout).toContain("removed plugins stale-plugin");
+    expect(install.stdout).toContain("linked  plugins @ex-machina/opencode-anthropic-auth@2.0.0-next.6");
 
     const config = readOpenCodeConfig();
-    expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
+    expect(config.plugins).toEqual(["@ex-machina/opencode-anthropic-auth@2.0.0-next.6"]);
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
   });
 
-  it("check fails when the local plugin list drifts from the manifest", () => {
+  it("check fails when the local v2 plugins list drifts from the manifest", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
 
     const config = readOpenCodeConfig();
-    config.plugin = [...((config.plugin as string[]) ?? []), "@dietrichgebert/ponytail"];
+    config.plugins = [...((config.plugins as string[]) ?? []), "stale-plugin"];
     writeOpenCodeConfig(config);
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
