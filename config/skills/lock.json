@@ -567,6 +567,13 @@
       "path": "skills/design/web-typography",
       "commit": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "sha256": "fb3e11b66d736abed5d8561ac5a1731034973ef7bf922da83689ec53761894f7"
+    },
+    "work-humanizer": {
+      "source": "phuryn/work-humanizer",
+      "srcPath": "skills/work-humanizer",
+      "path": "skills/productivity/work-humanizer",
+      "commit": "0a9065791d021f3dda695f3887cb2ae4c0eacbcf",
+      "sha256": "c18a61de249688ad719bcac9d04e89f06357ae86882c69a459614a03a3b09bf5"
     }
   },
   "sources": {
@@ -639,6 +646,13 @@
       "license": "Apache-2.0",
       "licensePath": ".agents/licenses/pbakaus-impeccable-LICENSE",
       "licenseSha256": "f884b107a27cf03d14dd9f72d54fb2622a1f6d527e9ed416ea17f0662f0c7a3f"
+    },
+    "phuryn/work-humanizer": {
+      "repository": "https://github.com/phuryn/work-humanizer.git",
+      "ref": "main",
+      "license": "MIT",
+      "licensePath": ".agents/licenses/phuryn-work-humanizer-LICENSE",
+      "licenseSha256": "24625ba731eabf1ee106ad38d5a01f7bf8c7a2010525f81255cc30d5ddbe63e3"
     },
     "plannotator/effective-html": {
       "repository": "https://github.com/plannotator/effective-html.git",
