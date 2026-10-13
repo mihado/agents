@@ -155,38 +155,6 @@ describe("integration: apm providers", () => {
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
-    const config = readOpenCodeConfig();
-    expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
-  });
-
-  it("install prunes plugins removed from the manifest", () => {
-    seed(JSON.stringify({ plugin: ["@dietrichgebert/ponytail"] }));
-    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
-    expect(install.status).toBe(0);
-    expect(install.stdout).toContain("removed plugin @dietrichgebert/ponytail");
-
-    const config = readOpenCodeConfig();
-    expect(config.plugin ?? []).not.toContain("@dietrichgebert/ponytail");
-
-    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
-    expect(check.status).toBe(0);
-  });
-
-  it("check fails when the local plugin list drifts from the manifest", () => {
-    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
-    expect(install.status).toBe(0);
-
-    const config = readOpenCodeConfig();
-    config.plugin = [...((config.plugin as string[]) ?? []), "@dietrichgebert/ponytail"];
-    writeOpenCodeConfig(config);
-
-    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
-    expect(check.status).not.toBe(0);
-    expect(check.stderr).toContain("not in providers.json");
-
-    // restore for subsequent tests
-    const reinstall = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
-    expect(reinstall.status).toBe(0);
   });
 
   it("install writes the manifest v2 plugins list and prunes removals", () => {

@@ -215,9 +215,6 @@ function validateProviderManifest(manifest: ProviderManifest): void {
   if (!isObject(manifest.provider) || Object.keys(manifest.provider).length === 0) {
     fail("providers.json must contain at least one provider");
   }
-  if (manifest.plugin !== undefined && (!Array.isArray(manifest.plugin) || !manifest.plugin.every((plugin) => typeof plugin === "string" && plugin))) {
-    fail("providers.json plugin must be an array of non-empty strings");
-  }
   if (manifest.plugins !== undefined && (!Array.isArray(manifest.plugins) || !manifest.plugins.every((plugin) => typeof plugin === "string" && plugin))) {
     fail("providers.json plugins must be an array of non-empty strings");
   }
@@ -296,21 +293,6 @@ export function checkProviders(root: string): boolean {
     }
   }
 
-  const expectedPlugins = manifest.plugin ?? [];
-  const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
-  for (const plugin of expectedPlugins) {
-    if (!configuredPlugins.includes(plugin)) {
-      console.error(`FAIL  plugin ${plugin} not configured`);
-      failures++;
-    }
-  }
-  for (const plugin of configuredPlugins) {
-    if (!expectedPlugins.includes(plugin)) {
-      console.error(`FAIL  plugin ${plugin} not in providers.json`);
-      failures++;
-    }
-  }
-
   const expectedPluginsV2 = manifest.plugins ?? [];
   const configuredPluginsV2 = Array.isArray(config.plugins) ? config.plugins : [];
   for (const plugin of expectedPluginsV2) {
@@ -364,16 +346,6 @@ export function installProviders(root: string): void {
     (config.provider as Record<string, unknown>)[providerId] = expected;
     changed = true;
     console.log(`linked  provider ${providerId}`);
-  }
-
-  const expectedPlugins = manifest.plugin ?? [];
-  const configuredPlugins = Array.isArray(config.plugin) ? config.plugin : [];
-  if (JSON.stringify(configuredPlugins) !== JSON.stringify(expectedPlugins)) {
-    const removed = configuredPlugins.filter((plugin) => !expectedPlugins.includes(plugin));
-    config.plugin = expectedPlugins;
-    changed = true;
-    if (removed.length > 0) console.log(`removed plugin ${removed.join(", ")}`);
-    if (expectedPlugins.length > 0) console.log(`linked  plugin ${expectedPlugins.join(", ")}`);
   }
 
   const expectedPluginsV2 = manifest.plugins ?? [];
