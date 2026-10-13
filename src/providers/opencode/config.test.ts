@@ -189,6 +189,37 @@ describe("integration: apm providers", () => {
     expect(reinstall.status).toBe(0);
   });
 
+  it("install writes the manifest v2 plugins list and prunes removals", () => {
+    seed(JSON.stringify({ plugins: ["stale-plugin"] }));
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+    expect(install.stdout).toContain("removed plugins stale-plugin");
+    expect(install.stdout).toContain("linked  plugins @ex-machina/opencode-anthropic-auth@2.0.0-next.6");
+
+    const config = readOpenCodeConfig();
+    expect(config.plugins).toEqual(["@ex-machina/opencode-anthropic-auth@2.0.0-next.6"]);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).toBe(0);
+  });
+
+  it("check fails when the local v2 plugins list drifts from the manifest", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const config = readOpenCodeConfig();
+    config.plugins = [...((config.plugins as string[]) ?? []), "stale-plugin"];
+    writeOpenCodeConfig(config);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).not.toBe(0);
+    expect(check.stderr).toContain("not in providers.json");
+
+    // restore for subsequent tests
+    const reinstall = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(reinstall.status).toBe(0);
+  });
+
   it("installs operator and prunes the managed typist symlink", () => {
     const agentsDir = path.join(tempConfigHome, "opencode", "agents");
     const legacyTarget = path.join(root, "config", "providers", "opencode", "agents", "typist.md");
