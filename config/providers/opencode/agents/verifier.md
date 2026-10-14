@@ -1,7 +1,7 @@
 ---
 description: Verify slice or Brief-wide acceptance evidence and issue a PASS, FAIL, INCOMPLETE, or BLOCKED verdict.
 mode: subagent
-model: openai/gpt-5.6-luna
+model: openai/gpt-6-luna
 permission:
   edit: deny
   bash: allow
