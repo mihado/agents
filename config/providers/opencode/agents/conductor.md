@@ -1,7 +1,7 @@
 ---
 description: Conduct workflow routing, artifact transitions, worker dispatch, recovery, and bounded retries.
 mode: primary
-model: opencode-go/deepseek-v4.1-flash
+model: anthropic/claude-opus-5-5
 permission:
   edit: allow
   bash: allow

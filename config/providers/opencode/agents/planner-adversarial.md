@@ -1,7 +1,7 @@
 ---
 description: Produce a risk-focused planning candidate or pressure-test a research decision for failure modes, weak evidence, and hidden risk.
 mode: subagent
-model: opencode-go/deepseek-v4.1-flash
+model: anthropic/claude-opus-5-5
 permission:
   edit: deny
   bash: allow
