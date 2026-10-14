@@ -162,10 +162,10 @@ describe("integration: apm providers", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
     expect(install.stdout).toContain("removed plugins stale-plugin");
-    expect(install.stdout).toContain("linked  plugins @ex-machina/opencode-anthropic-auth@2.0.0-next.6");
+    expect(install.stdout).toContain("linked  plugins opencode-anthropic-login-via-cli@1.7.0");
 
     const config = readOpenCodeConfig();
-    expect(config.plugins).toEqual(["@ex-machina/opencode-anthropic-auth@2.0.0-next.6"]);
+    expect(config.plugins).toEqual(["opencode-anthropic-login-via-cli@1.7.0"]);
 
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).toBe(0);
