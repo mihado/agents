@@ -1,7 +1,7 @@
 ---
 description: Review a diff for correctness, regressions, repository standards, and Brief/Plan conformance.
 mode: subagent
-model: opencode-go/deepseek-v4.1-flash
+model: openai/gpt-6.1-sol
 permission:
   edit: deny
   bash: allow

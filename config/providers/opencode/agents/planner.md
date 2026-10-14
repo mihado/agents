@@ -1,7 +1,7 @@
 ---
 description: Plan an execution slice or research a bounded decision from repository and authoritative-source evidence.
 mode: subagent
-model: opencode-go/deepseek-v4.1-flash
+model: anthropic/claude-sonnet-5-5
 permission:
   edit: deny
   bash: allow
