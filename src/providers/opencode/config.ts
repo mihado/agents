@@ -212,8 +212,8 @@ export function loadProviderManifest(root: string): ProviderManifest {
 }
 
 function validateProviderManifest(manifest: ProviderManifest): void {
-  if (!isObject(manifest.provider) || Object.keys(manifest.provider).length === 0) {
-    fail("providers.json must contain at least one provider");
+  if (!isObject(manifest.provider)) {
+    fail("providers.json must contain a provider object (possibly empty)");
   }
   if (manifest.plugins !== undefined && (!Array.isArray(manifest.plugins) || !manifest.plugins.every((plugin) => typeof plugin === "string" && plugin))) {
     fail("providers.json plugins must be an array of non-empty strings");

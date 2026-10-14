@@ -1,7 +1,7 @@
 ---
 description: Adjudicate constructive and adversarial reports into one evidence-bounded synthesis.
 mode: subagent
-model: commandcode/gpt-5.6-sol
+model: anthropic/claude-opus-5-5
 permission:
   edit: deny
   bash: allow

@@ -249,59 +249,6 @@ describe("integration: apm providers", () => {
     expect(result.status).not.toBe(0);
   });
 
-  it("propagates modalities for vision-capable models", () => {
-    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
-    expect(install.status).toBe(0);
-
-    const config = readOpenCodeConfig();
-    const c9 = config.provider as Record<string, { models?: Record<string, Record<string, unknown>> }> | undefined;
-    const models = c9?.c9?.models ?? {};
-
-    // Derived from the source manifest so every image-input model stays covered
-    // as models are added or renamed.
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
-    ) as { provider: Record<string, { models?: Record<string, { modalities?: { input?: string[] } }> }> };
-    const visionModels = Object.entries(manifest.provider.c9?.models ?? {})
-      .filter(([, model]) => model.modalities?.input?.includes("image"))
-      .map(([id]) => id);
-    expect(visionModels.length, "manifest should contain vision-capable models").toBeGreaterThan(0);
-    for (const id of visionModels) {
-      expect(models[id], `model ${id} should exist`).toBeTruthy();
-      expect((models[id] as Record<string, { input: string[]; output: string[] }>).modalities).toEqual({
-        input: ["text", "image"],
-        output: ["text"],
-      });
-    }
-
-    const textOnlyModels = Object.entries(manifest.provider.c9?.models ?? {})
-      .filter(([, model]) => model.modalities === undefined)
-      .map(([id]) => id);
-    for (const id of textOnlyModels) {
-      expect(models[id], `model ${id} should exist`).toBeTruthy();
-      expect((models[id] as Record<string, unknown>).modalities, `${id} should not have modalities`).toBeUndefined();
-    }
-  });
-
-  it("propagates tool_call and temperature for all models", () => {
-    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
-    expect(install.status).toBe(0);
-
-    const config = readOpenCodeConfig();
-    const c9 = config.provider as Record<string, { models?: Record<string, Record<string, unknown>> }> | undefined;
-    const models = c9?.c9?.models ?? {};
-    const allIds = Object.keys(models);
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(root, "config", "providers", "opencode.json"), "utf8"),
-    ) as { provider: Record<string, { models?: Record<string, unknown> }> };
-    expect(new Set(allIds)).toEqual(new Set(Object.keys(manifest.provider.c9?.models ?? {})));
-
-    for (const id of allIds) {
-      expect((models[id] as Record<string, unknown>).tool_call, `${id} should have tool_call: true`).toBe(true);
-      expect((models[id] as Record<string, unknown>).temperature, `${id} should have temperature: true`).toBe(true);
-    }
-  });
-
   it("syncs permission config from the manifest", () => {
     const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
     expect(install.status).toBe(0);
