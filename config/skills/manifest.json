@@ -128,6 +128,14 @@
         "name": "MIT",
         "path": "LICENSE"
       }
+    },
+    "phuryn/work-humanizer": {
+      "repository": "https://github.com/phuryn/work-humanizer.git",
+      "ref": "main",
+      "license": {
+        "name": "MIT",
+        "path": "LICENSE"
+      }
     }
   },
   "skills": {
@@ -535,6 +543,11 @@
       "source": "plannotator/effective-html",
       "srcPath": "skills/design-artifact",
       "path": "skills/design/design-artifact"
+    },
+    "work-humanizer": {
+      "source": "phuryn/work-humanizer",
+      "srcPath": "skills/work-humanizer",
+      "path": "skills/productivity/work-humanizer"
     }
   }
 }
