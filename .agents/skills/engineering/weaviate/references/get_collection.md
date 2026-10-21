@@ -5,7 +5,7 @@ Get detailed configuration of a specific collection including vectorizer, proper
 ## Usage
 
 ```bash
-uv run scripts/get_collection.py --name "CollectionName" [--json]
+uv run SKILL_DIR/scripts/get_collection.py --name "CollectionName" [--json]
 ```
 
 ## Parameters
@@ -19,14 +19,15 @@ uv run scripts/get_collection.py --name "CollectionName" [--json]
 
 - **Default**: Markdown-formatted collection details with property table
 - **JSON**: Full collection configuration object
+- `vectorizer_config` reports the collection's vectorizer and model; if the collection has several named vectors, it reports the one whose name sorts first
 
 ## Examples
 
 ```bash
-uv run scripts/get_collection.py --name "Articles"
+uv run SKILL_DIR/scripts/get_collection.py --name "Articles"
 ```
 
 ```bash
-uv run scripts/get_collection.py --name "Products" --json
+uv run SKILL_DIR/scripts/get_collection.py --name "Products" --json
 ```
 
