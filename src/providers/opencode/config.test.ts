@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { getOpenCodeConfigPath, readOpenCodeConfig, writeOpenCodeConfig, toOpenCodeMcp } from "./config.js";
+import { getOpenCodeConfigPath, readOpenCodeConfig, writeOpenCodeConfig, toOpenCodeMcp, toOpenCodeProvider } from "./config.js";
 
 const root = path.resolve(fileURLToPath(import.meta.url), "../../../..");
 
@@ -142,6 +142,25 @@ describe("toOpenCodeMcp()", () => {
   });
 });
 
+describe("toOpenCodeProvider()", () => {
+  it("syncs an options overlay verbatim for built-in providers", () => {
+    expect(toOpenCodeProvider("commandcode", {
+      options: { headers: { "x-cmd-zdr": "1" } },
+    })).toEqual({ options: { headers: { "x-cmd-zdr": "1" } } });
+  });
+
+  it("merges declared options into full provider builds", () => {
+    const built = toOpenCodeProvider("c9", {
+      baseURL: "https://c9.rter.cc/v1",
+      headers: { "x-a": "1" },
+      options: { headers: { "x-b": "2" } },
+      models: { m: { name: "M" } },
+    }) as { options: Record<string, unknown> };
+    expect(built.options.headers).toEqual({ "x-a": "1", "x-b": "2" });
+    expect(built.options.baseURL).toBe("https://c9.rter.cc/v1");
+  });
+});
+
 describe("integration: apm providers", () => {
   const apmCli = path.join(root, "dist", "cli", "main.js");
 
@@ -182,6 +201,39 @@ describe("integration: apm providers", () => {
     const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
     expect(check.status).not.toBe(0);
     expect(check.stderr).toContain("not in providers.json");
+
+    // restore for subsequent tests
+    const reinstall = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(reinstall.status).toBe(0);
+  });
+
+  it("install writes manifest provider overlays and check verifies them", () => {
+    seed(JSON.stringify({ provider: {} }));
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+    expect(install.stdout).toContain("linked  provider commandcode");
+
+    const config = readOpenCodeConfig();
+    expect((config.provider as Record<string, unknown>).commandcode).toEqual({
+      options: { headers: { "x-cmd-zdr": "1" } },
+    });
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).toBe(0);
+  });
+
+  it("check fails when a provider overlay drifts from the manifest", () => {
+    const install = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
+    expect(install.status).toBe(0);
+
+    const config = readOpenCodeConfig();
+    const provider = config.provider as Record<string, Record<string, unknown>>;
+    provider.commandcode = { options: { headers: {} } };
+    writeOpenCodeConfig(config);
+
+    const check = spawnSync("node", [apmCli, "providers", "check"], { encoding: "utf8" });
+    expect(check.status).not.toBe(0);
+    expect(check.stderr).toContain("provider commandcode config differs");
 
     // restore for subsequent tests
     const reinstall = spawnSync("node", [apmCli, "providers", "install"], { encoding: "utf8" });
