@@ -14,13 +14,17 @@ export interface ProviderManifestModel {
 }
 
 export interface ProviderManifestEntry {
-  baseURL: string;
+  baseURL?: string;
   name?: string;
   npm?: string;
   apiKeyEnv?: string;
   apiKey?: string;
   headers?: Record<string, string>;
-  models: Record<string, ProviderManifestModel>;
+  models?: Record<string, ProviderManifestModel>;
+  // Overlay for a built-in (Models.dev) provider: synced verbatim under the
+  // provider id. Lets repo config set options (e.g. headers) on providers
+  // OpenCode already knows without redeclaring baseURL/models.
+  options?: Record<string, unknown>;
 }
 
 export interface ProviderManifest {

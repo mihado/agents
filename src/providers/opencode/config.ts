@@ -232,16 +232,19 @@ function validateProviderManifest(manifest: ProviderManifest): void {
     if (!id || typeof def !== "object") {
       fail(`providers.json: "${id}" must be an object`);
     }
-    if (!def.baseURL || typeof def.baseURL !== "string") {
-      fail(`providers.json: "${id}" must have a "baseURL" string`);
+    if (def.baseURL !== undefined && typeof def.baseURL !== "string") {
+      fail(`providers.json: "${id}" baseURL must be a string`);
+    }
+    if (!def.baseURL && !isObject(def.options)) {
+      fail(`providers.json: "${id}" must have a "baseURL" string or an "options" object`);
     }
     if (def.headers !== undefined && (!isObject(def.headers) || !Object.values(def.headers).every((v) => typeof v === "string"))) {
       fail(`providers.json: "${id}" headers must be a string map`);
     }
-    if (!def.models || Object.keys(def.models).length === 0) {
+    if (def.baseURL && (!def.models || Object.keys(def.models).length === 0)) {
       fail(`providers.json: "${id}" must have at least one model`);
     }
-    for (const [modelId, model] of Object.entries(def.models)) {
+    for (const [modelId, model] of Object.entries(def.models ?? {})) {
       if (typeof model.name !== "string" || !model.name) {
         fail(`providers.json: "${id}" model "${modelId}" must have a "name" string`);
       }
@@ -250,14 +253,27 @@ function validateProviderManifest(manifest: ProviderManifest): void {
 }
 
 export function toOpenCodeProvider(providerId: string, def: ProviderManifestEntry): Record<string, unknown> {
+  // Overlay: no baseURL means a built-in provider OpenCode already knows.
+  // Sync the declared options verbatim rather than rebuilding the block.
+  if (!def.baseURL) {
+    return { options: def.options ?? {} };
+  }
+  const options: Record<string, unknown> = {
+    baseURL: def.baseURL,
+    ...(def.apiKeyEnv ? { apiKey: `{env:${def.apiKeyEnv}}` } : (def.apiKey ? { apiKey: def.apiKey } : {})),
+    ...(def.headers ? { headers: def.headers } : {}),
+  };
+  if (def.options) {
+    const { headers: optionHeaders, ...rest } = def.options;
+    Object.assign(options, rest);
+    if (optionHeaders !== undefined) {
+      options.headers = { ...((options.headers as Record<string, unknown>) ?? {}), ...(optionHeaders as Record<string, unknown>) };
+    }
+  }
   return {
     npm: def.npm || "@ai-sdk/openai-compatible",
     name: def.name || providerId,
-    options: {
-      baseURL: def.baseURL,
-      ...(def.apiKeyEnv ? { apiKey: `{env:${def.apiKeyEnv}}` } : (def.apiKey ? { apiKey: def.apiKey } : {})),
-      ...(def.headers ? { headers: def.headers } : {}),
-    },
+    options,
     models: Object.fromEntries(
       Object.entries(def.models || {}).map(([modelId, model]) => [
         modelId,

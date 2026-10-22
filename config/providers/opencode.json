@@ -37,5 +37,13 @@
       "git clean -f*": "ask"
     }
   },
-  "provider": {}
+  "provider": {
+    "commandcode": {
+      "options": {
+        "headers": {
+          "x-cmd-zdr": "1"
+        }
+      }
+    }
+  }
 }
